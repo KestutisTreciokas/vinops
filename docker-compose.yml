@@ -27,6 +27,11 @@ services:
       DATABASE_URL: ${DATABASE_URL}
       API_BASE_URL: http://api:3001
       SENTRY_DSN: ${SENTRY_DSN}
+      DB_HOST: db
+      DB_PORT: ${DB_PORT}
+      DB_DATABASE: ${DB_NAME}
+      DB_USERNAME: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
       NEXT_PUBLIC_SENTRY_DSN: ${NEXT_PUBLIC_SENTRY_DSN}
     ports:
       - "${PORT_API_HOST:-3001}:3001"
@@ -42,6 +47,11 @@ services:
       PORT: 3000
       NEXT_PUBLIC_API_URL: http://${DOMAIN_OR_IP}:${PORT_API_HOST}
       SENTRY_DSN: ${SENTRY_DSN}
+      DB_HOST: db
+      DB_PORT: ${DB_PORT}
+      DB_DATABASE: ${DB_NAME}
+      DB_USERNAME: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
       NEXT_PUBLIC_SENTRY_DSN: ${NEXT_PUBLIC_SENTRY_DSN}
     ports:
       - "${PORT_WEB_HOST:-80}:3000"
