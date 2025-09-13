@@ -1,5 +1,5 @@
-import Features from './_home/Features'
 'use client'
+import Features from './_home/Features'
 import { useState } from 'react'
 import Script from 'next/script'
 
