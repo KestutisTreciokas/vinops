@@ -535,3 +535,55 @@ a:hover { color: var(--brand-hover); }
 @media (min-width: 768px) {
   .filters-bar { grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr; } /* 6 ячеек под селекты */
 }
+
+/* ===== Catalog filters: layout/size fix ===== */
+.filters-bar{
+  display:flex; flex-wrap:wrap; align-items:center; gap:12px;
+}
+
+/* общий контейнер селекта */
+.select-wrap{
+  position:relative;
+  min-width:180px;   /* базовая ширина всех селектов */
+  height:40px;
+}
+
+/* сам <select> — единая высота/линия, фон и радиус по токенам */
+.select{
+  appearance:none; -webkit-appearance:none; -moz-appearance:none;
+  display:block; width:100%; height:40px; line-height:40px;
+  padding:0 36px 0 14px;
+  border:1px solid var(--border-muted);
+  background:var(--bg-surface);
+  color:var(--fg-default);
+  border-radius:12px;
+}
+
+/* фокус */
+.select:focus{
+  outline:2px solid color-mix(in hsl, var(--brand) 40%, transparent);
+  outline-offset:0;
+}
+
+/* стрелка в правом краю, по центру по Y */
+.select-wrap .chev{
+  position:absolute; right:12px; top:50%; transform:translateY(-50%);
+  pointer-events:none; color:var(--fg-muted);
+  font-size:14px; line-height:1;
+}
+
+/* Узкие селекты только для 4-го и 5-го (диапазон "От" / "До") */
+.filters-bar .select-wrap:nth-of-type(4),
+.filters-bar .select-wrap:nth-of-type(5){
+  min-width:120px;
+}
+
+/* Кнопки справа смотрятся плотнее */
+.filters-bar .btn{ height:40px; }
+.filters-bar .btn.btn-primary{ height:40px; }
+
+/* На узких экранах — селекты во всю ширину ряда */
+@media (max-width: 640px){
+  .select-wrap{ min-width: 100%; }
+  .filters-bar{ gap:10px; }
+}
