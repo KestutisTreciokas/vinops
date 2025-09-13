@@ -1,3 +1,4 @@
+import { inter, mono } from './fonts'
 import '../styles/globals.css'
 import type { Metadata } from 'next'
 
@@ -14,7 +15,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html suppressHydrationWarning>
-      <body>{children}</body>
+      <body className={`${inter.variable} ${mono.variable} font-sans`}>{children}</body>
     </html>
   )
 }
