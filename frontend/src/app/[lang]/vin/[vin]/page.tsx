@@ -1,3 +1,4 @@
+import RemovalRequest from '../../../../components/RemovalRequest'
 import Timeline from './_Timeline'
 import Specs from './_Specs'
 import Script from 'next/script'
@@ -89,7 +90,8 @@ export default function VinPage({
             <a className="btn btn-secondary" href="https://t.me/keustis" target="_blank" rel="noreferrer">@keustis</a>
           </div>
         </div>
-      </section>
+            <RemovalRequest t={t} />
+    </section>
     </>
   )
 }
