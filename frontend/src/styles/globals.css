@@ -302,3 +302,8 @@ a:hover { color: var(--brand-hover); }
     radial-gradient(1200px 400px at 50% -150px, color-mix(in hsl, var(--brand) 18%, transparent), transparent),
     var(--bg-canvas);
 }
+
+/* Theme-aware logo (две картинки, отображаем одну) */
+.logo-img-dark { display: none; }
+[data-theme="dark"] .logo-img-light { display: none; }
+[data-theme="dark"] .logo-img-dark { display: block; }
