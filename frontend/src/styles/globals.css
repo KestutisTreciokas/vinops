@@ -282,3 +282,11 @@ a:hover { color: var(--brand-hover); }
 .nav-link { color: var(--fg-muted); }
 .nav-link:hover, .nav-link-active { color: var(--fg-default); }
 .nav-link-active::after { background: var(--brand); }
+
+/* Layout containers */
+.container { max-width: 1200px; margin-left: auto; margin-right: auto; padding: 0 16px; }
+.container-prose { max-width: 1040px; margin-left: auto; margin-right: auto; padding: 0 16px; }
+
+/* Typo helpers */
+.h1 { @apply text-4xl font-semibold leading-tight; }
+.lead { @apply text-base; color: var(--fg-muted); }
