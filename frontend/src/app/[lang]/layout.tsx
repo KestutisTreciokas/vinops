@@ -25,7 +25,7 @@ export default function LangLayout({
     <div className="min-h-screen flex flex-col bg-bg-canvas text-fg-default">
       <header className="site-header">
         <div className="inner">
-          <Link href={`/${params.lang}`} className="logo">vinops</Link>
+          <Link href={`/${params.lang}`} className="logo"><img src="/svg/brand/property-1-brand-theme-light-size-56.svg" alt="vinops" width="56" height="56" /></Link>
           <nav className="flex items-center gap-6">
             {NAV.map((n) => (
               <NavLink key={n.href} href={href(n.href)}>
