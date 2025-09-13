@@ -468,3 +468,10 @@ a:hover { color: var(--brand-hover); }
 .nav-link:hover::after { background: var(--border-muted); transform: scaleX(1); }
 .nav-link-active { color: var(--fg-default); }
 .nav-link-active::after { background: var(--brand); transform: scaleX(1); }
+
+/* Inputs: placeholder + focus */
+.input::placeholder { color: var(--fg-muted); opacity: 1; }
+.input:focus { outline: 2px solid color-mix(in hsl, var(--brand) 35%, transparent); outline-offset: 0; }
+
+/* Hero paddings (по макету ближе к 80px сверху/снизу) */
+.hero { padding-top: 80px !important; padding-bottom: 80px !important; }
