@@ -290,3 +290,24 @@ a:hover { color: var(--brand-hover); }
 /* Typo helpers */
 .h1 { @apply text-4xl font-semibold leading-tight; }
 .lead { @apply text-base; color: var(--fg-muted); }
+
+/* Hero background (светлая/тёмная) */
+.hero {
+  background:
+    radial-gradient(1200px 400px at 50% -150px, color-mix(in hsl, var(--brand) 10%, transparent), transparent),
+    var(--bg-canvas);
+}
+[data-theme="dark"] .hero {
+  background:
+    radial-gradient(1200px 400px at 50% -150px, color-mix(in hsl, var(--brand) 18%, transparent), transparent),
+    var(--bg-canvas);
+}
+
+/* Theme-aware logo (две картинки, отображаем одну) */
+.logo-img-dark { display: none; }
+[data-theme="dark"] .logo-img-light { display: none; }
+[data-theme="dark"] .logo-img-dark { display: block; }
+
+/* Чуть выше контраст инпутов/карт на тёмной */
+[data-theme="dark"] .input { background: #0E1522; border-color: #253141; }
+[data-theme="dark"] .card  { background: #101826; border-color: #253141; box-shadow: none; }
