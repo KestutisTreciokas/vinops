@@ -12,6 +12,10 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ["var(--font-sans)", "ui-sans-serif", "system-ui", "-apple-system", "Segoe UI", "Roboto", "Helvetica Neue", "Arial"],
+        mono: ["var(--font-mono)", "ui-monospace", "SFMono-Regular", "Menlo", "Consolas"],
+      },
       colors: {
         // Текст
         'fg-default': 'var(--fg-default)',
@@ -58,3 +62,4 @@ const config: Config = {
   plugins: [],
 }
 export default config
+
