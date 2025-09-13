@@ -114,3 +114,43 @@ a:hover { color: var(--brand-hover); }
 .btn-lg   { @apply h-12 px-5 text-base rounded-xl; }      /* 48px */
 .h1       { @apply text-4xl font-semibold leading-tight; }/* ~36-40px */
 .lead     { @apply text-base text-fg-muted; }             /* 16px muted */
+
+/* ---------- Header / Navigation polish ---------- */
+.site-header { 
+  background: var(--bg-canvas);
+  border-bottom: 1px solid var(--border-muted);
+}
+.site-header .inner {
+  @apply container;
+  height: 64px; /* фикс высота по макету */
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.logo {
+  @apply font-semibold;
+  font-size: 18px;
+  letter-spacing: -0.01em;
+}
+
+/* Навигация */
+.nav-link {
+  @apply text-sm;
+  color: var(--fg-muted);
+  padding-bottom: 6px;
+  transition: color .15s ease;
+}
+.nav-link:hover { color: var(--fg-default); }
+.nav-link-active {
+  color: var(--fg-default);
+  position: relative;
+}
+.nav-link-active::after {
+  content: "";
+  position: absolute;
+  left: 0; right: 0;
+  bottom: 0;               /* подчёркивание вплотную к тексту */
+  height: 2px;
+  background: var(--brand);
+  border-radius: 9999px;
+}

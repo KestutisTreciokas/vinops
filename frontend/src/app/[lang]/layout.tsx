@@ -1,10 +1,11 @@
 import Link from 'next/link'
 import type { Metadata } from 'next'
+import NavLink from '../../components/NavLink'
 
 const NAV = [
-  { href: '/[lang]/cars',    label: { en: 'Catalog',  ru: 'Каталог' } },
-  { href: '/[lang]/contacts',label: { en: 'Contacts', ru: 'Контакты' } },
-  { href: '/[lang]/terms',   label: { en: 'Terms',    ru: 'Условия' } },
+  { href: '/[lang]/cars',     label: { en: 'Catalog',  ru: 'Каталог' } },
+  { href: '/[lang]/contacts', label: { en: 'Contacts', ru: 'Контакты' } },
+  { href: '/[lang]/terms',    label: { en: 'Terms',    ru: 'Условия' } },
 ]
 
 export const metadata: Metadata = {
@@ -22,14 +23,14 @@ export default function LangLayout({
 
   return (
     <div className="min-h-screen flex flex-col bg-bg-canvas text-fg-default">
-      <header className="border-b border-border-muted">
-        <div className="container-prose flex items-center justify-between py-4">
-          <Link href={`/${params.lang}`} className="text-lg font-semibold">vinops</Link>
+      <header className="site-header">
+        <div className="inner">
+          <Link href={`/${params.lang}`} className="logo">vinops</Link>
           <nav className="flex items-center gap-6">
             {NAV.map((n) => (
-              <Link key={n.href} href={href(n.href)} className="hover:underline">
+              <NavLink key={n.href} href={href(n.href)}>
                 {t(n.label.en, n.label.ru)}
-              </Link>
+              </NavLink>
             ))}
             <LangSwitcher lang={params.lang} />
           </nav>
