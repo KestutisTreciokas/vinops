@@ -633,3 +633,16 @@ a:hover { color: var(--brand-hover); }
   padding: 4px 10px;
   font-weight: 600;
 }
+
+/* === Icons integration === */
+.select-wrap { position: relative; }
+.select { appearance: none; padding-right: 38px; }
+.chev {
+  position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+  display: inline-flex; pointer-events: none; opacity: .8;
+}
+.chev svg { width: 16px; height: 16px; }
+
+/* icons inside badges and chips */
+.badge .icon, .price-chip .icon { width: 14px; height: 14px; margin-right: 6px; }
+.badge-live .icon { color: var(--brand); }

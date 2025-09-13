@@ -1,3 +1,4 @@
+import ChevronDown from '@/src/icons/ChevronDown'
 'use client'
 import { useEffect, useMemo, useState } from 'react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
@@ -133,35 +134,35 @@ export default function CatalogPage({ params }: { params: { lang: Lang } }) {
                 <option value="">{t(lang,'All makes','Все марки')}</option>
                 {MAKES.map(m=><option key={m} value={m}>{m}</option>)}
               </select>
-              <span className="chev">▾</span>
+              <span className="chev"><ChevronDown/></span>
             </div>
             <div className="select-wrap">
               <select className="select" value={model} onChange={e=>setModel(e.target.value)}>
                 <option value="">{t(lang,'All models','Все модели')}</option>
                 {(MODELS[make]||[]).map(m=><option key={m} value={m}>{m}</option>)}
               </select>
-              <span className="chev">▾</span>
+              <span className="chev"><ChevronDown/></span>
             </div>
             <div className="select-wrap">
               <select className="select" value={gen} onChange={e=>setGen(e.target.value)}>
                 <option value="">{t(lang,'All generations','Все поколения')}</option>
                 {GENERATIONS.map(g=><option key={g} value={g}>{g}</option>)}
               </select>
-              <span className="chev">▾</span>
+              <span className="chev"><ChevronDown/></span>
             </div>
             <div className="select-wrap" data-size="sm">
               <select className="select" value={yFrom} onChange={e=>setYFrom(e.target.value)}>
                 <option value="">{t(lang,'Year from','От')}</option>
                 {YEARS.map(y=><option key={y} value={y}>{y}</option>)}
               </select>
-              <span className="chev">▾</span>
+              <span className="chev"><ChevronDown/></span>
             </div>
             <div className="select-wrap" data-size="sm">
               <select className="select" value={yTo} onChange={e=>setYTo(e.target.value)}>
                 <option value="">{t(lang,'Year to','До')}</option>
                 {YEARS.map(y=><option key={y} value={y}>{y}</option>)}
               </select>
-              <span className="chev">▾</span>
+              <span className="chev"><ChevronDown/></span>
             </div>
             <div className="flex gap-2">
               <button className="btn" onClick={reset}>{t(lang,'Reset','Сбросить')}</button>
