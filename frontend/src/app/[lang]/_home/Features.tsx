@@ -1,8 +1,8 @@
 'use client'
-import SearchIcon from '@/src/icons/SearchIcon'
-import DocIcon from '@/src/icons/DocIcon'
-import HistoryIcon from '@/src/icons/HistoryIcon'
-import ShieldIcon from '@/src/icons/ShieldIcon'
+import SearchIcon from '@/icons/SearchIcon'
+import DocIcon from '@/icons/DocIcon'
+import HistoryIcon from '@/icons/HistoryIcon'
+import ShieldIcon from '@/icons/ShieldIcon'
 
 export default function Features({ lang }: { lang: 'en'|'ru' }) {
   const t = (en: string, ru: string) => (lang === 'ru' ? ru : en)
