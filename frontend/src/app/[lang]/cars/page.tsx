@@ -54,13 +54,13 @@ export default function CatalogPage({ params }: { params: { lang: 'en'|'ru' } })
             </select>
             <span className="chev">▾</span>
           </div>
-          <div className="select-wrap">
+          <div className="select-wrap" data-size="sm">
             <select className="select">
               <option>{t('Year from','От')}</option>
             </select>
             <span className="chev">▾</span>
           </div>
-          <div className="select-wrap">
+          <div className="select-wrap" data-size="sm">
             <select className="select">
               <option>{t('Year to','До')}</option>
             </select>

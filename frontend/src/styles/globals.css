@@ -573,10 +573,6 @@ a:hover { color: var(--brand-hover); }
 }
 
 /* Узкие селекты только для 4-го и 5-го (диапазон "От" / "До") */
-.filters-bar .select-wrap:nth-of-type(4),
-.filters-bar .select-wrap:nth-of-type(5){
-  min-width:120px;
-}
 
 /* Кнопки справа смотрятся плотнее */
 .filters-bar .btn{ height:40px; }
@@ -587,3 +583,6 @@ a:hover { color: var(--brand-hover); }
   .select-wrap{ min-width: 100%; }
   .filters-bar{ gap:10px; }
 }
+
+/* Catalog filters: attribute-sized "small" selects (Year From/To) */
+.select-wrap[data-size="sm"]{ min-width:120px; }
