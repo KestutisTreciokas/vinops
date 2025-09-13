@@ -200,26 +200,27 @@ a:hover { color: var(--brand-hover); }
   --status-error: #E03131;
 }
 
+
 /* ===== Color tokens (Dark) ===== */
 :root[data-theme="dark"], [data-theme="dark"] {
+  /* Navy-палитра ближе к макету */
   --brand: #4F45E5;
   --brand-fg: #FFFFFF;
 
-  --fg-default: #E6E8EB;
-  --fg-muted:   #9AA4B2;
-  --fg-subtle:  #7D8A98;
+  --fg-default: #E9EDF5;   /* чуть светлее */
+  --fg-muted:   #A3AEC0;   /* спокойнее серо-синий */
+  --fg-subtle:  #8794A6;
   --fg-on-inverse: #0B0F17;
 
-  --bg-canvas:  #0B0F17;
-  --bg-surface: #121826;
-  --bg-muted:   #0F1621;
+  --bg-canvas:  #0A0F1A;   /* фон страницы */
+  --bg-surface: #101726;   /* карточки/хедер */
+  --bg-muted:   #0D1422;   /* поля/вторичный фон */
 
-  --border-muted: #253141;
-
+  --border-muted: #1E2A3A; /* бордеры мягче */
   --status-error: #F25555;
 }
 
-/* ===== Utility mapping to variables ===== */
+/* ===== Utility mapping/* ===== Utility mapping to variables ===== */
 .text-fg-default { color: var(--fg-default); }
 .text-fg-muted   { color: var(--fg-muted); }
 .text-fg-subtle  { color: var(--fg-subtle); }
@@ -299,7 +300,7 @@ a:hover { color: var(--brand-hover); }
 }
 [data-theme="dark"] .hero {
   background:
-    radial-gradient(1200px 400px at 50% -150px, color-mix(in hsl, var(--brand) 18%, transparent), transparent),
+    radial-gradient(1400px 520px at 50% -200px, color-mix(in hsl, var(--brand) 14%, transparent), transparent),
     var(--bg-canvas);
 }
 
@@ -311,3 +312,34 @@ a:hover { color: var(--brand-hover); }
 /* Чуть выше контраст инпутов/карт на тёмной */
 [data-theme="dark"] .input { background: #0E1522; border-color: #253141; }
 [data-theme="dark"] .card  { background: #101826; border-color: #253141; box-shadow: none; }
+
+
+/* Тонкая подстройка под dark */
+[data-theme="dark"] .input {
+  background: var(--bg-muted);
+  border-color: var(--border-muted);
+  color: var(--fg-default);
+}
+[data-theme="dark"] .input::placeholder { color: var(--fg-muted); }
+
+[data-theme="dark"] .card  {
+  background: var(--bg-surface);
+  border-color: var(--border-muted);
+  box-shadow: none;
+}
+
+[data-theme="dark"] .site-header {
+  background: var(--bg-surface);
+  border-bottom-color: var(--border-muted);
+}
+
+[data-theme="dark"] .nav-link { color: var(--fg-muted); }
+[data-theme="dark"] .nav-link:hover,
+[data-theme="dark"] .nav-link-active { color: var(--fg-default); }
+
+/* Кнопки */
+[data-theme="dark"] .btn-secondary {
+  background: var(--bg-muted);
+  color: var(--fg-default);
+  border-color: var(--border-muted);
+}
