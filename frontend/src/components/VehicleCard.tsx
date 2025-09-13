@@ -1,6 +1,6 @@
-import TagIcon from '@/src/icons/TagIcon'
-import CheckIcon from '@/src/icons/CheckIcon'
-import DotIcon from '@/src/icons/DotIcon'
+import TagIcon from '@/icons/TagIcon'
+import CheckIcon from '@/icons/CheckIcon'
+import DotIcon from '@/icons/DotIcon'
 
 export type VehicleLite = {
   year: number
