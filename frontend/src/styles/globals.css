@@ -451,3 +451,20 @@ a:hover { color: var(--brand-hover); }
     radial-gradient(1400px 520px at 50% -200px, color-mix(in hsl, var(--brand) 14%, transparent), transparent),
     var(--bg-canvas);
 }
+
+/* Header layout */
+.site-header { background: var(--bg-canvas); border-bottom: 1px solid var(--border-muted); }
+[data-theme="dark"] .site-header { background: var(--bg-surface); }
+.site-header-inner { height: 72px; display:flex; align-items:center; }
+
+/* Nav links (base + active underline) */
+.nav-link { position: relative; display:inline-flex; align-items:center; height: 40px; padding: 0 10px; color: var(--fg-muted); }
+.nav-link:hover { color: var(--fg-default); }
+.nav-link::after {
+  content:''; position:absolute; left:10px; right:10px; bottom:0;
+  height:2px; border-radius:2px; background: transparent; transform: scaleX(0);
+  transition: transform .18s ease, background-color .18s ease;
+}
+.nav-link:hover::after { background: var(--border-muted); transform: scaleX(1); }
+.nav-link-active { color: var(--fg-default); }
+.nav-link-active::after { background: var(--brand); transform: scaleX(1); }
