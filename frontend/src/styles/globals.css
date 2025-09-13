@@ -475,3 +475,10 @@ a:hover { color: var(--brand-hover); }
 
 /* Hero paddings (по макету ближе к 80px сверху/снизу) */
 .hero { padding-top: 80px !important; padding-bottom: 80px !important; }
+
+/* Brand tint для плашек иконок */
+.brand-tint { background: color-mix(in hsl, var(--brand) 15%, transparent); }
+
+/* Карточка преимуществ — subtle hover */
+.feature-card { transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease; }
+.feature-card:hover { transform: translateY(-1px); border-color: var(--brand); }
