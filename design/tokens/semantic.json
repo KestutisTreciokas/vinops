@@ -1,0 +1,77 @@
+{
+  "semantic": {
+    "colors": {
+      "brand": {
+        "default": { "value": "#4F45E5", "type": "color" },
+        "hover":   { "value": "#3361E5", "type": "color" },
+        "fg":      { "value": "#FFFFFF", "type": "color" }
+      },
+      "fg": {
+        "default":   { "value": "#1F1F20", "type": "color" },
+        "muted":     { "value": "#667080", "type": "color" },
+        "subtle":    { "value": "#737880", "type": "color" },
+        "onInverse": { "value": "#FFFFFF", "type": "color" }
+      },
+      "bg": {
+        "canvas":  { "value": "#FFFFFF", "type": "color" },
+        "surface": { "value": "#F7FAFF", "type": "color" },
+        "muted":   { "value": "#F2F5F7", "type": "color" }
+      },
+      "border": {
+        "muted":  { "value": "#E5E8ED", "type": "color" },
+        "strong": { "value": "#D9D9D9", "type": "color" }
+      },
+      "status": {
+        "error":      { "value": "#D94D4D", "type": "color" },
+        "errorHover": { "value": "#CC4747", "type": "color" },
+        "errorFg":    { "value": "#FFFFFF", "type": "color" },
+        "success":    { "value": "#22C55E", "type": "color" },
+        "successFg":  { "value": "#FFFFFF", "type": "color" }
+      },
+      "focus": {
+        "ring": { "value": "rgba(79, 69, 229, 0.40)", "type": "color" }
+      },
+      "overlay": {
+        "scrim": { "value": "rgba(0, 0, 0, 0.50)", "type": "color" }
+      }
+    }
+  },
+  "semantic.dark": {
+    "colors": {
+      "brand": {
+        "default": { "value": "#4F45E5", "type": "color" },
+        "hover":   { "value": "#3361E5", "type": "color" },
+        "fg":      { "value": "#FFFFFF", "type": "color" }
+      },
+      "fg": {
+        "default":   { "value": "#E6E8EB", "type": "color" },
+        "muted":     { "value": "#A8B0BD", "type": "color" },
+        "subtle":    { "value": "#8D96A5", "type": "color" },
+        "onInverse": { "value": "#FFFFFF", "type": "color" }
+      },
+      "bg": {
+        "canvas":  { "value": "#0E1116", "type": "color" },
+        "surface": { "value": "#12161C", "type": "color" },
+        "muted":   { "value": "#171C24", "type": "color" }
+      },
+      "border": {
+        "muted":  { "value": "#232A34", "type": "color" },
+        "strong": { "value": "#2E3743", "type": "color" }
+      },
+      "status": {
+        "error":      { "value": "#F97070", "type": "color" },
+        "errorHover": { "value": "#FF6B6B", "type": "color" },
+        "errorFg":    { "value": "#FFFFFF", "type": "color" },
+        "success":    { "value": "#22C55E", "type": "color" },
+        "successFg":  { "value": "#FFFFFF", "type": "color" }
+      },
+      "focus": {
+        "ring": { "value": "rgba(99, 102, 241, 0.55)", "type": "color" }
+      },
+      "overlay": {
+        "scrim": { "value": "rgba(0, 0, 0, 0.65)", "type": "color" }
+      }
+    }
+  }
+}
+
