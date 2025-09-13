@@ -1,3 +1,4 @@
+import Features from './_home/Features'
 'use client'
 import { useState } from 'react'
 import Script from 'next/script'
@@ -67,6 +68,7 @@ export default function Home({ params }: { params: { lang: 'en' | 'ru' } }) {
              'Допустимы только буквы A–Z и цифры 0–9. Ввод будет автоматически нормализован.')}
         </p>
       </section>
+      <Features t={t} />
     </>
   )
 }
