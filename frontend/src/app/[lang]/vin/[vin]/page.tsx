@@ -1,3 +1,5 @@
+import Timeline from './_Timeline'
+import Specs from './_Specs'
 import Script from 'next/script'
 
 export default function VinPage({
@@ -43,7 +45,7 @@ export default function VinPage({
       </header>
 
       <section className="grid gap-6">
-        {/* Характеристики */}
+        {/* Характеристики */}\n<Specs t={t} items={[{label:t("Year","Год"),value:vehicle.year?String(vehicle.year):"—"},{label:t("Make","Марка"),value:vehicle.make||"—"},{label:t("Model","Модель"),value:vehicle.model||"—"},{label:t("Fuel","Топливо"),value:vehicle.fuel||"—"},{label:t("Transmission","КПП"),value:vehicle.transmission||"—"}]} />
         <div className="card">
           <h2 className="font-semibold mb-3">{t('Specifications', 'Характеристики')}</h2>
           <div className="text-sm text-fg-muted">
@@ -62,7 +64,7 @@ export default function VinPage({
           </div>
         </div>
 
-        {/* История продаж / таймлайн */}
+        {/* История продаж / таймлайн */}\n<Timeline t={t} />
         <div className="card">
           <h2 className="font-semibold mb-3">{t('Sale timeline', 'История продаж')}</h2>
           <div className="text-sm text-fg-muted">
