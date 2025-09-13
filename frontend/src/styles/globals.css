@@ -108,3 +108,9 @@ a:hover { color: var(--brand-hover); }
 .container-prose {
   @apply container max-w-[1200px];
 }
+
+/* ---------- Presets to match design scale ---------- */
+.input-lg { @apply h-14 text-base px-4 rounded-2xl; }     /* 56px */
+.btn-lg   { @apply h-12 px-5 text-base rounded-xl; }      /* 48px */
+.h1       { @apply text-4xl font-semibold leading-tight; }/* ~36-40px */
+.lead     { @apply text-base text-fg-muted; }             /* 16px muted */
