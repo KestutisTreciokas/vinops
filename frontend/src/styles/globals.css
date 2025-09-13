@@ -233,7 +233,7 @@ a:hover { color: var(--brand-hover); }
 .text-brand      { color: var(--brand); }
 .text-brand-fg   { color: var(--brand-fg); }
 .bg-brand        { background-color: var(--brand); }
-.bg-brand/10     { background-color: color-mix(in hsl, var(--brand) 10%, transparent); }
+.bg-brand-10     { background-color: color-mix(in hsl, var(--brand) 10%, transparent); }
 
 /* ===== Components: buttons / inputs / cards ===== */
 .btn {
