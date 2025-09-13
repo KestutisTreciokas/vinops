@@ -290,3 +290,15 @@ a:hover { color: var(--brand-hover); }
 /* Typo helpers */
 .h1 { @apply text-4xl font-semibold leading-tight; }
 .lead { @apply text-base; color: var(--fg-muted); }
+
+/* Hero background (светлая/тёмная) */
+.hero {
+  background:
+    radial-gradient(1200px 400px at 50% -150px, color-mix(in hsl, var(--brand) 10%, transparent), transparent),
+    var(--bg-canvas);
+}
+[data-theme="dark"] .hero {
+  background:
+    radial-gradient(1200px 400px at 50% -150px, color-mix(in hsl, var(--brand) 18%, transparent), transparent),
+    var(--bg-canvas);
+}
