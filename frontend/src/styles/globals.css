@@ -4,6 +4,7 @@
 
 /* ---------- Light тема (по умолчанию) ---------- */
 :root {
+  --shadow-1: 0 1px 2px rgba(0,0,0,.06);
   --brand: #4F45E5;
   --brand-hover: #3361E5;
   --brand-fg: #FFFFFF;
@@ -164,6 +165,7 @@ a:hover { color: var(--brand-hover); }
 
 /* ===== Design tokens (from semantic.json) ===== */
 :root {
+  --shadow-1: 0 1px 2px rgba(0,0,0,.06);
   --brand: #4F45E5;
   --brand-fg: #FFFFFF;
 
@@ -183,6 +185,7 @@ a:hover { color: var(--brand-hover); }
 
 /* ===== Color tokens (Light) ===== */
 :root {
+  --shadow-1: 0 1px 2px rgba(0,0,0,.06);
   --brand: #4F45E5;
   --brand-fg: #FFFFFF;
 
@@ -221,7 +224,73 @@ a:hover { color: var(--brand-hover); }
   --status-error: #F25555;
 }
 
-/* ===== Utility mapping/* ===== Utility mapping/* ===== Utility mapping to variables ===== */
+
+/* Status tokens (Light) */
+:root {
+  --success-bg: #E8F5E9; --success-fg: #2E7D32;
+  --warning-bg: #FFF8E1; --warning-fg: #8D6E63;
+  --error-bg:   #FDECEA; --error-fg:   #C62828;
+}
+/* Status tokens (Dark) */
+:root[data-theme="dark"], [data-theme="dark"] {
+  --success-bg: #1F2A22; --success-fg: #6AD38B;
+  --warning-bg: #2A261A; --warning-fg: #E6C773;
+  --error-bg:   #2A1D1D; --error-fg:   #F27A7A;
+}
+
+/* Status utilities */
+.bg-success { background: var(--success-bg); }
+.text-success { color: var(--success-fg); }
+.bg-warning { background: var(--warning-bg); }
+.text-warning { color: var(--warning-fg); }
+.bg-error { background: var(--error-bg); }
+.text-error { color: var(--error-fg); }
+
+/* ===== Utility mapping
+/* Status tokens (Light) */
+:root {
+  --success-bg: #E8F5E9; --success-fg: #2E7D32;
+  --warning-bg: #FFF8E1; --warning-fg: #8D6E63;
+  --error-bg:   #FDECEA; --error-fg:   #C62828;
+}
+/* Status tokens (Dark) */
+:root[data-theme="dark"], [data-theme="dark"] {
+  --success-bg: #1F2A22; --success-fg: #6AD38B;
+  --warning-bg: #2A261A; --warning-fg: #E6C773;
+  --error-bg:   #2A1D1D; --error-fg:   #F27A7A;
+}
+
+/* Status utilities */
+.bg-success { background: var(--success-bg); }
+.text-success { color: var(--success-fg); }
+.bg-warning { background: var(--warning-bg); }
+.text-warning { color: var(--warning-fg); }
+.bg-error { background: var(--error-bg); }
+.text-error { color: var(--error-fg); }
+
+/* ===== Utility mapping
+/* Status tokens (Light) */
+:root {
+  --success-bg: #E8F5E9; --success-fg: #2E7D32;
+  --warning-bg: #FFF8E1; --warning-fg: #8D6E63;
+  --error-bg:   #FDECEA; --error-fg:   #C62828;
+}
+/* Status tokens (Dark) */
+:root[data-theme="dark"], [data-theme="dark"] {
+  --success-bg: #1F2A22; --success-fg: #6AD38B;
+  --warning-bg: #2A261A; --warning-fg: #E6C773;
+  --error-bg:   #2A1D1D; --error-fg:   #F27A7A;
+}
+
+/* Status utilities */
+.bg-success { background: var(--success-bg); }
+.text-success { color: var(--success-fg); }
+.bg-warning { background: var(--warning-bg); }
+.text-warning { color: var(--warning-fg); }
+.bg-error { background: var(--error-bg); }
+.text-error { color: var(--error-fg); }
+
+/* ===== Utility mapping to variables ===== */
 .text-fg-default { color: var(--fg-default); }
 .text-fg-muted   { color: var(--fg-muted); }
 .text-fg-subtle  { color: var(--fg-subtle); }
@@ -275,7 +344,7 @@ a:hover { color: var(--brand-hover); }
   @apply border rounded-2xl;
   background: var(--bg-surface);
   border-color: var(--border-muted);
-  box-shadow: 0 1px 2px rgba(16,24,40,.05);
+  box-shadow: var(--shadow-1);
 }
 
 /* Header baseline */
