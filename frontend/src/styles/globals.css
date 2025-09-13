@@ -307,3 +307,7 @@ a:hover { color: var(--brand-hover); }
 .logo-img-dark { display: none; }
 [data-theme="dark"] .logo-img-light { display: none; }
 [data-theme="dark"] .logo-img-dark { display: block; }
+
+/* Чуть выше контраст инпутов/карт на тёмной */
+[data-theme="dark"] .input { background: #0E1522; border-color: #253141; }
+[data-theme="dark"] .card  { background: #101826; border-color: #253141; box-shadow: none; }
