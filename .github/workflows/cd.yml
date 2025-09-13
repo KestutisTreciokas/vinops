@@ -35,7 +35,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
       - name: Build & Push API
-        if: ${{ hashFiles('backend/package.json') != '' }}
+        if: ${{ hashFiles('backend/package.json', 'backend/pyproject.toml', 'backend/requirements.txt', 'backend/go.mod', 'backend/composer.json') != '' }}
         uses: docker/build-push-action@v6
         with:
           context: ./backend
