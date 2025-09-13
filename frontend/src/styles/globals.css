@@ -1,0 +1,110 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ---------- Light тема (по умолчанию) ---------- */
+:root {
+  --brand: #4F45E5;
+  --brand-hover: #3361E5;
+  --brand-fg: #FFFFFF;
+
+  --fg-default: #1F1F20;
+  --fg-muted: #667080;
+  --fg-subtle: #737880;
+  --fg-on-inverse: #FFFFFF;
+
+  --bg-canvas: #FFFFFF;
+  --bg-surface: #F7FAFF;
+  --bg-muted: #F2F5F7;
+
+  --border-muted: #E5E8ED;
+  --border-strong: #D9D9D9;
+
+  --status-error: #D94D4D;
+  --status-error-hover: #CC4747;
+  --status-error-fg: #FFFFFF;
+  --status-success: #22C55E;
+  --status-success-fg: #FFFFFF;
+
+  --focus-ring: rgba(79, 69, 229, 0.40);
+  --overlay-scrim: rgba(0,0,0,0.5);
+}
+
+/* ---------- Dark тема ---------- */
+:root.dark, :root[data-theme="dark"] {
+  --brand: #4F45E5;
+  --brand-hover: #3361E5;
+  --brand-fg: #FFFFFF;
+
+  --fg-default: #E6E8EB;
+  --fg-muted: #A8B0BD;
+  --fg-subtle: #8D96A5;
+  --fg-on-inverse: #FFFFFF;
+
+  --bg-canvas: #0E1116;
+  --bg-surface: #12161C;
+  --bg-muted: #171C24;
+
+  --border-muted: #232A34;
+  --border-strong: #2E3743;
+
+  --status-error: #F97070;
+  --status-error-hover: #FF6B6B;
+  --status-error-fg: #FFFFFF;
+  --status-success: #22C55E;
+  --status-success-fg: #FFFFFF;
+
+  --focus-ring: rgba(99,102,241,0.55);
+  --overlay-scrim: rgba(0,0,0,0.65);
+}
+
+/* ---------- Базовая типографика и фон ---------- */
+html, body {
+  height: 100%;
+  background: var(--bg-canvas);
+  color: var(--fg-default);
+}
+a { color: var(--brand); }
+a:hover { color: var(--brand-hover); }
+
+/* ---------- Компоненты ---------- */
+.btn {
+  @apply inline-flex items-center justify-center rounded-xl px-4 py-2 text-sm font-medium transition-colors;
+}
+.btn-primary {
+  color: var(--brand-fg);
+  background: var(--brand);
+}
+.btn-primary:hover { background: var(--brand-hover); }
+
+.btn-secondary {
+  background: var(--bg-surface);
+  color: var(--fg-default);
+  border: 1px solid var(--border-muted);
+}
+
+.input {
+  @apply w-full rounded-xl border px-3 py-2 outline-none;
+  background: var(--bg-surface);
+  color: var(--fg-default);
+  border-color: var(--border-muted);
+}
+.input:focus { box-shadow: var(--focus-ring); }
+
+.card {
+  @apply rounded-2xl border p-4;
+  background: var(--bg-surface);
+  border-color: var(--border-muted);
+}
+
+.badge {
+  @apply inline-flex items-center rounded-full px-2.5 py-1 text-xs border;
+  background: var(--bg-muted);
+  color: var(--fg-muted);
+  border-color: var(--border-muted);
+}
+
+/* Контейнер-ограничитель контента */
+.container-prose {
+  @apply container max-w-[1200px];
+}
