@@ -4,10 +4,5 @@ const nextConfig = {
   experimental: {
     typedRoutes: true,
   },
-  i18n: {
-    locales: ['en', 'ru'],
-    defaultLocale: 'en',
-    localeDetection: false,
-  },
 }
 export default nextConfig
