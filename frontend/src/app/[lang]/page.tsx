@@ -32,10 +32,10 @@ export default function Home({ params }: { params: { lang: 'en' | 'ru' } }) {
     <>
       <Script id="ld-search" type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(ld) }} />
       <section className="py-16">
-        <h1 className="text-3xl font-semibold mb-4">
+        <h1 className="h1 mb-4">
           {t('Search by VIN', 'Поиск по VIN')}
         </h1>
-        <p className="text-fg-muted mb-6">
+        <p className="lead mb-6">
           {t(
             'Enter a 17-character VIN to view photos and auction history.',
             'Введите 17-значный VIN, чтобы увидеть фото и историю продаж.'
@@ -49,7 +49,7 @@ export default function Home({ params }: { params: { lang: 'en' | 'ru' } }) {
             value={vin}
             onChange={(e) => setVin(e.target.value)}
             placeholder={t('Enter VIN', 'Введите VIN')}
-            className="input"
+            className="input input-lg"
             inputMode="latin"
             autoCapitalize="characters"
             autoComplete="off"
@@ -57,7 +57,7 @@ export default function Home({ params }: { params: { lang: 'en' | 'ru' } }) {
             aria-label={t('VIN', 'VIN')}
             maxLength={23} /* позволяем вставить с пробелами/дефисами, очищаем сами */
           />
-          <button type="submit" className="btn btn-primary">
+          <button type="submit" className="btn btn-primary btn-lg">
             {t('Find', 'Найти')}
           </button>
         </form>
