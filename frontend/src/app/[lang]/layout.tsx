@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import type { Metadata } from 'next'
 import NavLink from '../../components/NavLink'
+import ThemeToggle from '../../components/ThemeToggle'
 
 const NAV = [
   { href: '/[lang]/cars',     label: { en: 'Catalog',  ru: 'Каталог' } },
@@ -32,6 +33,7 @@ export default function LangLayout({
                 {t(n.label.en, n.label.ru)}
               </NavLink>
             ))}
+            <ThemeToggle />
             <LangSwitcher lang={params.lang} />
           </nav>
         </div>
