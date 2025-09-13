@@ -1,3 +1,7 @@
+import TagIcon from '@/src/icons/TagIcon'
+import CheckIcon from '@/src/icons/CheckIcon'
+import DotIcon from '@/src/icons/DotIcon'
+
 export type VehicleLite = {
   year: number
   make: string
@@ -22,8 +26,8 @@ export default function VehicleCard({v}:{v:VehicleLite}) {
       <div className="vimgwrap">
         {/* сюда позже придёт <Image src=.../> */}
         <div className="vimg" />
-        {statusLabel ? <span className={statusClass}>{statusLabel}</span> : null}
-        {v.price ? <span className="price-chip">{v.price}</span> : null}
+        {statusLabel ? <span className={statusClass}>{v.status==='SOLD' ? <CheckIcon className='icon'/> : <DotIcon className='icon'/>}{statusLabel}</span> : null}
+        {v.price ? <span className="price-chip"><TagIcon className='icon'/>{v.price}</span> : null}
       </div>
       <div className="vbody">
         <div className="vtitle">{v.year} {v.make} {v.model}</div>
