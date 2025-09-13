@@ -1,24 +1,88 @@
-import CatalogCard from '../../../components/CatalogCard'
-import Filters from './_Filters'
-export default function Catalog({ params }: { params: { lang: 'en' | 'ru' } }) {
-  const t = (en: string, ru: string) => (params.lang === 'ru' ? ru : en)
+'use client'
+import { useState } from 'react'
+import PillTabs from '@/components/PillTabs'
+import VehicleCard, { VehicleLite } from '@/components/VehicleCard'
+
+export default function CatalogPage({ params }: { params: { lang: 'en'|'ru' } }) {
+  const lang = params.lang
+  const t = (en:string, ru:string)=> lang==='ru'?ru:en
+
+  const tabs = [
+    { id:'auto', label: t('Auto','Авто') },
+    { id:'moto', label: t('Moto','Мото') },
+    { id:'atv',  label: 'ATV' },
+    { id:'more', label: t('More','Еще') },
+  ]
+  const [tab, setTab] = useState('auto')
+
+  // Мок-данные (9 карточек, как в макете)
+  const rows: VehicleLite[] = Array.from({length:9}).map((_,i)=>({
+    year: 2019, make:'Toyota', model:'Camry',
+    damage:'Front End', title:'Salvage', location:'Dallas, TX',
+    vin: `4T1B11HK0000${3456+i}`
+  }))
 
   return (
-    <section className="grid gap-6">\n      <Filters lang={params.lang} />
-      <h1 className="text-2xl font-semibold">{t('Cars', 'Каталог')}</h1>
+    <main>
+      <section className="container catalog-head">
+        <h1 className="text-xl font-semibold mb-1">{t('Catalog • VIN', 'Каталог • VIN')}</h1>
+        <p className="text-fg-muted">{t(
+          'Live lots: photos, specs, statuses, sale prices and history.',
+          'Актуальные лоты: фото, характеристики, статусы, цены продаж и история.'
+        )}</p>
+      </section>
 
-      <div className="card">
-        <div className="text-sm text-fg-muted">
-           {t('Catalog will be here soon.', 'Каталог скоро будет.')}
+      <section className="container mt-6">
+        <PillTabs items={tabs} value={tab} onChange={setTab} className="mb-3" />
+
+        <div className="filters-bar">
+          <div className="select-wrap">
+            <select className="select">
+              <option>{t('All makes','Все марки')}</option>
+            </select>
+            <span className="chev">▾</span>
+          </div>
+          <div className="select-wrap">
+            <select className="select">
+              <option>{t('All models','Все модели')}</option>
+            </select>
+            <span className="chev">▾</span>
+          </div>
+          <div className="select-wrap">
+            <select className="select">
+              <option>{t('All generations','Все поколения')}</option>
+            </select>
+            <span className="chev">▾</span>
+          </div>
+          <div className="select-wrap">
+            <select className="select">
+              <option>{t('Year from','От')}</option>
+            </select>
+            <span className="chev">▾</span>
+          </div>
+          <div className="select-wrap">
+            <select className="select">
+              <option>{t('Year to','До')}</option>
+            </select>
+            <span className="chev">▾</span>
+          </div>
+          <div className="flex gap-2">
+            <button className="btn">{t('Reset','Сбросить')}</button>
+            <button className="btn btn-primary">{t('Apply','Применить')}</button>
+          </div>
         </div>
-      </div>
-    
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {Array.from({length:6}).map((_,i)=>(
-          <CatalogCard key={i} vin="WAUZZZAAAAAAAAAAA" year={2019} make="Audi" model="A4" primaryDamage="FRONT END" status={i%3===0?'sold':'active'} />
-        ))}
-      </div>
 
-    </section>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-5">
+          {rows.map((v,idx)=>(<VehicleCard key={idx} v={v}/>))}
+        </div>
+
+        <nav className="pager">
+          <button className="pager-btn">{t('Prev','Prev')}</button>
+          <button className="pager-btn pager-btn-active">1</button>
+          <button className="pager-btn">2</button>
+          <button className="pager-btn">{t('Next','Next')}</button>
+        </nav>
+      </section>
+    </main>
   )
 }
