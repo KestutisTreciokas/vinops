@@ -1,28 +1,26 @@
-import VinLeftColumn from '@/components/vin/VinLeftColumn'
-import VinSidebar from '@/components/vin/VinSidebar'
+import Gallery from '@/components/vin2/Gallery'
+import Specs from '@/components/vin2/Specs'
+import LotInfo from '@/components/vin2/LotInfo'
+import History from '@/components/vin2/History'
+import sample from '@/src/mock/vin-sample'
 
 export default function VinPage({ params }: { params: { lang: 'ru'|'en', vin: string } }) {
-  const { lang, vin } = params
+  const data = sample   // временно всегда мокаем
 
   return (
-    <div data-page="vin" className="container mx-auto px-4 md:px-6 lg:px-8 py-8">
-      {/* Заголовок */}
-      <header className="mb-6">
-        <h1 className="h1 mb-2">VIN: {vin}</h1>
-        <p className="lead">Актуальная информация по лоту, фото и спецификации.</p>
-      </header>
+    <div className="container py-8">
+      <h1 className="text-3xl font-semibold mb-2">VIN: {params.vin}</h1>
+      <p className="text-fg-muted mb-6">Актуальная информация по лоту, фото и спецификации.</p>
 
-      {/* Макет 2 колонки */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Левая колонка */}
-        <div className="lg:col-span-8 space-y-6">
-          {/* сюда позже добавим: История, Похожие лоты и т.д. */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 space-y-6">
+          <Gallery images={data.images} />
+          <History rows={data.history} />
         </div>
 
-        {/* Правая колонка (липкая) */}
-        <div className="lg:col-span-4">
-    <VinLeftColumn lang={params.lang} />
-          <VinSidebar />
+        <div className="lg:col-span-1 space-y-6">
+          <Specs specs={data.specs} />
+          <LotInfo lot={data.lot} />
         </div>
       </div>
     </div>
