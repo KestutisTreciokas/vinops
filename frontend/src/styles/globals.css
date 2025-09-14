@@ -769,7 +769,6 @@ a:hover { color: var(--brand-hover); }
 }
 
 /* Контентная зона карточки — единые отступы */
-[data-page="catalog"] .card .p-3,
-[data-page="catalog"] .card .p-4{ padding:12px !important; }
+[data-page="catalog"] .card > :is(div,section,article):last-child { padding:12px !important; }
 
 /* ===== /Catalog cards — polish ===== */
