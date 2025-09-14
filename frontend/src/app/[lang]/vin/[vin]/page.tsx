@@ -26,7 +26,7 @@ export default function VinPage({ params }: { params: { lang: 'ru'|'en', vin: st
         {/* Правая колонка: характеристики и инфо по лоту */}
         <div className="lg:col-span-5 space-y-6">
           <Specs lang={lang} data={data} />
-          <LotInfo lang={lang} data={data} />
+          <LotInfo history={data.history} lang={lang} data={data} />
         </div>
 
         {/* Ниже — история продаж на всю ширину */}
