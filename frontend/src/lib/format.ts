@@ -1,10 +1,10 @@
 export type Lang = 'ru' | 'en';
 
-const loc = (lang: Lang) => (lang === 'ru' ? 'ru-RU' : 'en-US');
+const l = (lang: Lang) => (lang === 'ru' ? 'ru-RU' : 'en-US');
 
 export function formatUsd(v: number | null | undefined, lang: Lang = 'en') {
   if (v == null || Number.isNaN(v)) return '—';
-  return new Intl.NumberFormat(loc(lang), {
+  return new Intl.NumberFormat(l(lang), {
     style: 'currency',
     currency: 'USD',
     maximumFractionDigits: 0,
@@ -13,17 +13,15 @@ export function formatUsd(v: number | null | undefined, lang: Lang = 'en') {
 
 export function formatMiles(v: number | null | undefined, lang: Lang = 'en') {
   if (v == null || Number.isNaN(v)) return '—';
-  const n = new Intl.NumberFormat(loc(lang), { maximumFractionDigits: 0 }).format(v);
-  return lang === 'ru' ? `${n} миль` : `${n} mi`;
+  const num = new Intl.NumberFormat(l(lang), { maximumFractionDigits: 0 }).format(v);
+  return lang === 'ru' ? `${num} миль` : `${num} mi`;
 }
 
 export function formatDateISO(iso: string | null | undefined, lang: Lang = 'en') {
   if (!iso) return '—';
   const d = new Date(iso);
   if (Number.isNaN(+d)) return '—';
-  return new Intl.DateTimeFormat(loc(lang), { year: 'numeric', month: '2-digit', day: '2-digit' }).format(d);
-}
-
-export function formatPlain(v: string | number | null | undefined) {
-  return v == null || v === '' ? '—' : String(v);
+  return new Intl.DateTimeFormat(l(lang), {
+    year: 'numeric', month: '2-digit', day: '2-digit'
+  }).format(d);
 }
