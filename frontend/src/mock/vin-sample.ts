@@ -26,6 +26,7 @@ export default {
     finalBid: '$11,500',
   },
   history: [
+    { date: "2025-02-12", auction: "Copart", lot: "80103945", status: "Active", price: "$9,100" },
     // Пример строки истории:
     // { date: '2024-11-05', auction: 'Copart', lot: '71234567', status: 'Sold', price: '$8,900' },
   ],
