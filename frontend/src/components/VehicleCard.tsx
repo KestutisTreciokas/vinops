@@ -1,4 +1,3 @@
-import TagIcon from '@/icons/TagIcon'
 import CheckIcon from '@/icons/CheckIcon'
 import DotIcon from '@/icons/DotIcon'
 
@@ -27,7 +26,7 @@ export default function VehicleCard({v}:{v:VehicleLite}) {
         {/* сюда позже придёт <Image src=.../> */}
         <div className="vimg" />
         {statusLabel ? <span className={statusClass}>{v.status==='SOLD' ? <CheckIcon className='icon'/> : <DotIcon className='icon'/>}{statusLabel}</span> : null}
-        {v.price ? <span className="price-chip"><TagIcon className='icon'/>{v.price}</span> : null}
+        {v.price ? <span className="price-chip">{v.price}</span> : null}
       </div>
       <div className="vbody">
         <div className="vtitle">{v.year} {v.make} {v.model}</div>
