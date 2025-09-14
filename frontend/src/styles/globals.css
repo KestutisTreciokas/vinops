@@ -653,3 +653,73 @@ a:hover { color: var(--brand-hover); }
 .card .absolute.top-3.right-3 svg { display: none !important; }
 /* optional: slightly reduce left padding since icon is gone */
 .card .absolute.top-3.right-3 { padding-left: 10px; }
+
+/* ===== Catalog filters polish ===== */
+[data-page="catalog"] [data-filters="bar"]{
+  display:flex;
+  gap:12px;
+  row-gap:12px;
+  flex-wrap:wrap;
+  align-items:center;
+}
+
+/* Единая геометрия контролов фильтров */
+[data-page="catalog"] [data-filters="bar"] .btn,
+[data-page="catalog"] [data-filters="bar"] .input,
+[data-page="catalog"] [data-filters="bar"] select,
+[data-page="catalog"] [data-filters="bar"] .select {
+  height: 44px;
+  border-radius: 12px;
+  padding-inline: 12px;
+  background: var(--bg-surface);
+  color: var(--fg-default);
+  border: 1px solid var(--border-muted);
+  box-shadow: none;
+}
+
+/* Кнопки «Сбросить/Применить»: выравнивание по высоте и межиконные отступы */
+[data-page="catalog"] [data-filters="bar"] .btn{
+  display:inline-flex; align-items:center; gap:8px;
+}
+
+/* Primary — акцент из токена */
+[data-page="catalog"] [data-filters="bar"] .btn-primary{
+  background: var(--brand);
+  color: var(--brand-fg, #fff);
+  border-color: color-mix(in oklab, var(--brand) 80%, black);
+}
+[data-theme="dark"] [data-page="catalog"] [data-filters="bar"] .btn-primary{
+  border-color: color-mix(in oklab, var(--brand) 60%, white 10%);
+}
+
+/* Hover для любых контролов фильтров — слегка поднимаем контраст границы */
+[data-page="catalog"] [data-filters="bar"] .btn:hover,
+[data-page="catalog"] [data-filters="bar"] .input:hover,
+[data-page="catalog"] [data-filters="bar"] select:hover,
+[data-page="catalog"] [data-filters="bar"] .select:hover{
+  border-color: color-mix(in oklab, var(--border-muted) 40%, var(--fg-default));
+}
+
+/* Фокус — мягкое свечение акцентом */
+[data-page="catalog"] [data-filters="bar"] .btn:focus-visible,
+[data-page="catalog"] [data-filters="bar"] .input:focus-visible,
+[data-page="catalog"] [data-filters="bar"] select:focus-visible,
+[data-page="catalog"] [data-filters="bar"] .select:focus-visible{
+  outline: 2px solid color-mix(in hsl, var(--brand) 35%, transparent);
+  outline-offset: 0;
+}
+
+/* Тёмная тема: корректный фон и бордеры (точно по нашим токенам) */
+[data-theme="dark"] [data-page="catalog"] [data-filters="bar"] .btn,
+[data-theme="dark"] [data-page="catalog"] [data-filters="bar"] .input,
+[data-theme="dark"] [data-page="catalog"] [data-filters="bar"] select,
+[data-theme="dark"] [data-page="catalog"] [data-filters="bar"] .select {
+  background: var(--bg-surface);      /* #1F1F20 */
+  border-color: var(--border-muted);  /* основано на 2E2E30 */
+  color: var(--fg-default);           /* #EDEDF0 */
+}
+
+/* Чуть плотнее сжимаем блок фильтров сверху/снизу для сходства с макетом */
+[data-page="catalog"] [data-filters="bar"]{ margin-top: 8px; margin-bottom: 10px; }
+
+/* ===== /Catalog filters polish ===== */
