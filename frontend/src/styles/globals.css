@@ -1087,3 +1087,12 @@ h3, .h3 { font-size: var(--fs-h3); line-height: 1.35;        font-weight: 600; }
 .card [data-status="sold"]    { border-color:#10b981; color:#10b981; }
 .card [data-status="active"]  { border-color:#3b82f6;  color:#3b82f6;  }
 .card [data-status="no_sale"] { border-color:#f59e0b;  color:#f59e0b;  }
+
+/* VIN history responsive */
+@media (max-width: 768px) {
+  .history-table { display: none; }
+  .history-cards { display: grid; gap: 12px; }
+}
+@media (min-width: 769px) {
+  .history-cards { display: none; }
+}

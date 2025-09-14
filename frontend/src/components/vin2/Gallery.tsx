@@ -1,60 +1,79 @@
 'use client'
-import { useState, useMemo } from 'react'
-import StatusBadge from './StatusBadge'
+import { useEffect, useMemo, useState } from 'react'
 
-export type Photo = { url: string; thumb?: string; alt?: string }
+type Photo = { url: string; thumb?: string; alt?: string }
 
-export default function Gallery({
-  photos,
-  status,
-  lang = 'ru',
-}: {
-  photos?: Photo[] | null
-  status?: string | null
-  lang?: 'ru' | 'en'
-}) {
-  const list = useMemo(() => (Array.isArray(photos) ? photos.filter(Boolean) : []), [photos])
+export default function Gallery({ photos }: { photos: Photo[] }) {
+  const list = Array.isArray(photos) ? photos : []
   const [idx, setIdx] = useState(0)
+  const [zoom, setZoom] = useState(false)
+
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (!list.length) return
+      if (e.key === 'ArrowRight') setIdx(i => (i + 1) % list.length)
+      if (e.key === 'ArrowLeft')  setIdx(i => (i - 1 + list.length) % list.length)
+      if (e.key === 'Escape')     setZoom(false)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [list.length])
+
+  const current = list[idx]
 
   if (!list.length) {
     return (
-      <section className="relative rounded-2xl border border-border-muted bg-surface p-4 min-h-[220px] flex items-center justify-center">
-        <div className="absolute left-4 top-4"><StatusBadge status={status} lang={lang} /></div>
-        <div className="text-sm text-fg-muted">{lang === 'ru' ? 'Нет изображений' : 'No images'}</div>
-      </section>
+      <div className="card p-6 flex items-center justify-center text-[var(--fg-muted)]">
+        <div className="flex flex-col items-center gap-2">
+          <svg viewBox="0 0 24 24" className="w-8 h-8" aria-hidden>
+            <path d="M4 8h4l2-2h4l2 2h4v10H4z" fill="currentColor" opacity=".12"/>
+            <path d="M4 8h4l2-2h4l2 2h4v10H4zM12 11.5a3 3 0 1 0 0 6a3 3 0 0 0 0-6Z" stroke="currentColor" strokeWidth="1.6" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+          <div>Нет изображений</div>
+        </div>
+      </div>
     )
   }
 
-  const current = list[Math.min(idx, list.length - 1)]
-
   return (
-    <section className="relative rounded-2xl border border-border-muted bg-surface p-3">
-      <div className="absolute left-3 top-3 z-10">
-        <StatusBadge status={status} lang={lang} />
-      </div>
-
-      <div className="aspect-[4/3] w-full overflow-hidden rounded-xl bg-canvas/60">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
+    <div className="card p-4">
+      <div className="relative">
         <img
           src={current.url}
-          alt={current.alt ?? ''}
-          className="h-full w-full object-contain select-none"
+          alt={current.alt || ''}
+          className={`w-full h-[340px] md:h-[420px] object-contain select-none transition-transform ${zoom ? 'scale-[1.5] cursor-zoom-out' : 'cursor-zoom-in'}`}
+          onClick={() => setZoom(z => !z)}
           draggable={false}
+        />
+        {/* стрелки (кликабельные области) */}
+        <button
+          className="absolute inset-y-0 left-0 w-1/6 opacity-0 hover:opacity-40 transition"
+          onClick={() => setIdx(i => (i - 1 + list.length) % list.length)}
+          aria-label="Prev"
+        />
+        <button
+          className="absolute inset-y-0 right-0 w-1/6 opacity-0 hover:opacity-40 transition"
+          onClick={() => setIdx(i => (i + 1) % list.length)}
+          aria-label="Next"
         />
       </div>
 
-      <div className="mt-3 grid grid-flow-col auto-cols-[56px] gap-2 overflow-x-auto pb-1">
+      <div className="flex gap-2 overflow-x-auto mt-3 py-1">
         {list.map((p, i) => (
           <button
-            key={p.url + i}
-            onClick={() => setIdx(i)}
-            className={`h-14 w-14 overflow-hidden rounded-lg border ${i === idx ? 'border-brand ring-2 ring-brand/30' : 'border-border-muted'}`}
+            key={i}
+            onClick={() => { setIdx(i); setZoom(false) }}
+            className={`shrink-0 rounded-md border ${i===idx ? 'border-[var(--brand)] ring-2 ring-[color-mix(in_hsl,var(--brand)_25%,transparent)]' : 'border-[var(--border-muted)]'}`}
           >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={p.thumb ?? p.url} alt="" className="h-full w-full object-cover" />
+            <img
+              src={p.thumb || p.url}
+              alt=""
+              className="w-20 h-14 object-cover rounded-[inherit] select-none"
+              draggable={false}
+            />
           </button>
         ))}
       </div>
-    </section>
+    </div>
   )
 }
