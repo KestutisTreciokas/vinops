@@ -930,3 +930,87 @@ html[lang="en"] [data-page="catalog"] .grid:empty::after  { content: "Adjust fil
 .table-vin thead th { text-align:left; font-weight:600; color: var(--fg-muted); padding:.5rem .5rem; }
 .table-vin tbody td { padding:.5rem .5rem; }
 .table-vin tbody tr:nth-child(odd) { background: color-mix(in hsl, var(--bg-surface) 40%, transparent); }
+
+/* === Token & Typography Lock v1 =============================== */
+/* Базовые токены темы. Приоритетом идут эти значения. */
+:root {
+  /* brand */
+  --brand: #4F45E5;
+
+  /* light (дефолт; dark ниже) */
+  --bg-canvas: #FFFFFF;
+  --bg-surface: #F6F7F9;
+  --bg-elevated: #FFFFFF;
+
+  --fg-default: #0F1115;
+  --fg-muted:   #6B7280;
+
+  --border-muted: #E5E7EB;
+  --ring: color-mix(in oklab, var(--brand) 55%, white 45%);
+
+  /* типографика (шкала) */
+  --fs-h1: clamp(28px, 3.0vw, 40px);
+  --fs-h2: clamp(24px, 2.4vw, 32px);
+  --fs-h3: clamp(20px, 2.0vw, 24px);
+  --fs-base: 16px;
+  --lh-tight: 1.2;
+  --lh-base: 1.55;
+}
+
+[data-theme="dark"] {
+  /* тёмная тема по макету */
+  --bg-canvas: #171718;
+  --bg-surface: #1F1F20;
+  --bg-elevated: #2E2E30;
+
+  --fg-default: #EDEDF0;
+  --fg-muted:   #A8A8AD;
+
+  --border-muted: #2E2E30;
+  --ring: color-mix(in oklab, var(--brand) 60%, black 40%);
+}
+
+/* Глобальные применения токенов */
+html, body {
+  background: var(--bg-canvas);
+  color: var(--fg-default);
+  font-size: var(--fs-base);
+  line-height: var(--lh-base);
+}
+
+/* Карточные поверхности и границы в темах */
+.card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-muted);
+  border-radius: 12px;
+}
+
+/* Ссылки/hover/фокус по brand */
+a { color: var(--brand); }
+a:hover { opacity: .9; }
+
+/* Унифицированный focus-visible */
+:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+/* Заголовки по шкале */
+h1, .h1 { font-size: var(--fs-h1); line-height: var(--lh-tight); font-weight: 700; letter-spacing: -0.01em; }
+h2, .h2 { font-size: var(--fs-h2); line-height: var(--lh-tight); font-weight: 650; letter-spacing: -0.005em; }
+h3, .h3 { font-size: var(--fs-h3); line-height: 1.35;        font-weight: 600; }
+
+/* Мелкие утилиты */
+.text-muted { color: var(--fg-muted); }
+.badge {
+  display:inline-flex; align-items:center; gap:.35rem;
+  height:24px; padding:0 8px; border-radius:999px;
+  font-size:12px; line-height:1; border:1px solid var(--border-muted);
+  background: var(--bg-elevated); color: var(--fg-default);
+}
+.badge--ok    { border-color: color-mix(in oklab, var(--brand) 50%, var(--border-muted)); }
+.badge--warn  { color:#EAB308; border-color:#EAB30822; }
+.badge--sold  { color:#22C55E; border-color:#22C55E22; }
+.badge--fail  { color:#EF4444; border-color:#EF444422; }
+
+/* =============================================================== */
