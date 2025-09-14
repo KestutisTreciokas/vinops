@@ -1,6 +1,6 @@
 'use client'
 import StatusBadge from '@/components/vin2/Badge'
-import { formatNumber, formatMiles, formatUsd } from '@/src/lib/format'
+import { formatNumber, formatMiles, formatUsd } from '@/lib/format'
 
 function Row({ k, v }: { k: string; v?: string }) {
   return (
