@@ -1056,3 +1056,9 @@ h3, .h3 { font-size: var(--fs-h3); line-height: 1.35;        font-weight: 600; }
 .card-hover:hover { box-shadow: 0 8px 24px rgba(0,0,0,.06); transform: translateY(-1px); transition: .15s ease; }
 
 /* ====================================================================== */
+
+/* A11y: видимый фокус при навигации с клавиатуры */
+:where(a, button, [role="button"], input, select, textarea, .btn, .chip, .copy-btn):focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}

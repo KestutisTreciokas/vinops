@@ -1,41 +1,33 @@
-'use client'
-import StatusBadge from '@/components/vin2/Badge'
-import { formatNumber, formatMiles, formatUsd } from '@/lib/format'
-
-function Row({ k, v }: { k: string; v?: string }) {
-  return (
-    <div className="kv">
-      <div className="k">{k}</div>
-      <div className="v">{v ?? '—'}</div>
-    </div>
-  )
-}
+import Row from './_Row'
+import CopyButton from '@/components/common/CopyButton'
+import { formatDateISO, formatMiles, formatPlain, formatUsd } from '@/src/lib/format'
 
 export default function LotInfo({ lot, lang='ru' }: { lot?: any; lang?: 'ru'|'en' }) {
-  const t = (ru: string, en: string) => lang === 'ru' ? ru : en
-  const lotNumber = lot?.lotNumber ? String(lot.lotNumber) : '—'
-  const auction   = lot?.auction || '—'
-  const seller    = lot?.seller || '—'
-  const date      = lot?.date || '—'
-  const odo       = formatMiles(lot?.odometer, lang === 'ru' ? 'ru-RU' : 'en-US')
-  const status    = lot?.status
-  const finalBid  = formatUsd(lot?.finalBidUSD)
+  const t = (ru: string, en: string) => (lang === 'ru' ? ru : en)
+  const L = lot ?? {}
 
   return (
-    <section className="card p-4">
+    <div className="card p-4">
       <h3 className="card-title mb-3">{t('Информация о лоте', 'Lot info')}</h3>
-      <div className="space-y-2">
-        <Row k={t('Номер лота', 'Lot number')} v={lotNumber} />
-        <Row k={t('Аукцион', 'Auction')} v={auction} />
-        <Row k={t('Продавец', 'Seller')} v={seller} />
-        <Row k={t('Дата', 'Date')} v={date} />
-        <Row k={t('Пробег', 'Odometer')} v={odo} />
-        <div className="kv">
-          <div className="k">{t('Статус', 'Status')}</div>
-          <div className="v"><StatusBadge status={status} lang={lang} /></div>
-        </div>
-        <Row k={t('Итоговая ставка', 'Final bid')} v={finalBid} />
+      <div className="space-y-2 text-sm">
+        <Row
+          k={t('Номер лота','Lot number')}
+          v={
+            L?.lotNumber
+              ? <span className="inline-flex items-center gap-2">
+                  {String(L.lotNumber)}
+                  <CopyButton text={String(L.lotNumber)} title={t('Скопировать номер','Copy number')} />
+                </span>
+              : '—'
+          }
+        />
+        <Row k={t('Аукцион','Auction')} v={formatPlain(L?.auction)} />
+        <Row k={t('Продавец','Seller')} v={formatPlain(L?.seller)} />
+        <Row k={t('Дата','Date')} v={formatDateISO(L?.date, lang)} />
+        <Row k={t('Пробег','Odometer')} v={L?.odometer ? formatMiles(L.odometer, lang) : '—'} />
+        <Row k={t('Статус','Status')} v={formatPlain(L?.status)} />
+        <Row k={t('Итоговая ставка','Final bid')} v={formatUsd(L?.finalBid ?? L?.price, lang as any)} />
       </div>
-    </section>
+    </div>
   )
 }
