@@ -1,4 +1,4 @@
-import VinLeftColumn from '@/src/components/vin/VinLeftColumn'
+import VinLeftColumn from '@/components/vin/VinLeftColumn'
 import VinSidebar from '@/components/vin/VinSidebar'
 
 export default function VinPage({ params }: { params: { lang: 'ru'|'en', vin: string } }) {
