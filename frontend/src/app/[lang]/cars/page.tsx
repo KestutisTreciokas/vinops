@@ -164,7 +164,7 @@ export default function CatalogPage({ params }: { params: { lang: Lang } }) {
               </select>
               <span className="chev"><ChevronDown/></span>
             </div>
-            <div className="flex gap-2">
+            <div data-filters="bar" className="flex gap-2">
               <button className="btn" onClick={reset}>{t(lang,'Reset','Сбросить')}</button>
               <button className="btn btn-primary" onClick={apply}>{t(lang,'Apply','Применить')}</button>
             </div>
