@@ -1,34 +1,23 @@
-import type { VinHistoryRow } from './types'
+import type { HistoryItem } from './types';
 
-export default function History({ rows }: { rows: VinHistoryRow[] }) {
+export default function HistoryCard({ items }: { items: HistoryItem[] }) {
   return (
-    <section className="card p-4 md:p-5">
-      <h3 className="text-lg font-semibold mb-4">История продаж</h3>
-
-      <div className="overflow-x-auto">
-        <table className="min-w-full text-sm">
-          <thead className="text-left text-fg-muted">
-            <tr className="border-b border-border-muted">
-              <th className="py-2 pr-4">Дата</th>
-              <th className="py-2 pr-4">Аукцион</th>
-              <th className="py-2 pr-4">Лот</th>
-              <th className="py-2 pr-4">Статус</th>
-              <th className="py-2 pr-2">Цена</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((r, i) => (
-              <tr key={i} className="border-b border-border-muted/50 last:border-0">
-                <td className="py-2 pr-4">{r.date}</td>
-                <td className="py-2 pr-4">{r.auction}</td>
-                <td className="py-2 pr-4">{r.lot}</td>
-                <td className="py-2 pr-4">{r.status}</td>
-                <td className="py-2 pr-2 font-medium">{r.price}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+    <div className="card p-4">
+      <h3 className="text-base font-semibold mb-3">История продаж</h3>
+      <div className="grid grid-cols-5 text-sm text-fg-muted pb-2 border-b border-muted">
+        <div>Дата</div><div>Аукцион</div><div>Лот</div><div>Статус</div><div className="text-right">Цена</div>
       </div>
-    </section>
-  )
+      <div className="divide-y divide-muted">
+        {items.map((it, i)=>(
+          <div key={i} className="grid grid-cols-5 py-2 text-sm">
+            <div>{it.date}</div>
+            <div>{it.auction}</div>
+            <div>{it.lot}</div>
+            <div>{it.status}</div>
+            <div className="text-right font-medium">${it.price.toLocaleString()}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 }

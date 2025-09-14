@@ -1,34 +1,33 @@
-'use client'
-import { useState } from 'react'
-import type { VinImage } from './types'
+'use client';
+import { useState } from 'react';
+import type { Photo } from './types';
 
-export default function Gallery({ images }: { images: VinImage[] }) {
-  const [idx, setIdx] = useState(0)
-  const current = images[idx] ?? images[0]
+export default function Gallery({ photos }: { photos: Photo[] }) {
+  const [idx, setIdx] = useState(0);
+  const current = photos[idx];
 
   return (
-    <section className="card p-4 md:p-5">
-      <div className="aspect-video w-full overflow-hidden rounded-xl bg-muted flex items-center justify-center">
-        {current ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={current.src} alt={current.alt ?? ''} className="w-full h-full object-contain" />
-        ) : <div className="text-fg-muted">No photo</div>}
+    <div className="card p-4">
+      <div className="text-sm text-fg-muted mb-2">Главное фото #{current?.id}</div>
+      <div className="aspect-video w-full rounded-2xl bg-muted/30 grid place-items-center overflow-hidden">
+        {current?.url
+          ? <img src={current.url} alt={current.title} className="w-full h-full object-contain" />
+          : <div className="text-fg-muted">{current?.title}</div>}
       </div>
 
-      <div className="mt-4 grid grid-cols-8 gap-2">
-        {images.map((im, i) => (
+      <div className="mt-3 flex gap-2">
+        {photos.map((p, i) => (
           <button
-            key={i}
-            aria-label={`preview ${i+1}`}
+            key={p.id}
             onClick={() => setIdx(i)}
-            className={`aspect-[4/3] rounded-lg overflow-hidden bg-muted ring-1 ring-inset ${
-              i===idx ? 'ring-brand' : 'ring-border-muted'
-            }`}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={im.src} alt="" className="w-full h-full object-cover" />
+            className={`h-9 w-9 rounded-xl grid place-items-center border
+              ${i===idx ? 'border-brand ring-2 ring-brand/30' : 'border-muted hover:border-fg-muted'}`}
+            aria-label={`thumb ${p.id}`}
+          >
+            <span className="text-xs text-fg-muted">{p.id}</span>
           </button>
         ))}
       </div>
-    </section>
-  )
+    </div>
+  );
 }

@@ -1,25 +1,26 @@
-import type { VinLot } from './types'
+import type { LotInfo } from './types';
 
-export default function LotInfo({ lot }: { lot: VinLot }) {
-  const Row = ({label, value}:{label:string; value:string}) => (
-    <div className="grid grid-cols-[120px_1fr] gap-3">
-      <div className="text-fg-muted">{label}</div>
-      <div className="font-medium">{value || '—'}</div>
-    </div>
-  )
-
+function Row({ k, v }: { k: string; v: string|number }) {
   return (
-    <section className="card p-4 md:p-5">
-      <h3 className="text-lg font-semibold mb-4">Информация о лоте</h3>
-      <div className="space-y-2">
-        <Row label="Номер лота" value={lot.lotNumber} />
-        <Row label="Аукцион"   value={lot.auction} />
-        <Row label="Продавец"  value={lot.seller} />
-        <Row label="Дата"      value={lot.date} />
-        <Row label="Пробег"    value={lot.odometer} />
-        <Row label="Статус"    value={lot.status} />
-        <Row label="Итог. ставка" value={lot.finalBid} />
-      </div>
-    </section>
-  )
+    <div className="grid grid-cols-2 gap-2 py-1">
+      <span className="text-fg-muted">{k}</span>
+      <span className="font-medium">{v}</span>
+    </div>
+  );
+}
+
+export default function LotInfoCard({ lot }: { lot: LotInfo }) {
+  const { lotNumber, auction, seller, date, odometer, status, finalBid } = lot;
+  return (
+    <div className="card p-4">
+      <h3 className="text-base font-semibold mb-2">Информация о лоте</h3>
+      <Row k="Номер лота" v={lotNumber} />
+      <Row k="Аукцион" v={auction} />
+      <Row k="Продавец" v={seller} />
+      <Row k="Дата" v={date} />
+      <Row k="Пробег" v={odometer} />
+      <Row k="Статус" v={status} />
+      <Row k="Итоговая ставка" v={`$${finalBid.toLocaleString()}`} />
+    </div>
+  );
 }

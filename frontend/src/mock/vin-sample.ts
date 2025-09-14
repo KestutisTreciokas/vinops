@@ -1,19 +1,27 @@
-import type { VinData } from '@/components/vin2/types'
+import type { VinData } from '@/components/vin2/types';
 
-const data: VinData = {
-  images: Array.from({length:8}, (_,i)=>({ src: `/vin-sample/${i+1}.svg`, alt: `Photo #${i+1}`})),
+const sample: VinData = {
+  photos: Array.from({length: 8}, (_,i)=>({
+    id: i+1,
+    title: `Фото #${i+1}`,
+    // можно заменить на реальные URL позже
+    url: '/icon.svg'
+  })),
   specs: {
-    make: 'Toyota', model: 'Camry', year: 2019, body: 'Sedan',
-    fuel: 'Gasoline', engine: '2.5L', transmission: 'AT', drive: 'FWD',
+    year: 2019, make: 'Toyota', model: 'Camry',
+    body: 'Sedan', engine: '2.5L', transmission: 'AT',
+    drive: 'FWD', fuel: 'Gasoline'
   },
   lot: {
-    lotNumber: '80103945', auction: 'Copart', seller: 'Progressive Casualty Insurance',
-    date: '2025-05-12', odometer: '49 792 mi', status: 'Sold', finalBid: '$11,500',
+    lotNumber: '80103945', auction: 'Copart',
+    seller: 'Progressive Casualty Insurance',
+    date: '2025-05-12', odometer: '49 792 mi',
+    status: 'Sold', finalBid: 11500
   },
   history: [
-    { date: '2025-05-12', auction: 'Copart', lot: '80103945', status: 'Sold',  price: '$11,500' },
-    { date: '2024-11-03', auction: 'IAAI',   lot: '73822011', status: 'Sold',  price: '$10,900' },
-    { date: '2024-07-18', auction: 'Copart', lot: '70112208', status: 'Offered', price: '—' },
-  ],
-}
-export default data
+    { date: '2025-05-12', auction: 'Copart', lot: '80103945', status: 'Sold', price: 11500 },
+    { date: '2025-03-01', auction: 'IAAI',   lot: '6988777',  status: 'Listed', price: 11200 }
+  ]
+};
+
+export default sample;

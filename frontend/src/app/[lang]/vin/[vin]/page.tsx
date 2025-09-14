@@ -1,26 +1,27 @@
+import sample from '@/mock/vin-sample'
 import Gallery from '@/components/vin2/Gallery'
 import Specs from '@/components/vin2/Specs'
 import LotInfo from '@/components/vin2/LotInfo'
 import History from '@/components/vin2/History'
-import sample from '@/mock/vin-sample'
 
 export default function VinPage({ params }: { params: { lang: 'ru'|'en', vin: string } }) {
-  const data = sample   // временно всегда мокаем
+  const { vin } = params
+  const data = sample
 
   return (
     <div className="container py-8">
-      <h1 className="text-3xl font-semibold mb-2">VIN: {params.vin}</h1>
-      <p className="text-fg-muted mb-6">Актуальная информация по лоту, фото и спецификации.</p>
+      <h1 className="text-3xl font-semibold mb-2">VIN: {vin}</h1>
+      <p className="text-fg-muted mb-8">Актуальная информация по лоту, фото и спецификации.</p>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-6">
-          <Gallery images={data.images} />
-          <History rows={data.history} />
+      <div className="grid lg:grid-cols-[1fr_360px] gap-6">
+        <div className="space-y-6">
+          <Gallery photos={data.photos} />
         </div>
 
-        <div className="lg:col-span-1 space-y-6">
+        <div className="space-y-6">
           <Specs specs={data.specs} />
           <LotInfo lot={data.lot} />
+          <History items={data.history} />
         </div>
       </div>
     </div>
