@@ -855,3 +855,7 @@ html[lang="en"] [data-page="catalog"] .grid:empty::after  { content: "Adjust fil
 
 /* extra tiny text */
 .text-2xs{ font-size:11px; line-height: 1rem; }
+
+/* VIN layout helpers */
+[data-page="vin"] .card{ @apply p-4 rounded-2xl border; border-color: var(--border-muted); background: var(--bg-surface); }
+
