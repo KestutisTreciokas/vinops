@@ -1,79 +1,71 @@
 'use client'
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
+import Lightbox from './Lightbox'
 
-type Photo = { url: string; thumb?: string; alt?: string }
+type Photo = { url: string; alt?: string }
 
-export default function Gallery({ photos }: { photos: Photo[] }) {
-  const list = Array.isArray(photos) ? photos : []
+export default function Gallery({ photos }: { photos?: Photo[] }) {
+  const items = useMemo<Photo[]>(() => (Array.isArray(photos) ? photos : []), [photos])
   const [idx, setIdx] = useState(0)
-  const [zoom, setZoom] = useState(false)
+  const [open, setOpen] = useState(false)
 
-  useEffect(() => {
-    function onKey(e: KeyboardEvent) {
-      if (!list.length) return
-      if (e.key === 'ArrowRight') setIdx(i => (i + 1) % list.length)
-      if (e.key === 'ArrowLeft')  setIdx(i => (i - 1 + list.length) % list.length)
-      if (e.key === 'Escape')     setZoom(false)
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [list.length])
-
-  const current = list[idx]
-
-  if (!list.length) {
+  if (!items.length) {
     return (
-      <div className="card p-6 flex items-center justify-center text-[var(--fg-muted)]">
-        <div className="flex flex-col items-center gap-2">
-          <svg viewBox="0 0 24 24" className="w-8 h-8" aria-hidden>
-            <path d="M4 8h4l2-2h4l2 2h4v10H4z" fill="currentColor" opacity=".12"/>
-            <path d="M4 8h4l2-2h4l2 2h4v10H4zM12 11.5a3 3 0 1 0 0 6a3 3 0 0 0 0-6Z" stroke="currentColor" strokeWidth="1.6" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-          <div>Нет изображений</div>
+      <div className="card h-[220px] md:h-[260px] flex items-center justify-center text-[var(--fg-muted)]">
+        <div className="text-center">
+          <div className="mx-auto mb-2 w-10 h-10 rounded-full border border-[var(--border-muted)] flex items-center justify-center">📷</div>
+          Нет изображений
         </div>
       </div>
     )
   }
 
+  const current = items[Math.max(0, Math.min(idx, items.length - 1))]
+
   return (
-    <div className="card p-4">
-      <div className="relative">
+    <div className="card p-3">
+      {/* Главное фото */}
+      <button
+        className="w-full aspect-video bg-[var(--bg-muted)] rounded-lg overflow-hidden"
+        onClick={() => setOpen(true)}
+        aria-label="Open image"
+      >
         <img
           src={current.url}
-          alt={current.alt || ''}
-          className={`w-full h-[340px] md:h-[420px] object-contain select-none transition-transform ${zoom ? 'scale-[1.5] cursor-zoom-out' : 'cursor-zoom-in'}`}
-          onClick={() => setZoom(z => !z)}
-          draggable={false}
+          alt={current.alt ?? ''}
+          className="w-full h-full object-contain"
         />
-        {/* стрелки (кликабельные области) */}
-        <button
-          className="absolute inset-y-0 left-0 w-1/6 opacity-0 hover:opacity-40 transition"
-          onClick={() => setIdx(i => (i - 1 + list.length) % list.length)}
-          aria-label="Prev"
-        />
-        <button
-          className="absolute inset-y-0 right-0 w-1/6 opacity-0 hover:opacity-40 transition"
-          onClick={() => setIdx(i => (i + 1) % list.length)}
-          aria-label="Next"
-        />
-      </div>
+      </button>
 
-      <div className="flex gap-2 overflow-x-auto mt-3 py-1">
-        {list.map((p, i) => (
+      {/* Превью */}
+      <div className="mt-3 flex gap-2 overflow-x-auto">
+        {items.map((p, i) => (
           <button
-            key={i}
-            onClick={() => { setIdx(i); setZoom(false) }}
-            className={`shrink-0 rounded-md border ${i===idx ? 'border-[var(--brand)] ring-2 ring-[color-mix(in_hsl,var(--brand)_25%,transparent)]' : 'border-[var(--border-muted)]'}`}
+            key={p.url + i}
+            className={`h-16 w-24 shrink-0 rounded-md overflow-hidden border ${
+              i === idx ? 'border-[var(--brand)]' : 'border-[var(--border-muted)]'
+            }`}
+            onClick={() => setIdx(i)}
+            aria-label={`Thumbnail ${i + 1}`}
           >
             <img
-              src={p.thumb || p.url}
-              alt=""
-              className="w-20 h-14 object-cover rounded-[inherit] select-none"
-              draggable={false}
+              src={p.url}
+              alt={p.alt ?? ''}
+              loading="lazy"
+              className="w-full h-full object-cover"
             />
           </button>
         ))}
       </div>
+
+      {open && (
+        <Lightbox
+          photos={items}
+          index={idx}
+          onClose={() => setOpen(false)}
+          onIndex={(n) => setIdx(n)}
+        />
+      )}
     </div>
   )
 }
