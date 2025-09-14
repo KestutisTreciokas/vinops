@@ -30,7 +30,7 @@ export default function AsideSummary({ vin, priceUSD, status = 'active', ctaHref
           </div>
         </div>
 
-        <a href={ctaHref} className="btn btn-primary btn-lg w-full">Get full report</a>
+        <a href={ctaHref} className="btn btn-primary btn-lg w-full">Связаться</a>
       </div>
     </aside>
   )
