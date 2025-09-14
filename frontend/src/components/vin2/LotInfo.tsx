@@ -1,6 +1,6 @@
 import Row from './_Row'
 import CopyButton from '@/components/common/CopyButton'
-import { formatDateISO, formatMiles, formatPlain, formatUsd } from '@/src/lib/format'
+import { formatDateISO, formatMiles, formatPlain, formatUsd } from '@/lib/format'
 
 export default function LotInfo({ lot, lang='ru' }: { lot?: any; lang?: 'ru'|'en' }) {
   const t = (ru: string, en: string) => (lang === 'ru' ? ru : en)

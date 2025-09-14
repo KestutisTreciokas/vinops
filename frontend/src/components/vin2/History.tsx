@@ -1,5 +1,5 @@
 'use client'
-import { formatUsd, formatDateISO } from '@/src/lib/format'
+import { formatUsd, formatDateISO } from '@/lib/format'
 
 export default function History({ rows, lang='ru' }: { rows?: any[]; lang?: 'ru'|'en' }) {
   const t = (ru: string, en: string) => (lang === 'ru' ? ru : en)
