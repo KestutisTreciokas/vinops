@@ -2,7 +2,7 @@ import Gallery from '@/components/vin2/Gallery'
 import Specs from '@/components/vin2/Specs'
 import LotInfo from '@/components/vin2/LotInfo'
 import History from '@/components/vin2/History'
-import sample from '@/src/mock/vin-sample'
+import sample from '@/mock/vin-sample'
 
 export default function VinPage({ params }: { params: { lang: 'ru'|'en', vin: string } }) {
   const data = sample   // временно всегда мокаем
