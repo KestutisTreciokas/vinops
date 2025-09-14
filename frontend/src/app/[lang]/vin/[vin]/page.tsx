@@ -1,37 +1,38 @@
-import { fetchVin } from '@/lib/api-vin'
-import sample from '@/mock/vin-sample'
-import Gallery from '@/components/vin2/Gallery'
-import Specs from '@/components/vin2/Specs'
+import VinGallery from '@/components/vin2/VinGallery'
+import VinSpecs from '@/components/vin2/VinSpecs'
 import LotInfo from '@/components/vin2/LotInfo'
 import History from '@/components/vin2/History'
+import sample from '@/mock/vin-sample'
 
-export default async function VinPage({ params }: { params: { lang: 'ru'|'en', vin: string } }) {
+export default function VinPage({ params }: { params: { lang: 'ru'|'en', vin: string } }) {
   const { lang, vin } = params
-  let data = sample
-
-  try {
-    const apiData = await fetchVin(vin, lang)
-    // если API вернул валидные данные — используем их
-    if (apiData?.photos?.length || apiData?.specs?.make) data = apiData
-  } catch {
-    // молча падаем на мок
-  }
+  // пока мокаем одной и той же структурой
+  const data = sample
 
   return (
-    <div className="container py-8">
-      <h1 className="text-3xl font-semibold mb-2">VIN: {vin}</h1>
-      <p className="text-fg-muted mb-8">Актуальная информация по лоту, фото и спецификации.</p>
+    <main className="container mx-auto px-4 lg:px-6" data-page="vin">
+      <header className="py-6">
+        <h1 className="text-3xl font-semibold">VIN: {vin}</h1>
+        <p className="text-fg-muted mt-1">
+          {lang === 'ru' ? 'Актуальная информация по лоту, фото, характеристики и история.'
+                         : 'Actual lot info with photos, specs and sale history.'}
+        </p>
+      </header>
 
-      <div className="grid lg:grid-cols-[1fr_360px] gap-6">
-        <div className="space-y-6">
-          <Gallery photos={data.photos} />
+      {/* Лэйаут: 3 колонки на xl, две на md */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 pb-10">
+        {/* Галерея — растягиваемся на 2 колонки для удобного просмотра */}
+        <div className="md:col-span-2">
+          <VinGallery images={data.images} title={lang==='ru'?'Главное фото':'Main photo'} />
         </div>
+
+        {/* Правая колонка (карточки) */}
         <div className="space-y-6">
-          <Specs specs={data.specs} />
-          <LotInfo lot={data.lot} />
-          <History items={data.history} />
+          <VinSpecs lang={lang} specs={data.specs} />
+          <LotInfo lang={lang} lot={data.lot} />
+          <History lang={lang} rows={data.history} />
         </div>
       </div>
-    </div>
+    </main>
   )
 }

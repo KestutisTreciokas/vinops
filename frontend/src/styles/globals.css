@@ -898,3 +898,7 @@ html[lang="en"] [data-page="catalog"] .grid:empty::after  { content: "Adjust fil
   padding:10px 12px;
   color:var(--fg-default);
 }
+
+/* -- VIN v2 tweaks -------------------------------------------------------- */
+.card       { @apply rounded-2xl bg-bg-surface ring-1 ring-border-muted; }
+.card-title { @apply text-base font-semibold text-fg-default; }

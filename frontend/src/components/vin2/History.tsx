@@ -1,23 +1,39 @@
-import type { HistoryItem } from './types';
-
-export default function HistoryCard({ items }: { items: HistoryItem[] }) {
+type Lang = 'ru'|'en'
+type Row = { date?: string; auction?: string; lot?: string|number; status?: string; priceUsd?: number }
+export default function History({ lang='ru', rows=[] }: { lang?:Lang, rows: Row[] }) {
+  const t = (ru:string,en:string)=> lang==='ru'?ru:en
+  const fmt = (n?:number) => n==null ? '—' :
+    new Intl.NumberFormat(lang==='ru'?'ru-RU':'en-US', { style:'currency', currency:'USD', maximumFractionDigits:0 }).format(n)
   return (
-    <div className="card p-4">
-      <h3 className="text-base font-semibold mb-3">История продаж</h3>
-      <div className="grid grid-cols-5 text-sm text-fg-muted pb-2 border-b border-muted">
-        <div>Дата</div><div>Аукцион</div><div>Лот</div><div>Статус</div><div className="text-right">Цена</div>
+    <section className="card p-4">
+      <h3 className="card-title mb-3">{t('История продаж','Sale history')}</h3>
+      <div className="text-sm overflow-x-auto">
+        <table className="min-w-[420px] w-full">
+          <thead className="text-fg-muted">
+            <tr className="text-left">
+              <th className="py-2 pr-4">{t('Дата','Date')}</th>
+              <th className="py-2 pr-4">{t('Аукцион','Auction')}</th>
+              <th className="py-2 pr-4">{t('Лот','Lot')}</th>
+              <th className="py-2 pr-4">{t('Статус','Status')}</th>
+              <th className="py-2 text-right">{t('Цена','Price')}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.length === 0 && (
+              <tr><td colSpan={5} className="py-4 text-center text-fg-muted">—</td></tr>
+            )}
+            {rows.map((r,idx)=>(
+              <tr key={idx} className="border-t border-border-muted">
+                <td className="py-2 pr-4">{r.date ?? '—'}</td>
+                <td className="py-2 pr-4">{r.auction ?? '—'}</td>
+                <td className="py-2 pr-4">{r.lot ?? '—'}</td>
+                <td className="py-2 pr-4">{r.status ?? '—'}</td>
+                <td className="py-2 text-right">{fmt(r.priceUsd)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
-      <div className="divide-y divide-muted">
-        {items.map((it, i)=>(
-          <div key={i} className="grid grid-cols-5 py-2 text-sm">
-            <div>{it.date}</div>
-            <div>{it.auction}</div>
-            <div>{it.lot}</div>
-            <div>{it.status}</div>
-            <div className="text-right font-medium">${it.price.toLocaleString()}</div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
+    </section>
+  )
 }
