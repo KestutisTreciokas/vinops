@@ -1,36 +1,81 @@
-type Lang = 'ru'|'en'
-type Row = { date?: string; auction?: string; lot?: string|number; status?: string; priceUsd?: number }
-export default function History({ lang='ru', rows=[] }: { lang?:Lang, rows: Row[] }) {
-  const t = (ru:string,en:string)=> lang==='ru'?ru:en
-  const fmt = (n?:number) => n==null ? '—' :
-    new Intl.NumberFormat(lang==='ru'?'ru-RU':'en-US', { style:'currency', currency:'USD', maximumFractionDigits:0 }).format(n)
+'use client'
+
+type Row = {
+  date: string
+  auction: string
+  lot: string
+  status: string
+  price: string
+}
+
+export default function History({
+  lang,
+  rows = [],
+}: {
+  lang: 'ru' | 'en'
+  rows: Row[]
+}) {
+  const t =
+    lang === 'ru'
+      ? {
+          title: 'История продаж',
+          date: 'Дата',
+          auction: 'Аукцион',
+          lot: 'Лот',
+          status: 'Статус',
+          price: 'Цена',
+        }
+      : {
+          title: 'Sales history',
+          date: 'Date',
+          auction: 'Auction',
+          lot: 'Lot',
+          status: 'Status',
+          price: 'Price',
+        }
+
   return (
-    <section className="card p-4">
-      <h3 className="card-title mb-3">{t('История продаж','Sale history')}</h3>
-      <div className="text-sm overflow-x-auto">
-        <table className="min-w-[420px] w-full">
-          <thead className="text-fg-muted">
-            <tr className="text-left">
-              <th className="py-2 pr-4">{t('Дата','Date')}</th>
-              <th className="py-2 pr-4">{t('Аукцион','Auction')}</th>
-              <th className="py-2 pr-4">{t('Лот','Lot')}</th>
-              <th className="py-2 pr-4">{t('Статус','Status')}</th>
-              <th className="py-2 text-right">{t('Цена','Price')}</th>
+    <section className="rounded-2xl border border-border-muted bg-surface p-4">
+      <h3 className="text-base font-semibold">{t.title}</h3>
+
+      <div className="mt-4">
+        <table className="w-full table-fixed">
+          <colgroup>
+            <col className="w-[120px]" />
+            <col className="w-[160px]" />
+            <col className="w-[120px]" />
+            <col className="w-[140px]" />
+            <col /> {/* цена тянется */}
+          </colgroup>
+
+          <thead className="text-sm text-fg-muted">
+            <tr>
+              <th className="py-2 text-left">{t.date}</th>
+              <th className="text-left">{t.auction}</th>
+              <th className="text-left">{t.lot}</th>
+              <th className="text-left">{t.status}</th>
+              <th className="text-right">{t.price}</th>
             </tr>
           </thead>
-          <tbody>
-            {rows.length === 0 && (
-              <tr><td colSpan={5} className="py-4 text-center text-fg-muted">—</td></tr>
-            )}
-            {rows.map((r,idx)=>(
-              <tr key={idx} className="border-t border-border-muted">
-                <td className="py-2 pr-4">{r.date ?? '—'}</td>
-                <td className="py-2 pr-4">{r.auction ?? '—'}</td>
-                <td className="py-2 pr-4">{r.lot ?? '—'}</td>
-                <td className="py-2 pr-4">{r.status ?? '—'}</td>
-                <td className="py-2 text-right">{fmt(r.priceUsd)}</td>
+
+          <tbody className="text-sm">
+            {rows?.length ? (
+              rows.map((r, i) => (
+                <tr key={i} className="border-t border-border-muted/60">
+                  <td className="py-2">{r.date}</td>
+                  <td>{r.auction}</td>
+                  <td>{r.lot}</td>
+                  <td>{r.status}</td>
+                  <td className="text-right">{r.price}</td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={5} className="py-3 text-fg-muted">
+                  —
+                </td>
               </tr>
-            ))}
+            )}
           </tbody>
         </table>
       </div>
