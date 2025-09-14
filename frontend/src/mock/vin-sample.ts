@@ -1,33 +1,26 @@
-export default {
-  vin: 'WAUZZZAAAAAAAAAAA',
-  gallery: {
-    mainIndex: 2,
-    items: Array.from({ length: 8 }).map((_, i) => ({
-      id: i,
-      url: `/placeholder/${i + 1}.jpg`,
-    })),
-  },
+const sample = {
+  photos: [],
   specs: {
+    year: 2019,
     make: 'Toyota',
     model: 'Camry',
-    year: 2019,
     body: 'Sedan',
     engine: '2.5L',
-    drive: 'FWD',
     transmission: 'AT',
+    drive: 'FWD',
   },
   lot: {
-    number: '80103945',
+    lotNumber: 80103945,
     auction: 'Copart',
     seller: 'Progressive Casualty Insurance',
     date: '2025-05-12',
-    odometer: '49 792 mi',
+    odometer: 49792,
     status: 'Sold',
-    finalBid: '$11,500',
+    finalBid: 11500
   },
   history: [
-    { date: "2025-02-12", auction: "Copart", lot: "80103945", status: "Active", price: "$9,100" },
-    // Пример строки истории:
-    // { date: '2024-11-05', auction: 'Copart', lot: '71234567', status: 'Sold', price: '$8,900' },
-  ],
-};
+    { date: '2025-05-12', auction: 'Copart', lot: '80103945', status: 'Sold', price: 11500 },
+    { date: '2024-11-03', auction: 'IAA',   lot: '73900210', status: 'Sold', price: 8900  }
+  ]
+}
+export default sample
