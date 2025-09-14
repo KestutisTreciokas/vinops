@@ -648,3 +648,8 @@ a:hover { color: var(--brand-hover); }
 .badge-live .icon { color: var(--brand); }
 /* price chip without leading icon */
 .price-chip { padding: 4px 10px; line-height: 1; }
+
+/* --- Hide tag icon in vehicle price chip & tighten padding --- */
+.card .absolute.top-3.right-3 svg { display: none !important; }
+/* optional: slightly reduce left padding since icon is gone */
+.card .absolute.top-3.right-3 { padding-left: 10px; }
