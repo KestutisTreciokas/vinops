@@ -738,3 +738,101 @@ a:hover { color: var(--brand-hover); }
 }
 
 /* --------------------------------------------- */
+
+/* ---------- Catalog • Card hover/focus, badges, empty state ---------- */
+
+/* Карточка: мягкий hover/фокус, без прыжков layout */
+[data-page="catalog"] .card {
+  transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease, background-color .18s ease;
+  will-change: transform, box-shadow, border-color, background-color;
+}
+[data-page="catalog"] .card:hover,
+[data-page="catalog"] .card:focus-within {
+  border-color: color-mix(in hsl, var(--brand) 35%, var(--border-muted));
+  box-shadow: 0 6px 22px rgba(0,0,0,.08);
+}
+[data-theme="dark"] [data-page="catalog"] .card:hover,
+[data-theme="dark"] [data-page="catalog"] .card:focus-within {
+  box-shadow: 0 8px 26px rgba(0,0,0,.45);
+  background: color-mix(in hsl, var(--bg-surface) 92%, var(--bg-canvas));
+}
+
+/* Бейджи статусов — выравнивание, читаемость, одинаковая высота */
+[data-page="catalog"] .card .badge,
+[data-page="catalog"] .card [data-badge] {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 24px;
+  line-height: 24px;
+  padding: 0 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--bg-muted);
+  color: var(--fg-muted);
+  border: 1px solid var(--border-muted);
+  backdrop-filter: saturate(120%) blur(2px);
+}
+[data-page="catalog"] .card .badge:is(.sold,[data-variant="sold"]),
+[data-page="catalog"] .card [data-badge]:is(.sold,[data-variant="sold"]) {
+  background: color-mix(in hsl, #A8A8AD 14%, transparent);
+  color: var(--fg-default);
+  border-color: color-mix(in hsl, #A8A8AD 28%, var(--border-muted));
+}
+[data-page="catalog"] .card .badge:is(.active,[data-variant="active"]),
+[data-page="catalog"] .card [data-badge]:is(.active,[data-variant="active"]) {
+  background: color-mix(in hsl, var(--brand) 20%, transparent);
+  color: var(--fg-default);
+  border-color: color-mix(in hsl, var(--brand) 35%, var(--border-muted));
+}
+
+/* Цена в правом верхнем углу — выравнивание и отступы */
+[data-page="catalog"] .card [data-price],
+[data-page="catalog"] .card .price {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 10px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-muted);
+  color: var(--fg-default);
+}
+/* если рядом рисуется «ярлычок-иконка» — скрываем, чтобы не съедал место */
+[data-page="catalog"] .card [data-price] svg:first-child,
+[data-page="catalog"] .card .price > svg:first-child {
+  display: none !important;
+}
+
+/* Плейсхолдер пустого состояния «без JS»:
+   сработает, когда grid действительно пустой (после фильтров) */
+[data-page="catalog"] .grid:empty {
+  position: relative;
+  min-height: 220px;
+  border: 1px dashed var(--border-muted);
+  border-radius: 16px;
+  background:
+    linear-gradient(0deg, color-mix(in hsl, var(--bg-surface) 86%, transparent),
+                         color-mix(in hsl, var(--bg-surface) 86%, transparent));
+}
+[data-page="catalog"] .grid:empty::before {
+  content: "Ничего не найдено";
+  position: absolute; inset: 0;
+  display: grid; place-items: center;
+  font-size: 18px; font-weight: 600;
+  color: var(--fg-default);
+}
+[data-page="catalog"] .grid:empty::after {
+  content: "Измените фильтры или сбросьте их — попробуем ещё раз.";
+  position: absolute; left: 0; right: 0; bottom: 38%;
+  text-align: center;
+  font-size: 14px; color: var(--fg-muted);
+}
+
+/* Английская локаль через атрибут на <html lang="en"> */
+html[lang="en"] [data-page="catalog"] .grid:empty::before { content: "No results found"; }
+html[lang="en"] [data-page="catalog"] .grid:empty::after  { content: "Adjust filters or reset them and try again."; }
+
+/* -------------------------------------------------------------------- */
