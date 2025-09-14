@@ -1,55 +1,39 @@
 'use client'
+import { Row, IcGavel, IcUser, IcCalendar, IcOdo, IcTag } from './ui'
+import StatusBadge from './StatusBadge'
+
+function t(ru: string, en: string, lang: 'ru'|'en') { return lang === 'ru' ? ru : en }
 
 type Lot = {
-  lotNumber?: number | string
+  lotNumber?: string | number
   auction?: string
   seller?: string
   date?: string
   odometer?: string | number
-  status?: string
+  status?: string | null
   finalBid?: string | number
-  location?: string
-}
-
-function Row({ k, v }: { k: string; v?: string }) {
-  return (
-    <div className="contents">
-      <dt className="text-sm text-fg-muted">{k}</dt>
-      <dd className="text-sm">{v ?? '—'}</dd>
-    </div>
-  )
-}
-
-const toStr = (x: unknown): string | undefined => {
-  if (x === null || x === undefined) return undefined
-  return typeof x === 'string' ? (x.trim() || undefined) : String(x)
 }
 
 export default function LotInfo({
   lot,
-  lang,
+  lang = 'ru'
 }: {
-  lot?: Lot
-  lang: 'ru' | 'en'
+  lot?: Lot | null
+  lang?: 'ru'|'en'
 }) {
-  const t = (ru: string, en: string) => (lang === 'ru' ? ru : en)
-  const L: Lot = lot ?? {}
-
+  const l = lot ?? {}
   return (
-    <section className="rounded-2xl border border-border-muted bg-surface p-4">
-      <h3 className="text-base font-semibold mb-3">
-        {t('Информация о лоте', 'Lot info')}
-      </h3>
-      <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2">
-        <Row k={t('Номер лота', 'Lot number')} v={toStr(L.lotNumber)} />
-        <Row k={t('Аукцион', 'Auction')} v={toStr(L.auction)} />
-        <Row k={t('Продавец', 'Seller')} v={toStr(L.seller)} />
-        <Row k={t('Дата', 'Date')} v={toStr(L.date)} />
-        <Row k={t('Пробег', 'Odometer')} v={toStr(L.odometer)} />
-        <Row k={t('Статус', 'Status')} v={toStr(L.status)} />
-        <Row k={t('Итоговая ставка', 'Final bid')} v={toStr(L.finalBid)} />
-        <Row k={t('Локация', 'Location')} v={toStr(L.location)} />
-      </dl>
+    <section className="card p-4">
+      <h3 className="card-title mb-3">{t('Информация о лоте','Lot info', lang)}</h3>
+      <div className="space-y-2 text-sm">
+        <Row icon={<IcTag />}     label={t('Номер лота','Lot number',lang)} value={l.lotNumber?.toString()} />
+        <Row icon={<IcGavel />}   label={t('Аукцион','Auction',lang)}       value={l.auction} />
+        <Row icon={<IcUser />}    label={t('Продавец','Seller',lang)}       value={l.seller} />
+        <Row icon={<IcCalendar />}label={t('Дата','Date',lang)}             value={l.date} />
+        <Row icon={<IcOdo />}     label={t('Пробег','Odometer',lang)}       value={l.odometer} />
+        <Row icon={<IcTag />}     label={t('Статус','Status',lang)}         value={<StatusBadge status={l.status} lang={lang}/>} />
+        <Row icon={<IcTag />}     label={t('Итоговая ставка','Final bid',lang)} value={l.finalBid} />
+      </div>
     </section>
   )
 }

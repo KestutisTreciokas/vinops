@@ -1,102 +1,50 @@
 'use client'
 
-type Row = {
-  date: string
-  auction: string
-  lot: string
-  status: string
-  price: string
-}
+function t(ru: string, en: string, lang: 'ru'|'en') { return lang === 'ru' ? ru : en }
 
-function statusBadgeCls(statusRaw: string) {
-  const s = statusRaw.toLowerCase()
-  if (s.includes('sold') || s.includes('прод')) {
-    return 'bg-emerald-500/15 text-emerald-400 ring-1 ring-emerald-500/25'
-  }
-  if (s.includes('active') || s.includes('актив')) {
-    return 'bg-indigo-500/15 text-indigo-400 ring-1 ring-indigo-500/25'
-  }
-  if (s.includes('pending') || s.includes('approval') || s.includes('ожид')) {
-    return 'bg-amber-500/15 text-amber-400 ring-1 ring-amber-500/25'
-  }
-  if (s.includes('cancel') || s.includes('fail') || s.includes('no sale') || s.includes('отмен')) {
-    return 'bg-rose-500/15 text-rose-400 ring-1 ring-rose-500/25'
-  }
-  return 'bg-zinc-500/15 text-zinc-400 ring-1 ring-zinc-500/25'
+type HistoryItem = {
+  date?: string
+  auction?: string
+  lot?: string | number
+  status?: string
+  price?: string | number
 }
 
 export default function History({
-  lang,
-  rows = [],
+  items,
+  lang = 'ru',
 }: {
-  lang: 'ru' | 'en'
-  rows: Row[]
+  items?: HistoryItem[] | null
+  lang?: 'ru'|'en'
 }) {
-  const t =
-    lang === 'ru'
-      ? {
-          title: 'История продаж',
-          date: 'Дата',
-          auction: 'Аукцион',
-          lot: 'Лот',
-          status: 'Статус',
-          price: 'Цена',
-        }
-      : {
-          title: 'Sales history',
-          date: 'Date',
-          auction: 'Auction',
-          lot: 'Lot',
-          status: 'Status',
-          price: 'Price',
-        }
+  const rows = Array.isArray(items) ? items : []
 
   return (
-    <section className="rounded-2xl border border-border-muted bg-surface p-4">
-      <h3 className="text-base font-semibold">{t.title}</h3>
-
-      <div className="mt-4">
-        <table className="w-full table-fixed">
-          <colgroup>
-            <col className="w-[120px]" />
-            <col className="w-[160px]" />
-            <col className="w-[120px]" />
-            <col className="w-[160px]" />
-            <col />
-          </colgroup>
-
-        <thead className="text-sm text-fg-muted">
-            <tr>
-              <th className="py-2 text-left">{t.date}</th>
-              <th className="text-left">{t.auction}</th>
-              <th className="text-left">{t.lot}</th>
-              <th className="text-left">{t.status}</th>
-              <th className="text-right">{t.price}</th>
+    <section className="card p-4">
+      <h3 className="card-title mb-3">{t('История продаж', 'Sales history', lang)}</h3>
+      <div className="overflow-hidden rounded-xl border border-border-muted">
+        <table className="w-full text-sm">
+          <thead className="bg-surface/60">
+            <tr className="text-left">
+              <th className="px-3 py-2 w-[22%]">{t('Дата','Date',lang)}</th>
+              <th className="px-3 py-2 w-[26%]">{t('Аукцион','Auction',lang)}</th>
+              <th className="px-3 py-2 w-[22%]">{t('Лот','Lot',lang)}</th>
+              <th className="px-3 py-2 w-[14%]">{t('Статус','Status',lang)}</th>
+              <th className="px-3 py-2 w-[16%]">{t('Цена','Price',lang)}</th>
             </tr>
           </thead>
-
-          <tbody className="text-sm">
-            {rows?.length ? (
-              rows.map((r, i) => (
-                <tr key={i} className="border-t border-border-muted/60">
-                  <td className="py-2">{r.date}</td>
-                  <td>{r.auction}</td>
-                  <td>{r.lot}</td>
-                  <td>
-                    <span className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium ring-1 ${statusBadgeCls(r.status)}`}>
-                      {r.status}
-                    </span>
-                  </td>
-                  <td className="text-right">{r.price}</td>
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan={5} className="py-3 text-fg-muted">
-                  —
-                </td>
+          <tbody>
+            {rows.length === 0 ? (
+              <tr><td className="px-3 py-3 text-fg-muted" colSpan={5}>—</td></tr>
+            ) : rows.map((r, i) => (
+              <tr key={i} className={i % 2 ? 'bg-canvas/40' : ''}>
+                <td className="px-3 py-2">{r.date ?? '—'}</td>
+                <td className="px-3 py-2">{r.auction ?? '—'}</td>
+                <td className="px-3 py-2">{r.lot ?? '—'}</td>
+                <td className="px-3 py-2">{r.status ?? '—'}</td>
+                <td className="px-3 py-2">{r.price ?? '—'}</td>
               </tr>
-            )}
+            ))}
           </tbody>
         </table>
       </div>
