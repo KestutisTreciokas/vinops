@@ -1,6 +1,9 @@
+'use client'
+import { useState } from 'react'
+
 export default function Gallery({ images }: { images: string[] }) {
-  const main = images[0]
-  const thumbs = images.slice(1, 5)
+  const [idx, setIdx] = useState(0)
+  const main = images[idx]
   return (
     <div className="card p-3 rounded-2xl bg-surface border border-border-muted">
       {main && (
@@ -8,12 +11,21 @@ export default function Gallery({ images }: { images: string[] }) {
           <img src={main} alt="" className="w-full h-full object-cover" />
         </div>
       )}
-      {thumbs.length > 0 && (
+      {images.length > 1 && (
         <div className="grid grid-cols-4 gap-2">
-          {thumbs.map((src, i) => (
-            <div key={i} className="aspect-[4/3] overflow-hidden rounded-lg bg-canvas-subtle">
+          {images.map((src, i) => (
+            <button
+              key={i}
+              type="button"
+              onClick={() => setIdx(i)}
+              className={[
+                'aspect-[4/3] overflow-hidden rounded-lg bg-canvas-subtle',
+                i === idx ? 'ring-2 ring-brand' : 'ring-1 ring-border-muted'
+              ].join(' ')}
+              aria-label={`Photo ${i+1}`}
+            >
               <img src={src} alt="" className="w-full h-full object-cover" />
-            </div>
+            </button>
           ))}
         </div>
       )}
