@@ -1,10 +1,5 @@
 import VinLeftColumn from '@/src/components/vin/VinLeftColumn'
-import VinGallery from '@/components/vin/VinGallery'
-import VinLeftColumn from '@/src/components/vin/VinLeftColumn'
-import VinSpecs from '@/components/vin/VinSpecs'
-import VinLeftColumn from '@/src/components/vin/VinLeftColumn'
 import VinSidebar from '@/components/vin/VinSidebar'
-import VinLeftColumn from '@/src/components/vin/VinLeftColumn'
 
 export default function VinPage({ params }: { params: { lang: 'ru'|'en', vin: string } }) {
   const { lang, vin } = params
@@ -21,12 +16,12 @@ export default function VinPage({ params }: { params: { lang: 'ru'|'en', vin: st
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Левая колонка */}
         <div className="lg:col-span-8 space-y-6">
-          <VinLeftColumn lang={params.lang} />
           {/* сюда позже добавим: История, Похожие лоты и т.д. */}
         </div>
 
         {/* Правая колонка (липкая) */}
         <div className="lg:col-span-4">
+    <VinLeftColumn lang={params.lang} />
           <VinSidebar />
         </div>
       </div>
