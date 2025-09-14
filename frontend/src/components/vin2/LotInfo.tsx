@@ -1,7 +1,7 @@
 'use client'
 import Row from './_Row'
 import CopyButton from '@/components/common/CopyButton'
-import { formatDateISO, formatMiles, formatUsd } from '@/src/lib/format'
+import { formatDateISO, formatMiles, formatUsd } from '@/lib/format'
 
 /** маленькие одноцветные иконки (inline SVG), чтобы не тянуть библиотеки */
 const stroke = { stroke: 'currentColor', strokeWidth: 2, fill: 'none', strokeLinecap: 'round', strokeLinejoin: 'round' } as any

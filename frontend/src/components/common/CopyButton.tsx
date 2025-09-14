@@ -6,6 +6,8 @@ export default function CopyButton({ text, title = 'Copy' }: { text: string; tit
   async function onCopy() {
     try {
       await navigator.clipboard.writeText(text)
+      setOk(true)
+      setTimeout(() => setOk(false), 1200)
     } catch {
       const ta = document.createElement('textarea')
       ta.value = text
@@ -13,7 +15,6 @@ export default function CopyButton({ text, title = 'Copy' }: { text: string; tit
       ta.select()
       document.execCommand('copy')
       document.body.removeChild(ta)
-    } finally {
       setOk(true)
       setTimeout(() => setOk(false), 1200)
     }
@@ -21,13 +22,10 @@ export default function CopyButton({ text, title = 'Copy' }: { text: string; tit
   return (
     <button
       onClick={onCopy}
-      aria-label={title}
       className="copy-btn inline-flex items-center gap-1 rounded-md px-2 h-7 text-xs border border-[var(--border-muted)] hover:bg-[color-mix(in_hsl,var(--brand)_10%,transparent)]"
-      title={ok ? 'Copied!' : title}
-      type="button"
+      title={title}
     >
-      <span aria-hidden>{ok ? '✔' : '⧉'}</span>
-      <span className="hidden sm:inline">{ok ? 'Copied' : title}</span>
+      {ok ? '✔' : '⧉'}
     </button>
   )
 }
