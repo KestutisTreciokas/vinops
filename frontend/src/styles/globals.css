@@ -1014,3 +1014,45 @@ h3, .h3 { font-size: var(--fs-h3); line-height: 1.35;        font-weight: 600; }
 .badge--fail  { color:#EF4444; border-color:#EF444422; }
 
 /* =============================================================== */
+
+/* === Catalog UI Lock =================================================== */
+
+/* Сетка каталога: 1 → 2 → 3 → 4 колонки */
+.grid-catalog {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+@media (min-width: 640px){ .grid-catalog{ grid-template-columns: repeat(2, 1fr);} }
+@media (min-width: 1024px){ .grid-catalog{ grid-template-columns: repeat(3, 1fr);} }
+@media (min-width: 1280px){ .grid-catalog{ grid-template-columns: repeat(4, 1fr);} }
+
+/* Медиа-зона карточки (строгий 4:3) */
+.media-4x3 { aspect-ratio: 4 / 3; position: relative; overflow: hidden; border-radius: 10px; }
+.media-4x3 > img, .media-4x3 > video, .media-4x3 > picture img {
+  width: 100%; height: 100%; object-fit: cover; display: block;
+}
+
+/* Универсальный скелетон (shimmer) */
+.skeleton {
+  position: relative; overflow: hidden;
+  background: color-mix(in oklab, var(--fg-muted) 14%, transparent);
+  border-radius: 10px;
+}
+.skeleton::after {
+  content: ""; position: absolute; inset: 0;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    color-mix(in oklab, var(--fg-muted) 25%, transparent) 45%,
+    transparent 90%);
+  animation: skel 1.2s infinite linear;
+}
+@keyframes skel { from { transform: translateX(-100%);} to { transform: translateX(100%);} }
+
+/* Выровнять высоту фильтров/селектов */
+.filters .btn, .filters select, .filters input { height: 40px; }
+
+/* Hover у карточек */
+.card-hover:hover { box-shadow: 0 8px 24px rgba(0,0,0,.06); transform: translateY(-1px); transition: .15s ease; }
+
+/* ====================================================================== */
