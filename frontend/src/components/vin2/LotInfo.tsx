@@ -1,43 +1,64 @@
 'use client'
 import Row from './_Row'
 import CopyButton from '@/components/common/CopyButton'
-import StatusBadge from '@/components/common/StatusBadge'
+import { formatDateISO, formatMiles, formatUsd } from '@/src/lib/format'
 
-export default function LotInfo({ lot = {}, lang='ru' }: { lot?: any; lang?: 'ru'|'en' }) {
-  const t = (ru:string,en:string)=> lang==='ru'?ru:en
-  const Icon = ({d}:{d:string}) => (
-    <svg aria-hidden viewBox="0 0 24 24" className="size-4 mr-2 opacity-70"><path fill="currentColor" d={d}/></svg>
-  )
+/** маленькие одноцветные иконки (inline SVG), чтобы не тянуть библиотеки */
+const stroke = { stroke: 'currentColor', strokeWidth: 2, fill: 'none', strokeLinecap: 'round', strokeLinejoin: 'round' } as any
+const IHash = () => (
+  <svg className="w-4 h-4" viewBox="0 0 24 24"><path {...stroke} d="M9 3L7 21M17 3l-2 18M4 8h16M3 16h16"/></svg>
+)
+const IGavel = () => (
+  <svg className="w-4 h-4" viewBox="0 0 24 24"><path {...stroke} d="M12 6l3 3m-6 0l3-3m-6 12h14M5 14l6-6"/></svg>
+)
+const IUser = () => (
+  <svg className="w-4 h-4" viewBox="0 0 24 24"><path {...stroke} d="M16 7a4 4 0 11-8 0 4 4 0 018 0z"/><path {...stroke} d="M4 20a8 8 0 0116 0"/></svg>
+)
+const ICalendar = () => (
+  <svg className="w-4 h-4" viewBox="0 0 24 24"><rect {...stroke} x="3" y="5" width="18" height="16" rx="2"/><path {...stroke} d="M16 3v4M8 3v4M3 11h18"/></svg>
+)
+const ISpeed = () => (
+  <svg className="w-4 h-4" viewBox="0 0 24 24"><path {...stroke} d="M21 12a9 9 0 10-18 0 9 9 0 0018 0z"/><path {...stroke} d="M12 12l4-2"/></svg>
+)
+const IStatus = () => (
+  <svg className="w-4 h-4" viewBox="0 0 24 24"><circle {...stroke} cx="12" cy="12" r="6"/></svg>
+)
+const IMoney = () => (
+  <svg className="w-4 h-4" viewBox="0 0 24 24"><path {...stroke} d="M12 3v18M7 7c0-2 2-4 5-3 3 .8 3 4.2 0 5-3 .8-3 4.2 0 5 3 .8 5-1 5-3"/></svg>
+)
 
-  // небольшая библиотека простых иконок (моно, чтобы совпасть со стилем «Характеристики»)
-  const ic = {
-    hash: 'M7 3v3M17 3v3M7 18v3M17 18v3M3 7h18M3 17h18',               // #
-    gavel: 'M2 21h7v-2H4l5.5-5.5l-2-2L2 17v4Zm9.2-9.7l2 2L22 4.7l-2-2L11.2 11.3ZM7.9 8.1l2 2l1.4-1.4l-2-2L7.9 8.1Z',
-    bld: 'M4 20h16V4H4v16Zm2-2V6h12v12H6Zm2-8h8v2H8v-2Zm0 4h8v2H8v-2Z', // seller
-    cal: 'M7 2v2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2V2h-2v2H9V2H7Zm12 6H5v10h14V8Z',
-    odo: 'M12 3a9 9 0 1 0 9 9h-2a7 7 0 1 1-7-7V3Zm1 9V7h-2v5l3 3 1.4-1.4L13 12Z',
-    dot: 'M12 8a4 4 0 1 1 0 8a4 4 0 0 1 0-8Z',                          // status
-    usd: 'M11 21v-2.1c-2.3-.3-4-1.7-4-3.7h2c0 1 .9 1.8 2 2v-4c-2.2-.5-4-1.5-4-3.7c0-2 1.7-3.4 4-3.7V3h2v2.1c2.3.3 4 1.7 4 3.7h-2c0-1-.9-1.8-2-2v4c2.2.5 4 1.5 4 3.7c0 2-1.7 3.4-4 3.7V21h-2Z'
-  }
+export default function LotInfo({
+  lot, lang = 'ru',
+}: {
+  lot: any; lang?: 'ru'|'en'
+}) {
+  const t = (ru: string, en: string) => (lang === 'ru' ? ru : en)
+
+  const lotNumber =
+    lot?.lotNumber
+      ? (
+        <span className="inline-flex items-center gap-2">
+          {String(lot.lotNumber)}
+          <CopyButton text={String(lot.lotNumber)} title={t('Скопировать номер', 'Copy number')} />
+        </span>
+      )
+      : '—'
+
+  const date = formatDateISO(lot?.date, lang as any)
+  const odo  = lot?.odometer != null ? formatMiles(lot.odometer, lang as any) : '—'
+  const bid  = formatUsd(lot?.finalBid, lang as any)
 
   return (
     <div className="card p-4">
       <h3 className="card-title mb-3">{t('Информация о лоте', 'Lot info')}</h3>
-      <div className="space-y-2 text-sm">
-        <Row k={<><Icon d={ic.hash}/>{t('Номер лота','Lot number')}</>} v={
-          lot?.lotNumber
-            ? <span className="inline-flex items-center gap-2">
-                {String(lot.lotNumber)}
-                <CopyButton text={String(lot.lotNumber)} title={t('Скопировать','Copy')}/>
-              </span>
-            : '—'
-        }/>
-        <Row k={<><Icon d={ic.gavel}/>{t('Аукцион','Auction')}</>} v={lot?.auction ?? '—'} />
-        <Row k={<><Icon d={ic.bld}/>{t('Продавец','Seller')}</>}   v={lot?.seller ?? '—'} />
-        <Row k={<><Icon d={ic.cal}/>{t('Дата','Date')}</>}        v={lot?.date ?? '—'} />
-        <Row k={<><Icon d={ic.odo}/>{t('Пробег','Odometer')}</>}  v={lot?.odometer ?? '—'} />
-        <Row k={<><Icon d={ic.dot}/>{t('Статус','Status')}</>}    v={<StatusBadge value={lot?.status} lang={lang}/>} />
-        <Row k={<><Icon d={ic.usd}/>{t('Итоговая ставка','Final bid')}</>} v={lot?.finalBid ?? '—'} />
+      <div className="text-sm">
+        <Row icon={<IHash />}     k={t('Номер лота', 'Lot number')} v={lotNumber} />
+        <Row icon={<IGavel />}    k={t('Аукцион',   'Auction')}     v={lot?.auction ?? '—'} />
+        <Row icon={<IUser />}     k={t('Продавец',  'Seller')}      v={lot?.seller ?? '—'} />
+        <Row icon={<ICalendar />} k={t('Дата',      'Date')}        v={date} />
+        <Row icon={<ISpeed />}    k={t('Пробег',    'Odometer')}    v={odo} />
+        <Row icon={<IStatus />}   k={t('Статус',    'Status')}      v={lot?.status ?? '—'} />
+        <Row icon={<IMoney />}    k={t('Итоговая ставка', 'Final bid')} v={bid} />
       </div>
     </div>
   )

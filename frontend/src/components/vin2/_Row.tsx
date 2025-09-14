@@ -1,10 +1,16 @@
+'use client'
 import { ReactNode } from 'react'
 
-export default function Row({ k, v }: { k: ReactNode; v?: ReactNode }) {
+export default function Row({
+  k, v, icon,
+}: { k: ReactNode; v: ReactNode; icon?: ReactNode }) {
   return (
-    <div className="flex items-baseline justify-between gap-3">
-      <span className="text-[var(--fg-muted)] whitespace-nowrap">{k}</span>
-      <span className="text-right break-words">{v ?? '—'}</span>
+    <div className="grid grid-cols-[20px,1fr,auto] items-center gap-3 py-1">
+      <div className="text-[var(--fg-muted)] flex items-center justify-center">
+        {icon ?? null}
+      </div>
+      <div className="text-[var(--fg-muted)]">{k}</div>
+      <div className="text-[var(--fg-default)]">{v}</div>
     </div>
   )
 }
