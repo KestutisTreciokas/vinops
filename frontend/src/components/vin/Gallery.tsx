@@ -1,34 +1,29 @@
 'use client'
 import { useState } from 'react'
 
-export default function Gallery({ images }: { images: string[] }) {
+export default function Gallery({ images, alt='photo' }: { images: string[]; alt?: string }) {
+  const safe = images && images.length ? images : ['/svg/brand/property-1-brand-theme-light-size-56.svg']
   const [idx, setIdx] = useState(0)
-  const main = images[idx]
+  const to = (i:number) => setIdx(Math.min(Math.max(i,0), safe.length-1))
   return (
-    <div className="card p-3 rounded-2xl bg-surface border border-border-muted">
-      {main && (
-        <div className="aspect-[4/3] overflow-hidden rounded-xl mb-3 bg-canvas-subtle">
-          <img src={main} alt="" className="w-full h-full object-cover" />
-        </div>
-      )}
-      {images.length > 1 && (
-        <div className="grid grid-cols-4 gap-2">
-          {images.map((src, i) => (
-            <button
-              key={i}
-              type="button"
-              onClick={() => setIdx(i)}
-              className={[
-                'aspect-[4/3] overflow-hidden rounded-lg bg-canvas-subtle',
-                i === idx ? 'ring-2 ring-brand' : 'ring-1 ring-border-muted'
-              ].join(' ')}
-              aria-label={`Photo ${i+1}`}
-            >
-              <img src={src} alt="" className="w-full h-full object-cover" />
-            </button>
-          ))}
-        </div>
-      )}
+    <div className="w-full">
+      <div className="aspect-video w-full overflow-hidden rounded-2xl border border-[color:var(--border-muted)] bg-[var(--bg-canvas)]">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={safe[idx]}
+          alt={alt}
+          className="h-full w-full object-cover"
+          onClick={() => to((idx+1)%safe.length)}
+        />
+      </div>
+      <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
+        {safe.map((src,i)=>(
+          // eslint-disable-next-line @next/next/no-img-element
+          <img key={i} src={src} alt=""
+               className={`h-16 w-24 flex-none cursor-pointer rounded-lg border object-cover ${i===idx?'border-[color:var(--brand)]':'border-[color:var(--border-muted)]'}`}
+               onClick={()=>to(i)} />
+        ))}
+      </div>
     </div>
   )
 }

@@ -859,3 +859,42 @@ html[lang="en"] [data-page="catalog"] .grid:empty::after  { content: "Adjust fil
 /* VIN layout helpers */
 [data-page="vin"] .card{ @apply p-4 rounded-2xl border; border-color: var(--border-muted); background: var(--bg-surface); }
 
+
+/* --- VIN details panels --- */
+.panel{
+  background: var(--bg-surface);
+  border: 1px solid var(--border-muted);
+  border-radius: 16px;
+  padding: 16px;
+}
+.panel h3{
+  margin: 0 0 12px 0;
+  font-weight: 600;
+  font-size: 16px;
+  color: var(--fg-default);
+}
+.specs-grid{
+  display:grid;
+  grid-template-columns: max-content 1fr;
+  gap: 8px 16px;
+  color: var(--fg-default);
+}
+.specs-grid .k{ color: var(--fg-muted); }
+.specs-grid .v{ color: var(--fg-default); }
+.table{
+  width:100%;
+  border-collapse: separate;
+  border-spacing: 0 8px;
+}
+.table th{
+  text-align:left;
+  font-weight:500;
+  color:var(--fg-muted);
+  padding: 0 12px;
+}
+.table td{
+  background: var(--bg-surface);
+  border:1px solid var(--border-muted);
+  padding:10px 12px;
+  color:var(--fg-default);
+}
