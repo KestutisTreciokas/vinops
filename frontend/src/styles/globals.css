@@ -633,3 +633,43 @@ a:hover { color: var(--brand-hover); }
   padding: 4px 10px;
   font-weight: 600;
 }
+
+/* ---------- Catalog UI polish v2 ---------- */
+
+/* Карточка: мягкий hover и быстрые переходы */
+[data-page="catalog"] .card {
+  transition: border-color .16s ease, box-shadow .16s ease, transform .16s ease;
+}
+[data-page="catalog"] .card:hover {
+  border-color: color-mix(in hsl, var(--brand) 55%, transparent);
+  box-shadow: 0 4px 16px rgba(0,0,0,.15);
+}
+[data-theme="dark"] [data-page="catalog"] .card:hover {
+  box-shadow: 0 4px 16px rgba(0,0,0,.35);
+}
+
+/* Карточка: единая высота медиа-зоны (первый дочерний блок) */
+[data-page="catalog"] .card > :first-child {
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+}
+
+/* Плашка цены: прячем «иконку-тег», оставляем только цену */
+[data-page="catalog"] .card [class*="price"] svg,
+[data-page="catalog"] .card [data-badge="price"] svg {
+  display: none;
+}
+/* Небольшой зазор для текста цены (если вдруг где-то остался отступ под иконку) */
+[data-page="catalog"] .card [class*="price"],
+[data-page="catalog"] .card [data-badge="price"] {
+  gap: 6px;
+}
+
+/* Фокус для кликабельной карточки (если обёрнута ссылкой) */
+[data-page="catalog"] a:has(.card):focus-visible .card {
+  outline: 2px solid color-mix(in hsl, var(--brand) 60%, transparent);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 6px color-mix(in hsl, var(--brand) 12%, transparent);
+}
+
+/* ----------------------------------------- */
