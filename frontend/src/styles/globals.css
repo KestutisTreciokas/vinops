@@ -673,3 +673,68 @@ a:hover { color: var(--brand-hover); }
 }
 
 /* ----------------------------------------- */
+
+/* ---------- Catalog • Filters polish ---------- */
+
+/* Находим «полосу фильтров» эвристически: первый блок под заголовком,
+   где есть input/select/combobox/кнопки — выстраиваем его во флекс-сетку */
+[data-page="catalog"] > *:has(> :is(input, select, button, [role="combobox"], [data-filter])) {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+
+/* Базовые размеры контролов на полосе фильтров */
+[data-page="catalog"] :is(input[type="text"], input[type="search"], select, button, [role="combobox"], [data-filter]) {
+  min-height: 40px;
+  border-radius: 12px;
+  /* унифицируем вертикальный ритм */
+  padding-block: 9px;
+}
+
+/* Внутренние паддинги «боксов» (типы: селекты/триггеры дропдаунов/кнопки) */
+[data-page="catalog"] :is(select, [role="combobox"], button) {
+  padding-inline: 12px;
+}
+
+/* Группы диапазонов «От/До»: ставим минимальную ширину, чтобы не «плавали» */
+[data-page="catalog"] :is([data-filter="yearFrom"], [data-filter="yearTo"],
+                          [data-filter="mileageFrom"], [data-filter="mileageTo"]) {
+  min-width: 110px;
+}
+
+/* Кнопки «Сбросить / Применить»: лёгкий акцент и одинаковая высота */
+[data-page="catalog"] button.btn {
+  min-height: 40px;
+}
+
+/* Между блоками комбобоксов и кнопками — чуть больше воздуха на узких экранах */
+@media (max-width: 1280px) {
+  [data-page="catalog"] > *:has(> :is(input, select, button, [role="combobox"], [data-filter])) {
+    row-gap: 14px;
+  }
+}
+
+/* Тёмная/светлая тема — цвета берём из токенов */
+[data-page="catalog"] :is(input, select, [role="combobox"]) {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-muted);
+  color: var(--fg-default);
+}
+[data-page="catalog"] :is(input, select, [role="combobox"])::placeholder {
+  color: var(--fg-muted);
+}
+
+/* Состояния */
+[data-page="catalog"] :is(input, select, [role="combobox"]):focus {
+  outline: 2px solid color-mix(in hsl, var(--brand) 40%, transparent);
+  outline-offset: 0;
+  border-color: color-mix(in hsl, var(--brand) 35%, var(--border-muted));
+}
+[data-page="catalog"] :is(input, select, [role="combobox"]):disabled {
+  opacity: .6;
+  cursor: not-allowed;
+}
+
+/* --------------------------------------------- */
