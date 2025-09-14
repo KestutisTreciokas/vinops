@@ -1,97 +1,73 @@
-import RemovalRequest from '../../../../components/RemovalRequest'
-import Timeline from './_Timeline'
-import Specs from './_Specs'
-import Script from 'next/script'
+import SeoBlock from './_SeoBlock'
+import AsideSummary from '@/components/vin/AsideSummary'
+import SpecList from '@/components/vin/SpecList'
+import Gallery from '@/components/vin/Gallery'
 
-export default function VinPage({
-  params,
-}: {
-  params: { lang: 'en' | 'ru'; vin: string }
-}) {
+type PageProps = { params: { lang: 'en'|'ru', vin: string } }
+
+export default async function VinPage({ params }: PageProps) {
   const { lang, vin } = params
-  const t = (en: string, ru: string) => (lang === 'ru' ? ru : en)
 
-  // Заглушка данных до подключения API (M3)
-  const vehicle = {
-    vin,
-    year: null as number | null,
-    make: null as string | null,
-    model: null as string | null,
-    mileage: null as number | null,
-    fuel: null as string | null,
-    transmission: null as string | null,
-  }
-
-  // JSON-LD Vehicle для SEO
-  const ldVehicle = {
-    '@context': 'https://schema.org',
-    '@type': 'Vehicle',
-    vehicleIdentificationNumber: vin,
-    ...(vehicle.make ? { brand: vehicle.make } : {}),
-    ...(vehicle.model ? { model: vehicle.model } : {}),
-    ...(vehicle.year ? { modelDate: String(vehicle.year) } : {}),
+  // TODO: заменить мок на реальные данные из API
+  const mock = {
+    title: '2019 Toyota Camry',
+    priceUSD: 8900,
+    status: 'sold' as const,
+    images: [
+      '/placeholders/car-1.svg',
+      '/placeholders/car-2.svg',
+      '/placeholders/car-3.svg',
+      '/placeholders/car-4.svg',
+      '/placeholders/car-5.svg',
+    ],
+    specs: [
+      { label: lang === 'ru' ? 'Кузов' : 'Body', value: 'Sedan' },
+      { label: lang === 'ru' ? 'Двигатель' : 'Engine', value: '2.5L' },
+      { label: 'Transmission', value: 'Automatic' },
+      { label: 'Location', value: 'Dallas, TX' },
+      { label: 'Odometer', value: '45,231 mi' },
+      { label: 'Title', value: 'Salvage' },
+    ],
   }
 
   return (
-    <>
-      <Script
-        id="ld-vehicle"
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(ldVehicle) }}
-      />
+    <div data-page="vin" className="container mx-auto px-4">
+      {/* Хлебные крошки */}
+      <nav className="text-sm text-fg-muted mb-4">
+        <a href={`/${lang}/cars`} className="hover:underline">{lang === 'ru' ? 'Каталог' : 'Catalog'}</a>
+        <span className="mx-2">/</span>
+        <span className="text-fg-default">{mock.title}</span>
+      </nav>
+
+      {/* Заголовок */}
       <header className="mb-6">
-        <h1 className="text-2xl font-semibold">
-          {t('Vehicle', 'Автомобиль')} — VIN {vin}
-        </h1>
+        <h1 className="h1">{mock.title}</h1>
+        <div className="text-fg-muted">{lang === 'ru' ? 'Отчет по VIN и история' : 'VIN report & history'}</div>
       </header>
 
-      <section className="grid gap-6">
-        {/* Характеристики */}\n<Specs t={t} items={[{label:t("Year","Год"),value:vehicle.year?String(vehicle.year):"—"},{label:t("Make","Марка"),value:vehicle.make||"—"},{label:t("Model","Модель"),value:vehicle.model||"—"},{label:t("Fuel","Топливо"),value:vehicle.fuel||"—"},{label:t("Transmission","КПП"),value:vehicle.transmission||"—"}]} />
-        <div className="card">
-          <h2 className="font-semibold mb-3">{t('Specifications', 'Характеристики')}</h2>
-          <div className="text-sm text-fg-muted">
-            {t(
-              'Data will appear after the first import.',
-              'Данные появятся после первого импорта.'
-            )}
-          </div>
-        </div>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* Левый столбец */}
+        <main className="lg:col-span-8 space-y-6">
+          <Gallery images={mock.images} />
 
-        {/* Галерея */}
-        <div className="card">
-          <h2 className="font-semibold mb-3">{t('Gallery', 'Галерея')}</h2>
-          <div className="text-sm text-fg-muted">
-            ⏳ {t('Photos will appear here.', 'Здесь появятся фото.')}
-          </div>
-        </div>
+          <section className="space-y-3">
+            <h2 className="text-lg font-semibold">{lang === 'ru' ? 'Характеристики' : 'Specifications'}</h2>
+            <SpecList rows={mock.specs} />
+          </section>
 
-        {/* История продаж / таймлайн */}\n<Timeline t={t} />
-        <div className="card">
-          <h2 className="font-semibold mb-3">{t('Sale timeline', 'История продаж')}</h2>
-          <div className="text-sm text-fg-muted">
-            ⏳ {t(
-              'Timeline will be generated when we detect sales.',
-              'Таймлайн появится после определения исхода продажи.'
-            )}
-          </div>
-        </div>
+          <SeoBlock lang={lang} />
+        </main>
 
-        {/* ОБЯЗАТЕЛЬНЫЙ блок Removal request */}
-        <div className="card">
-          <h2 className="font-semibold mb-3">{t('Removal request', 'Запрос на удаление')}</h2>
-          <p className="text-sm mb-3">
-            {t(
-              'To request removal of this VIN page, contact us:',
-              'Чтобы запросить удаление данной страницы VIN, свяжитесь с нами:'
-            )}
-          </p>
-          <div className="flex flex-wrap items-center gap-4 text-sm">
-            <a className="btn btn-secondary" href="mailto:request@vinops.online">request@vinops.online</a>
-            <a className="btn btn-secondary" href="https://t.me/keustis" target="_blank" rel="noreferrer">@keustis</a>
-          </div>
+        {/* Правый столбец */}
+        <div className="lg:col-span-4">
+          <AsideSummary
+            vin={vin}
+            priceUSD={mock.priceUSD}
+            status={mock.status}
+            ctaHref={`/${lang}/contacts`}
+          />
         </div>
-            <RemovalRequest t={t} />
-    </section>
-    </>
+      </div>
+    </div>
   )
 }

@@ -836,3 +836,9 @@ html[lang="en"] [data-page="catalog"] .grid:empty::before { content: "No results
 html[lang="en"] [data-page="catalog"] .grid:empty::after  { content: "Adjust filters or reset them and try again."; }
 
 /* -------------------------------------------------------------------- */
+
+/* --- VIN page helpers --- */
+[data-page="vin"] .card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-muted);
+}
