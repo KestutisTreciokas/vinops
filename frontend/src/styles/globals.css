@@ -902,3 +902,9 @@ html[lang="en"] [data-page="catalog"] .grid:empty::after  { content: "Adjust fil
 /* -- VIN v2 tweaks -------------------------------------------------------- */
 .card       { @apply rounded-2xl bg-bg-surface ring-1 ring-border-muted; }
 .card-title { @apply text-base font-semibold text-fg-default; }
+
+/* VIN: миниатюры галереи — акцентные рамки на hover/focus/active */
+.thumb { outline: 0; }
+.thumb:hover,
+.thumb:focus-visible { box-shadow: 0 0 0 2px var(--border-muted), 0 0 0 4px color-mix(in hsl, var(--brand) 40%, transparent); }
+.thumb[aria-current="true"] { box-shadow: 0 0 0 2px var(--brand); }
