@@ -1,48 +1,35 @@
 'use client'
+import { formatUsd } from '@/src/lib/format'
 
-function t(ru: string, en: string, lang: 'ru'|'en') { return lang === 'ru' ? ru : en }
-
-type HistoryItem = {
-  date?: string
-  auction?: string
-  lot?: string | number
-  status?: string
-  price?: string | number
-}
-
-export default function History({
-  items,
-  lang = 'ru',
-}: {
-  items?: HistoryItem[] | null
-  lang?: 'ru'|'en'
-}) {
-  const rows = Array.isArray(items) ? items : []
+export default function History({ rows, lang='ru' }: { rows?: any[]; lang?: 'ru'|'en' }) {
+  const t = (ru: string, en: string) => lang === 'ru' ? ru : en
+  const list = Array.isArray(rows) ? rows : []
 
   return (
     <section className="card p-4">
-      <h3 className="card-title mb-3">{t('История продаж', 'Sales history', lang)}</h3>
-      <div className="overflow-hidden rounded-xl border border-border-muted">
-        <table className="w-full text-sm">
-          <thead className="bg-surface/60">
-            <tr className="text-left">
-              <th className="px-3 py-2 w-[22%]">{t('Дата','Date',lang)}</th>
-              <th className="px-3 py-2 w-[26%]">{t('Аукцион','Auction',lang)}</th>
-              <th className="px-3 py-2 w-[22%]">{t('Лот','Lot',lang)}</th>
-              <th className="px-3 py-2 w-[14%]">{t('Статус','Status',lang)}</th>
-              <th className="px-3 py-2 w-[16%]">{t('Цена','Price',lang)}</th>
+      <h3 className="card-title mb-3">{t('История продаж', 'Sale history')}</h3>
+      <div className="overflow-auto">
+        <table className="table-vin w-full">
+          <thead>
+            <tr>
+              <th className="w-[18%]">{t('Дата','Date')}</th>
+              <th className="w-[22%]">{t('Аукцион','Auction')}</th>
+              <th className="w-[18%] text-right">{t('Лот','Lot')}</th>
+              <th className="w-[18%]">{t('Статус','Status')}</th>
+              <th className="w-[24%] text-right">{t('Цена','Price')}</th>
             </tr>
           </thead>
           <tbody>
-            {rows.length === 0 ? (
-              <tr><td className="px-3 py-3 text-fg-muted" colSpan={5}>—</td></tr>
-            ) : rows.map((r, i) => (
-              <tr key={i} className={i % 2 ? 'bg-canvas/40' : ''}>
-                <td className="px-3 py-2">{r.date ?? '—'}</td>
-                <td className="px-3 py-2">{r.auction ?? '—'}</td>
-                <td className="px-3 py-2">{r.lot ?? '—'}</td>
-                <td className="px-3 py-2">{r.status ?? '—'}</td>
-                <td className="px-3 py-2">{r.price ?? '—'}</td>
+            {list.length === 0 && (
+              <tr><td colSpan={5} className="py-3 text-center text-fg-muted">—</td></tr>
+            )}
+            {list.map((r, i) => (
+              <tr key={i}>
+                <td>{r?.date ?? '—'}</td>
+                <td>{r?.auction ?? '—'}</td>
+                <td className="text-right">{r?.lotNumber ?? '—'}</td>
+                <td>{r?.status ?? '—'}</td>
+                <td className="text-right">{formatUsd(r?.priceUSD)}</td>
               </tr>
             ))}
           </tbody>

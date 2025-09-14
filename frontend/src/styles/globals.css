@@ -908,3 +908,25 @@ html[lang="en"] [data-page="catalog"] .grid:empty::after  { content: "Adjust fil
 .thumb:hover,
 .thumb:focus-visible { box-shadow: 0 0 0 2px var(--border-muted), 0 0 0 4px color-mix(in hsl, var(--brand) 40%, transparent); }
 .thumb[aria-current="true"] { box-shadow: 0 0 0 2px var(--brand); }
+
+/* KV layout в карточках VIN */
+.kv { display:grid; grid-template-columns: 160px 1fr; gap: 8px; align-items: center; }
+.kv .k { color: var(--fg-muted); }
+.kv .v { color: var(--fg-default); }
+
+/* Бейджи статуса */
+.badge {
+  display:inline-flex; align-items:center; height:24px;
+  padding:0 10px; border-radius:999px; font-size:.8125rem; line-height:1;
+  border:1px solid transparent; background: var(--bg-surface); color: var(--fg-default);
+}
+.badge--neutral { background: var(--bg-surface); color: var(--fg-muted); border-color: var(--border-muted); }
+.badge--sold    { color:#22c55e; background: color-mix(in hsl, #22c55e 12%, transparent); border-color: color-mix(in hsl, #22c55e 35%, transparent); }
+.badge--active  { color:var(--brand); background: color-mix(in hsl, var(--brand) 12%, transparent); border-color: color-mix(in hsl, var(--brand) 35%, transparent); }
+.badge--pending { color:#eab308; background: color-mix(in hsl, #eab308 12%, transparent); border-color: color-mix(in hsl, #eab308 35%, transparent); }
+.badge--upcoming{ color:#60a5fa; background: color-mix(in hsl, #60a5fa 12%, transparent); border-color: color-mix(in hsl, #60a5fa 35%, transparent); }
+
+/* Таблица истории */
+.table-vin thead th { text-align:left; font-weight:600; color: var(--fg-muted); padding:.5rem .5rem; }
+.table-vin tbody td { padding:.5rem .5rem; }
+.table-vin tbody tr:nth-child(odd) { background: color-mix(in hsl, var(--bg-surface) 40%, transparent); }
