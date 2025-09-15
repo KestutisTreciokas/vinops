@@ -1405,3 +1405,13 @@ h3, .h3 { font-size: var(--fs-h3); line-height: 1.35;        font-weight: 600; }
   align-self: flex-start;
   margin-top: 2px;
 }
+
+/* ===== Price badge tones (used in catalog cards) ===== */
+.price.pill{border-radius:999px;display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;font-weight:600;font-size:13px;letter-spacing:.2px;border:1px solid var(--border-muted);box-shadow:0 2px 10px hsl(0 0% 0% / 8%)}
+[data-theme="dark"] .price.pill{box-shadow:0 2px 10px hsl(0 0% 0% / 28%)}
+.price.pill.tone-violet{background:color-mix(in hsl,#a78bfa 14%,transparent);color:#7c3aed;border-color:color-mix(in hsl,#a78bfa 28%,var(--border-muted))}
+.price.pill.tone-green {background:color-mix(in hsl,#22c55e 12%,transparent);color:#16a34a;border-color:color-mix(in hsl,#22c55e 20%,var(--border-muted))}
+.price.pill.tone-blue  {background:color-mix(in hsl,#60a5fa 14%,transparent);color:#2563eb;border-color:color-mix(in hsl,#60a5fa 28%,var(--border-muted))}
+.price.pill.tone-amber {background:color-mix(in hsl,#f59e0b 14%,transparent);color:#b45309;border-color:color-mix(in hsl,#f59e0b 28%,var(--border-muted))}
+.price.pill.tone-neutral{background:var(--bg-surface);color:var(--fg-default);border-color:var(--border-muted)}
+.price.pill.tone-gray  {background:color-mix(in hsl,#94a3b8 12%,transparent);color:#334155;border-color:color-mix(in hsl,#94a3b8 28%,var(--border-muted))}

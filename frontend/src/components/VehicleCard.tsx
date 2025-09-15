@@ -1,3 +1,4 @@
+import PriceBadge from '@/components/catalog/PriceBadge'
 export type VehicleLite = {
   year: number
   make: string
