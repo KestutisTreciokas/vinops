@@ -17,3 +17,6 @@ coverage/
 context/context-*.txt
 frontend/tsconfig.tsbuildinfo
 frontend/src/**/*.bak.*
+
+# compose backups
+*.bak.*
