@@ -1,54 +1,48 @@
-import type { Metadata } from 'next'
+export type Lang = 'ru' | 'en';
 
-export type Lang = 'ru' | 'en'
+export const siteName = 'vinops';
+export const siteUrl =
+  (typeof process !== 'undefined' && process.env.NEXT_PUBLIC_SITE_URL) ||
+  'http://localhost:3002';
 
-const BASE =
-  (process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, '') ??
-    'http://localhost:3002')
-
-function abs(path: string = '/') {
-  if (!path.startsWith('/')) path = '/' + path
-  return `${BASE}${path}`
+export function canonical(path: string = ''): string {
+  const base = siteUrl.replace(/\/+$/, '');
+  const p = String(path || '').replace(/^\/+/, '');
+  return p ? `${base}/${p}` : base;
 }
 
-/**
- * Универсальная «база» для метаданных страницы.
- * Используй так: baseMetadata({ lang, title, description, path: `/vin/${vin}` })
- */
-export function baseMetadata({
-  lang,
-  title,
-  description = '',
-  path = '/',
-}: {
-  lang: Lang
-  title: string
-  description?: string
-  path?: string
-}): Metadata {
-  const canonical = abs(`/${lang}${path}`)
-  return {
-    title,
-    description,
-    metadataBase: new URL(BASE),
-    alternates: {
-      canonical,
-      languages: {
-        'ru-RU': abs(`/ru${path}`),
-        'en-US': abs(`/en${path}`),
-      },
-    },
-    openGraph: {
-      type: 'website',
-      siteName: 'vinops',
-      title,
-      description,
-      url: canonical,
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title,
-      description,
-    },
+export const baseMetadata = {
+  metadataBase: new URL(siteUrl),
+  title: { default: siteName, template: `%s • ${siteName}` },
+  description:
+    'Актуальная информация по лоту: фото, характеристики, статусы, цены продаж и история.',
+  openGraph: {
+    type: 'website',
+    siteName,
+    url: siteUrl,
+  },
+  twitter: {
+    card: 'summary_large_image',
+  },
+} as any;
+
+export function vinPageTitle(vin: string, lang: Lang, make?: string, model?: string) {
+  const name = [make, model].filter(Boolean).join(' ');
+  if (lang === 'ru') {
+    return name ? `${name} — VIN ${vin}` : `VIN ${vin}`;
   }
+  return name ? `${name} — VIN ${vin}` : `VIN ${vin}`;
+}
+
+export function vehicleLdJson(params: { vin: string; make?: string; model?: string }) {
+  const { vin, make, model } = params;
+  const name = [make, model].filter(Boolean).join(' ').trim() || `VIN ${vin}`;
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Vehicle',
+    name,
+    vehicleIdentificationNumber: vin,
+    brand: make,
+    model,
+  };
 }
