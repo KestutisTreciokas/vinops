@@ -1,48 +1,56 @@
 export type Lang = 'ru' | 'en';
 
-export const siteName = 'vinops';
-export const siteUrl =
-  (typeof process !== 'undefined' && process.env.NEXT_PUBLIC_SITE_URL) ||
-  'http://localhost:3002';
+export const SITE = {
+  name: 'vinops',
+  url: process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3002',
+};
 
-export function canonical(path: string = ''): string {
-  const base = siteUrl.replace(/\/+$/, '');
-  const p = String(path || '').replace(/^\/+/, '');
-  return p ? `${base}/${p}` : base;
-}
-
-export const baseMetadata = {
-  metadataBase: new URL(siteUrl),
-  title: { default: siteName, template: `%s • ${siteName}` },
-  description:
-    'Актуальная информация по лоту: фото, характеристики, статусы, цены продаж и история.',
-  openGraph: {
-    type: 'website',
-    siteName,
-    url: siteUrl,
-  },
-  twitter: {
-    card: 'summary_large_image',
-  },
-} as any;
-
-export function vinPageTitle(vin: string, lang: Lang, make?: string, model?: string) {
-  const name = [make, model].filter(Boolean).join(' ');
-  if (lang === 'ru') {
-    return name ? `${name} — VIN ${vin}` : `VIN ${vin}`;
+export function absUrl(path: string = '/'): string {
+  try {
+    return new URL(path, SITE.url).toString();
+  } catch {
+    return `${SITE.url}${path.startsWith('/') ? '' : '/'}${path}`;
   }
-  return name ? `${name} — VIN ${vin}` : `VIN ${vin}`;
 }
 
-export function vehicleLdJson(params: { vin: string; make?: string; model?: string }) {
-  const { vin, make, model } = params;
-  const name = [make, model].filter(Boolean).join(' ').trim() || `VIN ${vin}`;
+/**
+ * Базовый набор меты (OG/Twitter/Canonical).
+ * Возвращаем plain-object, чтобы не тащить типы Next из этой утилиты.
+ */
+export function baseMetadata({
+  title,
+  description,
+  path = '/',
+  images = [],
+  lang = 'ru',
+}: {
+  title: string;
+  description?: string;
+  path?: string;
+  images?: string[];
+  lang?: Lang;
+}) {
+  const canonical = absUrl(path);
+
   return {
-    '@context': 'https://schema.org',
-    '@type': 'Vehicle',
-    name,
-    vehicleIdentificationNumber: vin,
-    brand: make,
-    model,
+    title,
+    description,
+    metadataBase: new URL(SITE.url),
+    alternates: { canonical },
+    openGraph: {
+      title,
+      description,
+      url: canonical,
+      siteName: SITE.name,
+      locale: lang === 'ru' ? 'ru_RU' : 'en_US',
+      type: 'website',
+      images,
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images,
+    },
   };
 }
