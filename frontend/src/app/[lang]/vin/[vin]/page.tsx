@@ -1,3 +1,17 @@
+import type { Metadata } from 'next'
+import { baseMetadata } from '@/src/lib/seo'
+
+export async function generateMetadata(
+  { params }: { params: { lang: 'ru'|'en', vin: string } }
+): Promise<Metadata> {
+  const { lang, vin } = params
+  const title = lang === 'ru' ? `VIN: ${vin} • vinops` : `VIN: ${vin} • vinops`
+  const description = lang === 'ru'
+    ? 'Страница VIN: фото, характеристики, статусы, цены и история продаж.'
+    : 'VIN page: photos, specs, statuses, prices and sales history.'
+  return baseMetadata(lang, { title, description, path: `/${lang}/vin/${vin}` })
+}
+
 import LotInfo from '@/components/vin2/LotInfo'
 import Specs from '@/components/vin2/Specs'
 import History from '@/components/vin2/History'

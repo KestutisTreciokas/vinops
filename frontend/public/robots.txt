@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+
+# важнo: при деплое заменить URL на прод
+Sitemap: /sitemap.xml

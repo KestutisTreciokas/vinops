@@ -1,20 +1,22 @@
 import type { MetadataRoute } from 'next'
-import { getSiteUrl } from './lib/site'
 
-const STATIC = [
-  '/', '/en', '/ru',
-  '/en/cars', '/ru/cars',
-  '/en/contacts', '/ru/contacts',
-  '/en/terms', '/ru/terms',
-]
+const langs = ['ru','en'] as const
 
-export default function sitemap(): MetadataRoute.Sitemap {
-  const base = getSiteUrl()
-  const now = new Date().toISOString()
-  return STATIC.map((p) => ({
-    url: `${base}${p}`,
-    lastModified: now,
-    changeFrequency: 'weekly',
-    priority: p === '/' ? 1 : 0.7,
-  }))
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const base = (process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000').replace(/\/+$/,'')
+  const urls: MetadataRoute.Sitemap = []
+
+  // базовые страницы
+  for (const lang of langs) {
+    urls.push(
+      { url: `${base}/${lang}`, changeFrequency: 'weekly', priority: 0.8 },
+      { url: `${base}/${lang}/cars`, changeFrequency: 'daily', priority: 0.9 },
+    )
+  }
+
+  // при появлении БД сюда легко добавить VIN-ы/пагинацию
+  // пример демо-VIN (необязательно):
+  // for (const lang of langs) urls.push({ url: `${base}/${lang}/vin/WAUZZZAAAAAAAAAAA`, changeFrequency: 'monthly', priority: 0.6 })
+
+  return urls
 }

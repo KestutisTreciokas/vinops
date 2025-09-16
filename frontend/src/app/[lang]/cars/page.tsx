@@ -1,3 +1,15 @@
+import type { Metadata } from 'next'
+import { baseMetadata } from '@/src/lib/seo'
+
+export async function generateMetadata({ params }: { params: { lang: 'ru'|'en' } }): Promise<Metadata> {
+  const { lang } = params
+  const title = lang === 'ru' ? 'Каталог • vinops' : 'Catalog • vinops'
+  const description = lang === 'ru'
+    ? 'Актуальные лоты: фото, характеристики, статусы, цены и история.'
+    : 'Live lots: photos, specs, statuses, prices and history.'
+  return baseMetadata(lang, { title, description, path: `/${lang}/cars` })
+}
+
 'use client'
 import ChevronDown from '@/icons/ChevronDown'
 import { useEffect, useMemo, useState } from 'react'
