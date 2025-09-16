@@ -3,7 +3,9 @@ import Features from './_home/Features'
 import { useState } from 'react'
 import Script from 'next/script'
 
-export default function Home({ params }: { params: { lang: 'en' | 'ru' } }) {
+export default function Home({
+  const { lang } = params as { lang: "en" | "ru" };
+ params }: { params: { lang: 'en' | 'ru' } }) {
   const [vin, setVin] = useState('')
   const t = (en: string, ru: string) => (lang === 'ru' ? ru : en)
 
