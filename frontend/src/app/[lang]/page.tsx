@@ -4,8 +4,9 @@ import { useState } from 'react'
 import Script from 'next/script'
 
 export default function Home({ params }: { params: { lang: 'en' | 'ru' } }) {
+  const { lang } = params as { lang: "en" | "ru" };
   const [vin, setVin] = useState('')
-  const t = (en: string, ru: string) => (params.lang === 'ru' ? ru : en)
+  const t = (en: string, ru: string) => (lang === 'ru' ? ru : en)
 
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -14,7 +15,7 @@ export default function Home({ params }: { params: { lang: 'en' | 'ru' } }) {
       alert(t('VIN must be 17 characters', 'VIN должен быть 17 символов'))
       return
     }
-    window.location.href = `/${params.lang}/vin/${normalized}`
+    window.location.href = `/${lang}/vin/${normalized}`
   }
 
   // JSON-LD SearchAction для Sitelinks Search Box
@@ -24,7 +25,7 @@ export default function Home({ params }: { params: { lang: 'en' | 'ru' } }) {
     url: 'https://vinops.online',
     potentialAction: {
       '@type': 'SearchAction',
-      target: `https://vinops.online/${params.lang}/vin/{search_term_string}`,
+      target: `https://vinops.online/${lang}/vin/{search_term_string}`,
       'query-input': 'required name=search_term_string',
     },
   }
@@ -51,7 +52,7 @@ export default function Home({ params }: { params: { lang: 'en' | 'ru' } }) {
             onChange={(e) => setVin(e.target.value)}
             placeholder={t('Enter VIN', 'Введите VIN')}
             className="input input-lg"
-            inputMode="latin"
+            inputMode="text"
             autoCapitalize="characters"
             autoComplete="off"
             spellCheck={false}
@@ -68,7 +69,7 @@ export default function Home({ params }: { params: { lang: 'en' | 'ru' } }) {
              'Допустимы только буквы A–Z и цифры 0–9. Ввод будет автоматически нормализован.')}
         </p>
       </section>
-      <Features t={t} />
+      <Features lang={lang} />
     </>
   )
 }

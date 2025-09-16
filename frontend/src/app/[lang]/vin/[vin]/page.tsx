@@ -20,13 +20,13 @@ export default function VinPage({ params }: { params: { lang: 'ru'|'en', vin: st
       <div className="grid gap-6 lg:grid-cols-12">
         {/* Левая колонка: галерея */}
         <div className="lg:col-span-7">
-          <VinGallery lang={lang} items={data.gallery?.items || []} mainIndex={data.gallery?.mainIndex || 0} />
+          <VinGallery photos={data.photos ?? []} />
         </div>
 
         {/* Правая колонка: характеристики и инфо по лоту */}
         <div className="lg:col-span-5 space-y-6">
-          <Specs lang={lang} data={data} />
-          <LotInfo history={data.history} lang={lang} data={data} />
+          <Specs specs={data.specs} />
+          <LotInfo lot={data.lot} history={data.history} lang={lang} />
         </div>
 
         {/* Ниже — история продаж на всю ширину */}

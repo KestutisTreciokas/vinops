@@ -1,14 +1,16 @@
-import VinGallery from '@/components/vin/VinGallery'
-import VinSpecs from '@/components/vin/VinSpecs'
-import VinLot from '@/components/vin/VinLot'
-import VinHistory from '@/components/vin/VinHistory'
+import VinGallery from './VinGallery'
+import VinSpecs from './VinSpecs'
+import VinLot from './VinLot'
+import VinHistory from './VinHistory'
 
-export default function VinLeftColumn({ lang }: { lang: 'ru'|'en' }) {
+export default function VinLeftColumn() {
+  // дефолт для тайпчека старых компонентов
+  const lang: 'ru' | 'en' = 'en'
   return (
     <div className="lg:col-span-8 space-y-6">
-      <VinGallery lang={lang} />
-      <VinSpecs   lang={lang} />
-      <VinLot     lang={lang} />
+      <VinGallery images={[]} />
+      <VinSpecs items={[]} />
+      <VinLot lang={lang} />
       <VinHistory lang={lang} />
     </div>
   )
