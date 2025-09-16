@@ -1,27 +1,34 @@
+# .github/workflows/build-push.yml
 name: build-push
 
 on:
   pull_request:
     branches: [ "main" ]
+    paths: [ "frontend/**" ]
   push:
     branches: [ "main", "restore/**" ]
+    paths: [ "frontend/**" ]
 
 jobs:
   build:
+    name: build
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: frontend
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
-          cache: "npm"
-          cache-dependency-path: "frontend/package-lock.json"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
 
       - name: Install deps
-        run: npm ci || npm i
+        run: npm ci
 
-      - name: Build
+      - name: Next build
         run: npx next build
+        env:
+          NEXT_TELEMETRY_DISABLED: "1"
