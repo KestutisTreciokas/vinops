@@ -15,3 +15,5 @@ build/
 .DS_Store
 coverage/
 context/context-*.txt
+frontend/tsconfig.tsbuildinfo
+frontend/src/**/*.bak.*
