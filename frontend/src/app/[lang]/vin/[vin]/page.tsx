@@ -20,7 +20,7 @@ export default function VinPage({ params }: { params: { lang: 'ru'|'en', vin: st
       <div className="grid gap-6 lg:grid-cols-12">
         {/* Левая колонка: галерея */}
         <div className="lg:col-span-7">
-          <VinGallery photos={data.gallery?.items ?? []} />
+          <VinGallery photos={data.photos ?? []} />
         </div>
 
         {/* Правая колонка: характеристики и инфо по лоту */}
