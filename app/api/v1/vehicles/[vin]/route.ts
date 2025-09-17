@@ -2,44 +2,58 @@ import { NextResponse } from "next/server";
 import { pool } from "@/lib/db";
 
 export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
 
+function normVin(v: string) {
+  return (v || "").trim().toUpperCase();
+}
 function isValidVin(v: string) {
-  return /^[A-HJ-NPR-Z0-9]{17}$/.test(v.toUpperCase());
+  return /^[A-HJ-NPR-Z0-9]{17}$/.test(v);
 }
 
 export async function GET(_req: Request, { params }: { params: { vin: string } }) {
-  const vin = (params.vin || "").toUpperCase();
-  if (!isValidVin(vin)) {
-    return NextResponse.json({ error: "BAD_VIN" }, { status: 400 });
-  }
-
-  const client = await pool.connect();
   try {
-    const { rows } = await client.query(
-      `
-      SELECT v.vin, v.make, v.model, v.year, v.status, v.price_usd, v.location,
-             v.damage, v.title_status AS title, v.keys, v.engine,
-             COALESCE((
-               SELECT json_agg(json_build_object('url', i.url, 'seq', i.seq) ORDER BY i.seq)
-               FROM images i WHERE i.vin = v.vin
-             ), '[]'::json) AS images,
-             COALESCE((
-               SELECT json_agg(json_build_object('sale_date', s.sale_date, 'status', s.status, 'final_bid_usd', s.final_bid_usd, 'source', s.source) ORDER BY s.sale_date)
-               FROM sales s WHERE s.vin = v.vin
-             ), '[]'::json) AS sales
-      FROM vehicles v
-      WHERE v.vin = $1
-      LIMIT 1
-      `,
-      [vin],
-    );
-
-    if (rows.length === 0) {
-      return NextResponse.json({ error: "NOT_FOUND" }, { status: 404 });
+    const vin = normVin(params.vin);
+    if (!isValidVin(vin)) {
+      return NextResponse.json({ error: "BAD_VIN" }, { status: 400 });
     }
-    return NextResponse.json(rows[0], { status: 200 });
-  } finally {
-    client.release();
+
+    const client = await pool.connect();
+    try {
+      const veh = await client.query('SELECT * FROM vehicles WHERE vin = $1 LIMIT 1', [vin]);
+      if (veh.rowCount === 0) {
+        return NextResponse.json({ error: "NOT_FOUND" }, { status: 404 });
+      }
+
+      const images = await client.query(
+        'SELECT url, COALESCE(seq,0) AS seq FROM images WHERE vin = $1 ORDER BY seq ASC, url ASC LIMIT 64',
+        [vin]
+      );
+      const sales = await client.query(
+        'SELECT sale_date, price_usd, mileage, source FROM sales WHERE vin = $1 ORDER BY sale_date DESC LIMIT 64',
+        [vin]
+      );
+
+      const v = veh.rows[0];
+      return NextResponse.json({
+        vin: v.vin,
+        make: v.make ?? null,
+        model: v.model ?? null,
+        year: v.year ?? null,
+        status: v.status ?? null,
+        priceUSD: v.price_usd ?? null,
+        location: v.location ?? null,
+        damage: v.damage ?? null,
+        title: v.title ?? null,
+        keys: v.keys ?? null,
+        engine: v.engine ?? null,
+        images: images.rows,
+        sales: sales.rows,
+      });
+    } finally {
+      client.release();
+    }
+  } catch (e) {
+    console.error("vehicles GET error", e);
+    return NextResponse.json({ error: "INTERNAL" }, { status: 500 });
   }
 }

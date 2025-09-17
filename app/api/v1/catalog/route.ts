@@ -2,57 +2,71 @@ import { NextResponse } from "next/server";
 import { pool } from "@/lib/db";
 
 export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
+
+function clamp(n: number, min: number, max: number) {
+  return Math.max(min, Math.min(max, n));
+}
 
 export async function GET(req: Request) {
-  const url = new URL(req.url);
-  const sp = url.searchParams;
-
-  const make = sp.get("make")?.trim() || null;
-  const model = sp.get("model")?.trim() || null;
-  const yMin = sp.get("year_min") ? Number(sp.get("year_min")) : null;
-  const yMax = sp.get("year_max") ? Number(sp.get("year_max")) : null;
-  const sort = (sp.get("sort") || "date_desc").toLowerCase();
-  const page = Math.max(1, parseInt(sp.get("page") || "1", 10) || 1);
-  const limit = Math.min(100, Math.max(1, parseInt(sp.get("limit") || "20", 10) || 20));
-  const offset = (page - 1) * limit;
-
-  const sorts: Record<string, string> = {
-    price_asc: "price_usd ASC NULLS LAST, year DESC",
-    price_desc: "price_usd DESC NULLS LAST, year DESC",
-    date_desc: "updated_at DESC, year DESC",
-  };
-  const orderBy = sorts[sort] ?? sorts.date_desc;
-
-  const where: string[] = [];
-  const params: any[] = [];
-  const add = (sql: string, val: any) => { params.push(val); where.push(sql.replace("?", `$${params.length}`)); };
-
-  if (make)  add("make ILIKE ?", make);
-  if (model) add("model ILIKE ?", model);
-  if (yMin !== null) add("year >= ?", yMin);
-  if (yMax !== null) add("year <= ?", yMax);
-
-  const whereSql = where.length ? `WHERE ${where.join(" AND ")}` : "";
-
-  const client = await pool.connect();
   try {
-    const countSql = `SELECT COUNT(*)::int AS cnt FROM vehicles ${whereSql}`;
-    const { rows: cntRows } = await client.query(countSql, params);
-    const total = cntRows[0]?.cnt ?? 0;
-    const totalPages = Math.max(1, Math.ceil(total / limit));
+    const url = new URL(req.url);
+    const sp = url.searchParams;
 
-    const listSql = `
-      SELECT vin, make, model, year, status, price_usd, location
-      FROM vehicles
-      ${whereSql}
-      ORDER BY ${orderBy}
-      LIMIT ${limit} OFFSET ${offset}
-    `;
-    const { rows } = await client.query(listSql, params);
+    const page = clamp(parseInt(sp.get("page") || "1", 10) || 1, 1, 1_000_000);
+    const limit = clamp(parseInt(sp.get("limit") || "10", 10) || 10, 1, 50);
+    const offset = (page - 1) * limit;
 
-    return NextResponse.json({ items: rows, page, totalPages }, { status: 200 });
-  } finally {
-    client.release();
+    const make = sp.get("make") || null;
+    const model = sp.get("model") || null;
+    const yearMin = sp.get("year_min") ? parseInt(sp.get("year_min")!, 10) : null;
+    const yearMax = sp.get("year_max") ? parseInt(sp.get("year_max")!, 10) : null;
+
+    const sort = (() => {
+      const s = (sp.get("sort") || "").toLowerCase();
+      if (s === "price_asc") return 'price_usd ASC NULLS LAST';
+      if (s === "price_desc") return 'price_usd DESC NULLS LAST';
+      return 'updated_at DESC NULLS LAST, vin DESC';
+    })();
+
+    const where: string[] = [];
+    const args: any[] = [];
+    const push = (sql: string, val: any) => { args.push(val); where.push(sql.replace(/\?/g, `$${args.length}`)); };
+
+    if (make)  push("make = ?", make);
+    if (model) push("model = ?", model);
+    if (yearMin !== null) push("year >= ?", yearMin);
+    if (yearMax !== null) push("year <= ?", yearMax);
+
+    const whereSql = where.length ? `WHERE ${where.join(" AND ")}` : "";
+
+    const client = await pool.connect();
+    try {
+      const itemsQ = await client.query(
+        `SELECT vin, make, model, year, status, price_usd
+         FROM vehicles
+         ${whereSql}
+         ORDER BY ${sort}
+         LIMIT $${args.length + 1}
+         OFFSET $${args.length + 2}`,
+         [...args, limit, offset]
+      );
+      // hasNext (без COUNT(*))
+      const nextQ = await client.query(
+        `SELECT 1 FROM vehicles ${whereSql} LIMIT 1 OFFSET $${args.length + 1}`,
+        [...args, offset + limit]
+      );
+
+      return NextResponse.json({
+        page,
+        limit,
+        hasNext: nextQ.rowCount > 0,
+        items: itemsQ.rows,
+      });
+    } finally {
+      client.release();
+    }
+  } catch (e) {
+    console.error("catalog GET error", e);
+    return NextResponse.json({ error: "INTERNAL" }, { status: 500 });
   }
 }
