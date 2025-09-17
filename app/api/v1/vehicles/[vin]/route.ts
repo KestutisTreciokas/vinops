@@ -2,27 +2,20 @@ import { NextResponse } from "next/server";
 import { pool } from "@/lib/db";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
-function normVin(v: string) {
-  return (v || "").trim().toUpperCase();
-}
-function isValidVin(v: string) {
-  return /^[A-HJ-NPR-Z0-9]{17}$/.test(v);
-}
+function normVin(v: string) { return (v || "").trim().toUpperCase(); }
+function isValidVin(v: string) { return /^[A-HJ-NPR-Z0-9]{17}$/.test(v); }
 
 export async function GET(_req: Request, { params }: { params: { vin: string } }) {
   try {
     const vin = normVin(params.vin);
-    if (!isValidVin(vin)) {
-      return NextResponse.json({ error: "BAD_VIN" }, { status: 400 });
-    }
+    if (!isValidVin(vin)) return NextResponse.json({ error: "BAD_VIN" }, { status: 400 });
 
     const client = await pool.connect();
     try {
       const veh = await client.query('SELECT * FROM vehicles WHERE vin = $1 LIMIT 1', [vin]);
-      if (veh.rowCount === 0) {
-        return NextResponse.json({ error: "NOT_FOUND" }, { status: 404 });
-      }
+      if (veh.rowCount === 0) return NextResponse.json({ error: "NOT_FOUND" }, { status: 404 });
 
       const images = await client.query(
         'SELECT url, COALESCE(seq,0) AS seq FROM images WHERE vin = $1 ORDER BY seq ASC, url ASC LIMIT 64',
@@ -49,9 +42,7 @@ export async function GET(_req: Request, { params }: { params: { vin: string } }
         images: images.rows,
         sales: sales.rows,
       });
-    } finally {
-      client.release();
-    }
+    } finally { client.release(); }
   } catch (e) {
     console.error("vehicles GET error", e);
     return NextResponse.json({ error: "INTERNAL" }, { status: 500 });

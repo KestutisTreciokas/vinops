@@ -2,10 +2,9 @@ import { NextResponse } from "next/server";
 import { pool } from "@/lib/db";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
-function clamp(n: number, min: number, max: number) {
-  return Math.max(min, Math.min(max, n));
-}
+const clamp = (n: number, min: number, max: number) => Math.max(min, Math.min(max, n));
 
 export async function GET(req: Request) {
   try {
@@ -50,21 +49,12 @@ export async function GET(req: Request) {
          OFFSET $${args.length + 2}`,
          [...args, limit, offset]
       );
-      // hasNext (без COUNT(*))
       const nextQ = await client.query(
         `SELECT 1 FROM vehicles ${whereSql} LIMIT 1 OFFSET $${args.length + 1}`,
         [...args, offset + limit]
       );
-
-      return NextResponse.json({
-        page,
-        limit,
-        hasNext: nextQ.rowCount > 0,
-        items: itemsQ.rows,
-      });
-    } finally {
-      client.release();
-    }
+      return NextResponse.json({ page, limit, hasNext: nextQ.rowCount > 0, items: itemsQ.rows });
+    } finally { client.release(); }
   } catch (e) {
     console.error("catalog GET error", e);
     return NextResponse.json({ error: "INTERNAL" }, { status: 500 });
