@@ -1,68 +1,58 @@
 import { NextResponse } from "next/server";
-import { query } from "@/lib/db";
+import { pool } from "@/lib/db";
 
-function num(v: string | null, def: number) {
-  const n = v ? parseInt(v, 10) : def;
-  return Number.isFinite(n) && n > 0 ? n : def;
-}
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 export async function GET(req: Request) {
   const url = new URL(req.url);
   const sp = url.searchParams;
 
-  const make = sp.get("make")?.toUpperCase() || null;
-  const model = sp.get("model")?.toUpperCase() || null;
-  const yearMin = sp.get("year_min");
-  const yearMax = sp.get("year_max");
-  const page = Math.max(1, num(sp.get("page"), 1));
-  const limit = Math.min(50, num(sp.get("limit"), 20));
+  const make = sp.get("make")?.trim() || null;
+  const model = sp.get("model")?.trim() || null;
+  const yMin = sp.get("year_min") ? Number(sp.get("year_min")) : null;
+  const yMax = sp.get("year_max") ? Number(sp.get("year_max")) : null;
+  const sort = (sp.get("sort") || "date_desc").toLowerCase();
+  const page = Math.max(1, parseInt(sp.get("page") || "1", 10) || 1);
+  const limit = Math.min(100, Math.max(1, parseInt(sp.get("limit") || "20", 10) || 20));
+  const offset = (page - 1) * limit;
 
-  const sort = sp.get("sort");
-  const sortSql =
-    sort === "price_asc" ? "ll.retail_value_usd ASC NULLS LAST" :
-    sort === "price_desc" ? "ll.retail_value_usd DESC NULLS LAST" :
-    "ll.auction_datetime_utc DESC NULLS LAST";
+  const sorts: Record<string, string> = {
+    price_asc: "price_usd ASC NULLS LAST, year DESC",
+    price_desc: "price_usd DESC NULLS LAST, year DESC",
+    date_desc: "updated_at DESC, year DESC",
+  };
+  const orderBy = sorts[sort] ?? sorts.date_desc;
 
   const where: string[] = [];
   const params: any[] = [];
-  let p = 1;
+  const add = (sql: string, val: any) => { params.push(val); where.push(sql.replace("?", `$${params.length}`)); };
 
-  if (make)  { where.push(`v.make = $${p++}`);  params.push(make); }
-  if (model) { where.push(`v.model = $${p++}`); params.push(model); }
-  if (yearMin) { where.push(`v.year >= $${p++}`); params.push(parseInt(yearMin, 10)); }
-  if (yearMax) { where.push(`v.year <= $${p++}`); params.push(parseInt(yearMax, 10)); }
+  if (make)  add("make ILIKE ?", make);
+  if (model) add("model ILIKE ?", model);
+  if (yMin !== null) add("year >= ?", yMin);
+  if (yMax !== null) add("year <= ?", yMax);
 
   const whereSql = where.length ? `WHERE ${where.join(" AND ")}` : "";
-  const offset = (page - 1) * limit;
 
-  const itemsSql = `
-    WITH latest_lot AS (
-      SELECT l.*
-      FROM lots l
-      JOIN (
-        SELECT vin, MAX(auction_datetime_utc) AS max_dt
-        FROM lots
-        GROUP BY vin
-      ) mx ON mx.vin = l.vin AND mx.max_dt = l.auction_datetime_utc
-    )
-    SELECT v.vin, v.make, v.model, v.year,
-           ll.id AS lot_id, ll.source, ll.auction_datetime_utc, ll.retail_value_usd, ll.status
-    FROM vehicles v
-    LEFT JOIN latest_lot ll ON ll.vin = v.vin
-    ${whereSql}
-    ORDER BY ${sortSql}
-    LIMIT ${limit} OFFSET ${offset}
-  `;
+  const client = await pool.connect();
+  try {
+    const countSql = `SELECT COUNT(*)::int AS cnt FROM vehicles ${whereSql}`;
+    const { rows: cntRows } = await client.query(countSql, params);
+    const total = cntRows[0]?.cnt ?? 0;
+    const totalPages = Math.max(1, Math.ceil(total / limit));
 
-  const countSql = `SELECT COUNT(*)::int AS cnt FROM vehicles v ${whereSql}`;
+    const listSql = `
+      SELECT vin, make, model, year, status, price_usd, location
+      FROM vehicles
+      ${whereSql}
+      ORDER BY ${orderBy}
+      LIMIT ${limit} OFFSET ${offset}
+    `;
+    const { rows } = await client.query(listSql, params);
 
-  const [itemsRes, countRes] = await Promise.all([
-    query(itemsSql, params),
-    query(countSql, params),
-  ]);
-
-  const total = countRes.rows[0]?.cnt ?? 0;
-  const totalPages = Math.max(1, Math.ceil(total / limit));
-
-  return NextResponse.json({ page, totalPages, items: itemsRes.rows });
+    return NextResponse.json({ items: rows, page, totalPages }, { status: 200 });
+  } finally {
+    client.release();
+  }
 }
