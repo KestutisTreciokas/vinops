@@ -18,6 +18,9 @@ RUN npm run build
 
 # 3) runner
 FROM node:20-alpine AS runner
+ENV HOSTNAME=0.0.0.0
+ENV PORT=3000
+ENV NODE_OPTIONS=--dns-result-order=ipv4first
 RUN addgroup -S nodejs && adduser -S nextjs -G nodejs
 WORKDIR /app
 ENV NODE_ENV=production
