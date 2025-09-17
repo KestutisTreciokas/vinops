@@ -1,11 +1,10 @@
 import { NextResponse } from "next/server";
 import { pool } from "@/lib/db";
-
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-function normVin(v: string) { return (v || "").trim().toUpperCase(); }
-function isValidVin(v: string) { return /^[A-HJ-NPR-Z0-9]{17}$/.test(v); }
+const normVin = (v: string) => (v || "").trim().toUpperCase();
+const isValidVin = (v: string) => /^[A-HJ-NPR-Z0-9]{17}$/.test(v);
 
 export async function GET(_req: Request, { params }: { params: { vin: string } }) {
   try {
@@ -18,29 +17,18 @@ export async function GET(_req: Request, { params }: { params: { vin: string } }
       if (veh.rowCount === 0) return NextResponse.json({ error: "NOT_FOUND" }, { status: 404 });
 
       const images = await client.query(
-        'SELECT url, COALESCE(seq,0) AS seq FROM images WHERE vin = $1 ORDER BY seq ASC, url ASC LIMIT 64',
-        [vin]
+        'SELECT url, COALESCE(seq,0) AS seq FROM images WHERE vin = $1 ORDER BY seq ASC, url ASC LIMIT 64',[vin]
       );
       const sales = await client.query(
-        'SELECT sale_date, price_usd, mileage, source FROM sales WHERE vin = $1 ORDER BY sale_date DESC LIMIT 64',
-        [vin]
+        'SELECT sale_date, price_usd, mileage, source FROM sales WHERE vin = $1 ORDER BY sale_date DESC LIMIT 64',[vin]
       );
 
       const v = veh.rows[0];
       return NextResponse.json({
-        vin: v.vin,
-        make: v.make ?? null,
-        model: v.model ?? null,
-        year: v.year ?? null,
-        status: v.status ?? null,
-        priceUSD: v.price_usd ?? null,
-        location: v.location ?? null,
-        damage: v.damage ?? null,
-        title: v.title ?? null,
-        keys: v.keys ?? null,
-        engine: v.engine ?? null,
-        images: images.rows,
-        sales: sales.rows,
+        vin: v.vin, make: v.make ?? null, model: v.model ?? null, year: v.year ?? null,
+        status: v.status ?? null, priceUSD: v.price_usd ?? null, location: v.location ?? null,
+        damage: v.damage ?? null, title: v.title ?? null, keys: v.keys ?? null, engine: v.engine ?? null,
+        images: images.rows, sales: sales.rows,
       });
     } finally { client.release(); }
   } catch (e) {
