@@ -92,8 +92,8 @@ export default async function VinPage({ params }: Props) {
         <h2 className="font-semibold mb-2">Removal request</h2>
         <p>
           Email:{" "}
-          <a href="mailto:request@vinops.online">request@vinops.online</a> •
-          {" "}Telegram:{" "}
+          <a href="mailto:request@vinops.online">request@vinops.online</a> •{" "}
+          Telegram:{" "}
           <a href="https://t.me/keustis" target="_blank" rel="noreferrer">
             @keustis
           </a>
