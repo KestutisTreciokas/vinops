@@ -69,7 +69,7 @@ export default function Home({ params }: { params: { lang: 'en' | 'ru' } }) {
              'Допустимы только буквы A–Z и цифры 0–9. Ввод будет автоматически нормализован.')}
         </p>
       </section>
-      <Features lang={lang} />
+      <FeaturesSSR lang={lang} />
     </>
   )
 }
