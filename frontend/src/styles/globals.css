@@ -1524,3 +1524,11 @@ h3, .h3 { font-size: var(--fs-h3); line-height: 1.35;        font-weight: 600; }
 }
 
 .hero{box-shadow:none !important;}
+
+/* S1-A: turn off legacy glow/gradient on search hero */
+.hero,
+.container-prose > section:first-of-type,
+#home-hero{
+  background: var(--bg-canvas) !important;
+  box-shadow: none !important;
+}
