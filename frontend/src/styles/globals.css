@@ -1415,3 +1415,66 @@ h3, .h3 { font-size: var(--fs-h3); line-height: 1.35;        font-weight: 600; }
 .price.pill.tone-amber {background:color-mix(in hsl,#f59e0b 14%,transparent);color:#b45309;border-color:color-mix(in hsl,#f59e0b 28%,var(--border-muted))}
 .price.pill.tone-neutral{background:var(--bg-surface);color:var(--fg-default);border-color:var(--border-muted)}
 .price.pill.tone-gray  {background:color-mix(in hsl,#94a3b8 12%,transparent);color:#334155;border-color:color-mix(in hsl,#94a3b8 28%,var(--border-muted))}
+:root{
+  --grad-brand: radial-gradient(1200px 420px at 50% -240px,
+    color-mix(in hsl, var(--brand) 18%, transparent), transparent);
+  --glow-brand: 0 8px 28px color-mix(in oklab, var(--brand) 22%, transparent);
+}
+:root[data-theme=dark]{
+  --grad-brand: radial-gradient(1400px 520px at 50% -260px,
+    color-mix(in hsl, var(--brand) 24%, transparent), transparent);
+  --glow-brand: 0 10px 34px color-mix(in oklab, var(--brand) 28%, transparent);
+}
+
+.brand-gradient { background-image: var(--grad-brand); }
+.glow-brand     { box-shadow: var(--glow-brand); }
+
+.icon-grad {
+  background:
+    linear-gradient(135deg,
+      color-mix(in oklab, var(--brand) 65%, #7c3aed 35%),
+      color-mix(in oklab, var(--brand) 35%, #22c55e 65%));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.card-accent { transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease; }
+.card-accent:hover {
+  transform: translateY(-1px);
+  border-color: var(--brand);
+  box-shadow: 0 6px 22px color-mix(in oklab, var(--brand) 18%, transparent);
+}
+/* === Accent utilities (light/dark safe) === */
+:root{
+  --grad-brand: radial-gradient(1200px 420px at 50% -240px,
+    color-mix(in hsl, var(--brand) 18%, transparent), transparent);
+  --glow-brand: 0 8px 28px color-mix(in oklab, var(--brand) 22%, transparent);
+}
+:root[data-theme=dark]{
+  --grad-brand: radial-gradient(1400px 520px at 50% -260px,
+    color-mix(in hsl, var(--brand) 24%, transparent), transparent);
+  --glow-brand: 0 10px 34px color-mix(in oklab, var(--brand) 28%, transparent);
+}
+
+.brand-gradient { background-image: var(--grad-brand); }
+.glow-brand     { box-shadow: var(--glow-brand); }
+
+/* Gradient chip for feature icons (background gradient + white icon) */
+.icon-chip{
+  background:
+    linear-gradient(135deg,
+      color-mix(in oklab, var(--brand) 65%, #7c3aed 35%),
+      color-mix(in oklab, var(--brand) 35%, #22c55e 65%));
+  color: #fff; /* SVGs with currentColor */
+  border: 1px solid color-mix(in oklab, var(--brand) 35%, transparent);
+  box-shadow: var(--glow-brand);
+}
+
+/* Card subtle hover accent */
+.card-accent { transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease; }
+.card-accent:hover {
+  transform: translateY(-1px);
+  border-color: var(--brand);
+  box-shadow: 0 6px 22px color-mix(in oklab, var(--brand) 18%, transparent);
+}
