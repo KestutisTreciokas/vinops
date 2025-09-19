@@ -33,7 +33,7 @@ export default function Home({ params }: { params: { lang: 'en' | 'ru' } }) {
   return (
     <>
       <Script id="ld-search" type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(ld) }} />
-      <section className="py-16">
+      <section className="py-20 hero brand-gradient rounded-2xl glow-brand">
         <h1 className="h1 mb-4">
           {t('Search by VIN', 'Поиск по VIN')}
         </h1>
@@ -59,7 +59,7 @@ export default function Home({ params }: { params: { lang: 'en' | 'ru' } }) {
             aria-label={t('VIN', 'VIN')}
             maxLength={23} /* позволяем вставить с пробелами/дефисами, очищаем сами */
           />
-          <button type="submit" className="btn btn-primary btn-lg">
+          <button type="submit" className="btn btn-primary btn-lg glow-brand">
             {t('Find', 'Найти')}
           </button>
         </form>

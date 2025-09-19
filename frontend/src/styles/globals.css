@@ -1497,3 +1497,18 @@ h3, .h3 { font-size: var(--fs-h3); line-height: 1.35;        font-weight: 600; }
   box-shadow: none !important;
   border-color: var(--border-muted);
 }
+
+/* __S1_A_HERO_INPUT_TWEAK__ — hero search input: no glow/outline */
+.hero .input,
+.hero input[type="text"],
+.hero input[type="search"]{
+  outline: none !important;
+  box-shadow: none !important;
+}
+.hero .input:focus,
+.hero input[type="text"]:focus,
+.hero input[type="search"]:focus{
+  outline: none !important;
+  box-shadow: none !important;
+  border-color: var(--border-muted);
+}
