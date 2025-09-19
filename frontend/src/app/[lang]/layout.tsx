@@ -26,9 +26,9 @@ export default function LangLayout({
     <div className="min-h-screen flex flex-col bg-bg-canvas text-fg-default">
       <header className="site-header">
         <div className="inner">
-          <Link href={`/`} className="logo flex items-center gap-2" aria-label="vinops">
-  <img className="logo-img-light" src="/svg/brand/property-1-brand-theme-light-size-56.svg" alt="" aria-hidden="true" width="56" height="56" />
-  <img className="logo-img-dark"  src="/svg/brand/property-1-brand-theme-dark-size-56.svg"  alt="" aria-hidden="true" width="56" height="56" />
+          <Link href={`/${params.lang}`} className="logo flex items-center gap-2" aria-label="vinops">
+  <img className="logo-img-light" src="/svg/brand/property-1-brand-theme-light-size-56.svg" alt="" aria-hidden={true} width={56} height={56} />
+  <img className="logo-img-dark"  src="/svg/brand/property-1-brand-theme-dark-size-56.svg"  alt="" aria-hidden={true} width={56} height={56} />
   <span className="logo-text">vinops</span>
 </Link>
           <nav className="flex items-center gap-6">
