@@ -17,6 +17,7 @@ RUN npm run build
 
 # 3) prod runner (standalone)
 FROM node:20-alpine AS runner
+RUN apk add --no-cache curl
 RUN addgroup -S nodejs && adduser -S nextjs -G nodejs
 WORKDIR /app
 ENV NODE_ENV=production
