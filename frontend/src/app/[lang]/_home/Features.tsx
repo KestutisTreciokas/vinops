@@ -31,7 +31,7 @@ export default function Features({ lang }: { lang: 'en'|'ru' }) {
   ]
 
   return (
-    <section className="container mt-12">
+    <section id="home-features" className="container mt-12">
       <h2 className="text-xl font-semibold mb-6">{t('What you get', 'Что вы получите')}</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {items.map((it, i) => (
