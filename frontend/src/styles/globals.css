@@ -1478,3 +1478,22 @@ h3, .h3 { font-size: var(--fs-h3); line-height: 1.35;        font-weight: 600; }
   border-color: var(--brand);
   box-shadow: 0 6px 22px color-mix(in oklab, var(--brand) 18%, transparent);
 }
+
+/* === S1-A: header & hero tweaks (idempotent) === */
+.logo { display: inline-flex; align-items: center; gap: 8px; }
+.logo-text { font-weight: 600; letter-spacing: -0.01em; }
+
+/* Убираем активную обводку/свечение у поля поиска в герое */
+.hero input[type="text"],
+.hero input[type="search"],
+.hero .input {
+  outline: none !important;
+  box-shadow: none !important;
+}
+.hero input[type="text"]:focus,
+.hero input[type="search"]:focus,
+.hero .input:focus {
+  outline: none !important;
+  box-shadow: none !important;
+  border-color: var(--border-muted);
+}
