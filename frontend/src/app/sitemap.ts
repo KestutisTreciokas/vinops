@@ -1,20 +1,18 @@
+// /root/work/vinops.restore/frontend/src/app/sitemap.ts
 import type { MetadataRoute } from 'next'
-import { getSiteUrl } from './lib/site'
-
-const STATIC = [
-  '/', '/en', '/ru',
-  '/en/cars', '/ru/cars',
-  '/en/contacts', '/ru/contacts',
-  '/en/terms', '/ru/terms',
-]
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const base = getSiteUrl()
-  const now = new Date().toISOString()
-  return STATIC.map((p) => ({
-    url: `${base}${p}`,
-    lastModified: now,
-    changeFrequency: 'weekly',
-    priority: p === '/' ? 1 : 0.7,
-  }))
+  const base = process.env.NEXT_PUBLIC_SITE_URL || 'https://vinops.online'
+  const now = new Date()
+
+  return [
+    { url: `${base}/en`, lastModified: now, changeFrequency: 'daily', priority: 1 },
+    { url: `${base}/ru`, lastModified: now, changeFrequency: 'daily', priority: 1 },
+    { url: `${base}/en/cars`, lastModified: now },
+    { url: `${base}/ru/cars`, lastModified: now },
+    { url: `${base}/en/contacts`, lastModified: now },
+    { url: `${base}/ru/contacts`, lastModified: now },
+    { url: `${base}/en/terms`, lastModified: now },
+    { url: `${base}/ru/terms`, lastModified: now },
+  ]
 }
