@@ -4,7 +4,10 @@ import History from '@/components/vin2/History'
 import VinGallery from '@/components/vin2/Gallery'
 import sample from '@/mock/vin-sample'
 
-export default function VinPage({ params }: { params: { lang: 'ru'|'en', vin: string } }) {
+
+export default function VinPage({
+  const t = (en: string, ru: string) => (params?.lang === 'ru' ? ru : en);
+ params }: { params: { lang: 'ru'|'en', vin: string } }) {
   const { lang, vin } = params
   const data = sample
 
