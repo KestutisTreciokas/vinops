@@ -1512,3 +1512,13 @@ h3, .h3 { font-size: var(--fs-h3); line-height: 1.35;        font-weight: 600; }
   box-shadow: none !important;
   border-color: var(--border-muted);
 }
+
+/* __S1_A_HERO_RING_OFF__ — S1-A: убрать обводку/свечение у формы поиска на главной */
+.hero :where(input,.input,button,.btn):focus,
+.hero :where(input,.input,button,.btn):focus-visible{
+  outline: none !important;
+  box-shadow: none !important;
+}
+.hero :where(input,.input){
+  border-color: var(--border-muted) !important;
+}
