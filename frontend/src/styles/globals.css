@@ -1,3 +1,4 @@
+@import "./theme.overrides.css";
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -997,7 +998,7 @@ a:hover { opacity: .9; }
 
 /* Заголовки по шкале */
 h1, .h1 { font-size: var(--fs-h1); line-height: var(--lh-tight); font-weight: 700; letter-spacing: -0.01em; }
-h2, .h2 { font-size: var(--fs-h2); line-height: var(--lh-tight); font-weight: 650; letter-spacing: -0.005em; }
+h2, .h2 { font-size: var(--fs-h2); line-height: var(--lh-tight); font-weight:600; letter-spacing: -0.005em; }
 h3, .h3 { font-size: var(--fs-h3); line-height: 1.35;        font-weight: 600; }
 
 /* Мелкие утилиты */
@@ -1558,3 +1559,68 @@ h3, .h3 { font-size: var(--fs-h3); line-height: 1.35;        font-weight: 600; }
   box-shadow: 0 8px 26px rgba(0,0,0,.35);
   background: color-mix(in hsl, var(--bg-surface) 92%, var(--bg-canvas));
 }
+
+/* === S1-B: VIN chip + accent panels (без градиентов/свечений) === */
+.chip {
+  display:inline-flex; align-items:center; gap:.375rem;
+  height:24px; padding:0 8px; border-radius:9999px;
+  font-size:12px; line-height:1; border:1px solid var(--border-muted);
+  background: var(--bg-surface); color: var(--fg-muted);
+}
+.chip--vin { font-weight:600; letter-spacing:.2px; }
+
+/* Применим «акцент» к типовым контейнерам VIN-страницы,
+   чтобы не править JSX существующих карточек */
+[data-page=vin] .card,
+[data-page=vin] .panel,
+[data-page=vin] .panel-accent {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-muted);
+  border-radius: 16px;
+  padding: 16px;
+  transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease, background-color .16s ease;
+  box-shadow: 0 1px 2px rgba(16,24,40,.04);
+}
+[data-page=vin] .card:hover,
+[data-page=vin] .panel:hover,
+[data-page=vin] .panel-accent:hover,
+[data-page=vin] .card:focus-within,
+[data-page=vin] .panel:focus-within,
+[data-page=vin] .panel-accent:focus-within {
+  transform: translateY(-1px);
+  border-color: color-mix(in hsl, var(--brand) 35%, var(--border-muted));
+  box-shadow: 0 6px 22px rgba(0,0,0,.08);
+}
+[data-theme=dark] [data-page=vin] .card:hover,
+[data-theme=dark] [data-page=vin] .panel:hover,
+[data-theme=dark] [data-page=vin] .panel-accent:hover,
+[data-theme=dark] [data-page=vin] .card:focus-within,
+[data-theme=dark] [data-page=vin] .panel:focus-within,
+[data-theme=dark] [data-page=vin] .panel-accent:focus-within {
+  box-shadow: 0 8px 26px rgba(0,0,0,.35);
+  background: color-mix(in hsl, var(--bg-surface) 92%, var(--bg-canvas));
+}
+
+/* VIN hero/шапка — без фоновых градиентов */
+[data-page=vin] .hero,
+[data-page=vin] .hero * {
+  background: none !important;
+  box-shadow: none !important;
+}
+
+/* === S1-F: глобальная шрифтовая санация === */
+/* Не даём браузеру «рисовать» фальш-жирности и включаем сглаживание */
+html, :host {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-synthesis-weight: none;
+  font-synthesis-style: none;
+}
+
+/* Каталог и VIN — всегда sans по умолчанию (моношрифт — точечно) */
+[data-page=catalog], [data-page=vin] {
+  font-family: var(--font-sans), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+}
+/* Моноширинно только там, где нужно: VIN-чип, код */
+.chip--vin, code, kbd, pre { font-family: var(--font-mono), ui-monospace, SFMono-Regular, Menlo, Consolas; }
