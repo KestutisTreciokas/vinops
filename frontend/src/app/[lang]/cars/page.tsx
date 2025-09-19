@@ -70,21 +70,36 @@ export default function CatalogPage({ params }: { params: { lang: Lang } }) {
       yto: yTo,
       page: String(page),
     })
-    router.replace(`${pathname}${q}`)
+    
+    router.replace({
+      pathname: pathname as any,
+      query: Object.fromEntries(new URLSearchParams(q))
+    })
+  
   }
 
   // Сброс -> чистим всё, кроме type
   const reset = () => {
     setMake(''); setModel(''); setGen(''); setYFrom(''); setYTo(''); setPage(1)
     const q = buildQuery(sp, { make:'', model:'', gen:'', yfrom:'', yto:'', page:'1' })
-    router.replace(`${pathname}${q}`)
+    
+    router.replace({
+      pathname: pathname as any,
+      query: Object.fromEntries(new URLSearchParams(q))
+    })
+  
   }
 
   // смена таба — сразу в URL (и сбрасываем страницу)
   const onTab = (id:string) => {
     setType(id)
     const q = buildQuery(sp, { type:id, page:'1' })
-    router.replace(`${pathname}${q}`)
+    
+    router.replace({
+      pathname: pathname as any,
+      query: Object.fromEntries(new URLSearchParams(q))
+    })
+  
   }
 
   // Данные после фильтрации (клиентская имитация)
@@ -111,7 +126,12 @@ export default function CatalogPage({ params }: { params: { lang: Lang } }) {
     const next = Math.min(Math.max(1,p), totalPages)
     setPage(next)
     const q = buildQuery(sp, { page:String(next) })
-    router.replace(`${pathname}${q}`)
+    
+    router.replace({
+      pathname: pathname as any,
+      query: Object.fromEntries(new URLSearchParams(q))
+    })
+  
   }
 
   return (
