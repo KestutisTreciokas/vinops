@@ -1,14 +1,16 @@
+// /root/work/vinops.restore/frontend/next.config.ts
 import type { NextConfig } from 'next'
 
 const nextConfig: NextConfig = {
-  reactStrictMode: true,
-  experimental: {
-    typedRoutes: true,
-  },
+  experimental: { typedRoutes: true },
+  output: 'standalone',
   i18n: {
     locales: ['en', 'ru'],
     defaultLocale: 'en',
-    localeDetection: true,
+    localeDetection: false, // <— было true
+  },
+  images: {
+    remotePatterns: [{ protocol: 'https', hostname: '**' }],
   },
 }
 
