@@ -1,3 +1,4 @@
+import type { Route } from "next";
 'use client'
 import ChevronDown from '@/icons/ChevronDown'
 import { useEffect, useMemo, useState } from 'react'
@@ -71,10 +72,9 @@ export default function CatalogPage({ params }: { params: { lang: Lang } }) {
       page: String(page),
     })
     
-    router.replace({
-      pathname: pathname as any,
-      query: Object.fromEntries(new URLSearchParams(q))
-    })
+    
+    router.replace((`${pathname}${q}` as unknown as Route))
+  
   
   }
 
@@ -83,10 +83,9 @@ export default function CatalogPage({ params }: { params: { lang: Lang } }) {
     setMake(''); setModel(''); setGen(''); setYFrom(''); setYTo(''); setPage(1)
     const q = buildQuery(sp, { make:'', model:'', gen:'', yfrom:'', yto:'', page:'1' })
     
-    router.replace({
-      pathname: pathname as any,
-      query: Object.fromEntries(new URLSearchParams(q))
-    })
+    
+    router.replace((`${pathname}${q}` as unknown as Route))
+  
   
   }
 
@@ -95,10 +94,9 @@ export default function CatalogPage({ params }: { params: { lang: Lang } }) {
     setType(id)
     const q = buildQuery(sp, { type:id, page:'1' })
     
-    router.replace({
-      pathname: pathname as any,
-      query: Object.fromEntries(new URLSearchParams(q))
-    })
+    
+    router.replace((`${pathname}${q}` as unknown as Route))
+  
   
   }
 
@@ -127,10 +125,9 @@ export default function CatalogPage({ params }: { params: { lang: Lang } }) {
     setPage(next)
     const q = buildQuery(sp, { page:String(next) })
     
-    router.replace({
-      pathname: pathname as any,
-      query: Object.fromEntries(new URLSearchParams(q))
-    })
+    
+    router.replace((`${pathname}${q}` as unknown as Route))
+  
   
   }
 
