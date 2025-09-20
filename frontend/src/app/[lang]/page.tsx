@@ -73,3 +73,36 @@ export default function Home({ params }: { params: { lang: 'en' | 'ru' } }) {
     </>
   )
 }
+
+// --- MS-06 SEO metadata (canonical + hreflang) ---
+export async function generateMetadata({ params } : { params: { lang: 'en'|'ru' } }) {
+  const { lang } = params
+  const t = (en: string, ru: string) => (lang === 'ru' ? ru : en)
+  const BASE = 'https://vinops.online'
+  const PATH = ''
+  const canonical = `${BASE}/${lang}${PATH}`
+  const title = t('VIN history & car sales analytics', 'История VIN и аналитика продаж авто')
+  const description = t('Search cars, see specs and sales history.', 'Ищите авто, смотрите характеристики и историю продаж.')
+
+  return {
+    // layout применит шаблон "%s — vinops"
+    title,
+    description,
+    alternates: {
+      canonical,
+      languages: {
+        en: `${BASE}/en${PATH}`,
+        ru: `${BASE}/ru${PATH}`,
+        'x-default': `${BASE}/en${PATH}`,
+      },
+    },
+    openGraph: {
+      url: canonical,
+      title: `${title} — vinops`,
+      description,
+      type: 'website',
+    },
+    robots: { index: true, follow: true },
+  }
+}
+// --- /MS-06 ---

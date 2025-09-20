@@ -43,3 +43,36 @@ export default function Contacts({ params }: { params: { lang: 'en' | 'ru' } }) 
     </section>
   )
 }
+
+// --- MS-06 SEO metadata (canonical + hreflang) ---
+export async function generateMetadata({ params } : { params: { lang: 'en'|'ru' } }) {
+  const { lang } = params
+  const t = (en: string, ru: string) => (lang === 'ru' ? ru : en)
+  const BASE = 'https://vinops.online'
+  const PATH = '/contacts'
+  const canonical = `${BASE}/${lang}${PATH}`
+  const title = t('Contacts', 'Контакты')
+  const description = t('Get in touch with vinops.', 'Свяжитесь с vinops.')
+
+  return {
+    // layout применит шаблон "%s — vinops"
+    title,
+    description,
+    alternates: {
+      canonical,
+      languages: {
+        en: `${BASE}/en${PATH}`,
+        ru: `${BASE}/ru${PATH}`,
+        'x-default': `${BASE}/en${PATH}`,
+      },
+    },
+    openGraph: {
+      url: canonical,
+      title: `${title} — vinops`,
+      description,
+      type: 'website',
+    },
+    robots: { index: true, follow: true },
+  }
+}
+// --- /MS-06 ---

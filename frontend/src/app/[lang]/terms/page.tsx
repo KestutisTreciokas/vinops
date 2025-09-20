@@ -19,3 +19,36 @@ export default function Terms({ params }: { params: { lang: 'en' | 'ru' } }) {
     </section>
   )
 }
+
+// --- MS-06 SEO metadata (canonical + hreflang) ---
+export async function generateMetadata({ params } : { params: { lang: 'en'|'ru' } }) {
+  const { lang } = params
+  const t = (en: string, ru: string) => (lang === 'ru' ? ru : en)
+  const BASE = 'https://vinops.online'
+  const PATH = '/terms'
+  const canonical = `${BASE}/${lang}${PATH}`
+  const title = t('Terms of Service', 'Условия сервиса')
+  const description = t('Terms and conditions for using vinops.', 'Условия использования сервиса vinops.')
+
+  return {
+    // layout применит шаблон "%s — vinops"
+    title,
+    description,
+    alternates: {
+      canonical,
+      languages: {
+        en: `${BASE}/en${PATH}`,
+        ru: `${BASE}/ru${PATH}`,
+        'x-default': `${BASE}/en${PATH}`,
+      },
+    },
+    openGraph: {
+      url: canonical,
+      title: `${title} — vinops`,
+      description,
+      type: 'website',
+    },
+    robots: { index: true, follow: true },
+  }
+}
+// --- /MS-06 ---
