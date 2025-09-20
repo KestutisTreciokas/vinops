@@ -1,10 +1,9 @@
-import type { MetadataRoute } from 'next'
-import { getSiteUrl } from '../lib/site'
+const BASE = 'https://vinops.online'
 
-export default function robots(): MetadataRoute.Robots {
-  const base = getSiteUrl()
+export default function robots() {
   return {
+    host: 'vinops.online',
+    sitemap: `${BASE}/sitemap.xml`,
     rules: [{ userAgent: '*', allow: '/' }],
-    sitemap: `${base}/sitemap.xml`,
   }
 }
