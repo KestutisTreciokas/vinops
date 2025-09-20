@@ -46,15 +46,15 @@ export async function generateMetadata(
 
 export default function VinPage({ params }: { params: { lang: 'ru'|'en', vin: string } }) {
   const { lang, vin } = params
-  const t = (en: string, ru: string) => (lang === 'ru' ? ru : en)
   const data = sample
+  const t = (en: string, ru: string) => (lang === 'ru' ? ru : en)
 
   return (
     <div className="container mx-auto px-4">
       {/* JSON-LD */}
       <SeoVinJsonLd lang={lang} vin={vin} />
 
-      <h1 className="h1 mb-2">VIN: {vin}</h1>
+      {/* Описание под заголовком из layout */}
       <p className="lead mb-6">
         {lang === 'ru'
           ? 'Актуальная информация по лоту, фото, характеристики и история.'
