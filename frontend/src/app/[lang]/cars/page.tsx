@@ -1,4 +1,3 @@
-import type { Route } from "next";
 'use client'
 import ChevronDown from '@/icons/ChevronDown'
 import { useEffect, useMemo, useState } from 'react'
@@ -73,7 +72,7 @@ export default function CatalogPage({ params }: { params: { lang: Lang } }) {
     })
     
     
-    router.replace((`${pathname}${q}` as unknown as Route))
+    router.replace((`${pathname}${q}` ))
   
   
   }
@@ -84,7 +83,7 @@ export default function CatalogPage({ params }: { params: { lang: Lang } }) {
     const q = buildQuery(sp, { make:'', model:'', gen:'', yfrom:'', yto:'', page:'1' })
     
     
-    router.replace((`${pathname}${q}` as unknown as Route))
+    router.replace((`${pathname}${q}` ))
   
   
   }
@@ -95,7 +94,7 @@ export default function CatalogPage({ params }: { params: { lang: Lang } }) {
     const q = buildQuery(sp, { type:id, page:'1' })
     
     
-    router.replace((`${pathname}${q}` as unknown as Route))
+    router.replace((`${pathname}${q}` ))
   
   
   }
@@ -126,7 +125,7 @@ export default function CatalogPage({ params }: { params: { lang: Lang } }) {
     const q = buildQuery(sp, { page:String(next) })
     
     
-    router.replace((`${pathname}${q}` as unknown as Route))
+    router.replace((`${pathname}${q}` ))
   
   
   }
