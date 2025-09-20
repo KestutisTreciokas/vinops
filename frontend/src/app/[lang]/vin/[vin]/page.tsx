@@ -20,9 +20,8 @@ export async function generateMetadata(
   )
 
   return {
-    // Делаем относительные ссылки абсолютными в <head>
     metadataBase: new URL('https://vinops.online'),
-    title, // шаблон из layout: "%s — vinops"
+    title, // шаблон из root layout: "%s — vinops"
     description,
     alternates: {
       canonical: path,
