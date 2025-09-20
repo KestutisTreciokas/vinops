@@ -1624,3 +1624,16 @@ html, :host {
 }
 /* Моноширинно только там, где нужно: VIN-чип, код */
 .chip--vin, code, kbd, pre { font-family: var(--font-mono), ui-monospace, SFMono-Regular, Menlo, Consolas; }
+
+/* === PT Sans / PT Mono fallbacks & numeric === */
+:root{
+  --font-sans-fallback: system-ui, -apple-system, "Segoe UI", Roboto, Arial, "Noto Sans", "Liberation Sans", sans-serif;
+  --font-mono-fallback: ui-monospace, "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+/* ensure our utilities use variables + fallbacks */
+.font-sans { font-family: var(--font-sans), var(--font-sans-fallback); }
+.font-mono { font-family: var(--font-mono), var(--font-mono-fallback); font-variant-numeric: tabular-nums; }
+
+/* numeric utility for VIN, цены, пробег */
+.num { font-variant-numeric: tabular-nums; }
