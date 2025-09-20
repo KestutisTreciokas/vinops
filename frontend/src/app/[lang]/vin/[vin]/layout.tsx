@@ -1,37 +1,28 @@
-import sample from '@/mock/vin-sample'
-import VinChipCopy from '@/components/VinChipCopy'
+import type { Metadata } from 'next'
+import React from 'react'
+import { buildVinMeta, buildVehicleJsonLd } from './seo'
+
+export async function generateMetadata(
+  { params }: { params: { lang: 'en'|'ru', vin: string } }
+): Promise<Metadata> {
+  const { lang, vin } = params
+  return buildVinMeta(lang, vin)
+}
 
 export default function VinLayout({
-  params,
-  children,
+  children, params
 }: {
-  params: { lang: 'en' | 'ru', vin: string }
-  children: React.ReactNode
+  children: React.ReactNode,
+  params: { lang: 'en'|'ru', vin: string }
 }) {
   const { lang, vin } = params
-  const t = (en: string, ru: string) => (lang === 'ru' ? ru : en)
-  const { year, make, model, body } = sample.specs
-
+  const ld = buildVehicleJsonLd(lang, vin)
   return (
-    <div className="container mx-auto px-4">
-      {/* breadcrumbs */}
-      <nav className="mb-2 text-sm text-fg-muted" aria-label="Breadcrumb">
-        <ol className="flex items-center gap-2">
-          <li><a href={`/${lang}`} className="hover:underline">{t('Home', 'Главная')}</a></li>
-          <li aria-hidden="true">/</li>
-          <li><span>{t('VIN page', 'Страница VIN')}</span></li>
-        </ol>
-      </nav>
-
-      {/* Title + VIN chip (copyable) */}
-      <div className="mb-3 flex items-center justify-between gap-3">
-        <h1 className="h1 m-0 flex-1" data-vin-title="true">
-          {year} {make} {model}, {body}
-        </h1>
-        <VinChipCopy vin={vin} lang={lang} />
-      </div>
-
+    <>
       {children}
-    </div>
+      <script id="ld-vehicle" type="application/ld+json"
+        // eslint-disable-next-line react/no-danger
+        dangerouslySetInnerHTML={{ __html: ld }} />
+    </>
   )
 }
