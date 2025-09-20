@@ -12,6 +12,8 @@ export async function generateMetadata(
   const canonical = `${BASE}/${params.lang}${PATH}`
 
   return {
+    // дублируем на всякий случай; у вас он также задан в [lang]/layout.tsx
+    metadataBase: new URL(BASE),
     alternates: {
       canonical,
       languages: {
