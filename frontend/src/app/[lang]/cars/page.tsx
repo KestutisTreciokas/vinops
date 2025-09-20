@@ -17,6 +17,7 @@ export async function generateMetadata(
   const title = t('Car catalog', 'Каталог автомобилей')
   const description = t('Browse cars and filter by attributes.', 'Просматривайте автомобили и фильтруйте по параметрам.')
 
+    metadataBase: new URL('https://vinops.online'),
   return {
     title, // layout применит шаблон "%s — vinops"
     description,

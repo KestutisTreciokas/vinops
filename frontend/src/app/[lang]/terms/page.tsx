@@ -17,6 +17,7 @@ export async function generateMetadata(
   const title = t('Terms of Service', 'Условия сервиса')
   const description = t('Terms and conditions for using vinops.', 'Условия использования сервиса vinops.')
 
+    metadataBase: new URL('https://vinops.online'),
   return {
     title, // layout применит шаблон "%s — vinops"
     description,
