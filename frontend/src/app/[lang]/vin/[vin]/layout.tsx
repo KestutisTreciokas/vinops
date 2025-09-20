@@ -8,20 +8,54 @@ export default function VinLayout({
   children: React.ReactNode
 }) {
   const { lang, vin } = params
-  const v = sample?.specs || {}
-  const base = [v.year, v.make, v.model].filter(Boolean).join(' ')
-  const suffix = (v as any).trim || v.body
-  const title = suffix ? `${base}, ${suffix}` : base
   const t = (en: string, ru: string) => (lang === 'ru' ? ru : en)
 
+  // Моки до интеграции API
+  const { specs } = sample
+  const title = [specs.year, specs.make, specs.model, specs.body ? `${specs.body}` : '']
+    .filter(Boolean)
+    .join(' ')
+    .replace(' Sedan', ', Sedan') // лёгкий косметический штрих для примера
+
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-3">
-        <h1 className="h1 m-0 flex-1" data-vin-title>{title}</h1>
-        <span className="vin-chip inline-flex items-center gap-1 rounded border border-border-muted px-2 py-1 text-xs">
-          {t('VIN', 'VIN')}: <code className="font-mono">{vin}</code>
-        </span>
+    <div>
+      <div className="container mx-auto px-4">
+        {/* Breadcrumbs (UI) */}
+        <nav className="mb-2 text-sm text-fg-muted" aria-label="Breadcrumb">
+          <ol className="flex items-center gap-2">
+            <li>
+              <a href={`/${lang}`} className="hover:underline">{t('Home', 'Главная')}</a>
+            </li>
+            <li aria-hidden="true">/</li>
+            <li>
+              <span>{t('VIN page', 'Страница VIN')}</span>
+            </li>
+          </ol>
+        </nav>
+
+        {/* Заголовок + VIN chip */}
+        <div className="flex items-center gap-3 mb-4">
+          <h1 className="h1 m-0 flex-1" data-vin-title="true">{title}</h1>
+          <span
+            className="vin-chip inline-flex items-center gap-1 rounded border border-border-muted px-2 py-1 text-xs"
+            data-vin-chip="true"
+          >
+            <span>VIN:</span>
+            <code className="font-mono" data-vin-value={vin}>{vin}</code>
+            {/* Специально без JS, только атрибуты для QA/а11y */}
+            <button
+              type="button"
+              className="copy-btn inline-flex items-center gap-1 rounded-md px-2 h-7 text-xs border border-[var(--border-muted)]"
+              title={t('Copy VIN', 'Скопировать VIN')}
+              aria-label={t('Copy VIN', 'Скопировать VIN')}
+              data-vin-copy={vin}
+            >
+              ⧉
+            </button>
+          </span>
+        </div>
       </div>
+
       {children}
     </div>
   )
