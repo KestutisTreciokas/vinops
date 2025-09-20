@@ -9,13 +9,6 @@ export function buildVinMeta(lang: Lang, vinRaw: string): Metadata {
 
   return {
     title,
-    alternates: {
-      canonical: `${base}/${lang}/vin/${vin}`,
-      languages: {
-        en: `${base}/en/vin/${vin}`,
-        ru: `${base}/ru/vin/${vin}`,
-        'x-default': `${base}/en/vin/${vin}`,
-      },
     },
     robots: { index: true, follow: true },
   }

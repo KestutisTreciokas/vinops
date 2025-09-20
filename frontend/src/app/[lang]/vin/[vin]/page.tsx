@@ -1,4 +1,4 @@
-import type { Metadata, ResolvingMetadata } from 'next'
+import type { Metadata } from 'next'
 import LotInfo from '@/components/vin2/LotInfo'
 import VinSpecs from '@/components/vin2/VinSpecs'
 import History from '@/components/vin2/History'
@@ -7,8 +7,7 @@ import sample from '@/mock/vin-sample'
 import SeoVinJsonLd from './_SeoVinJsonLd'
 
 export async function generateMetadata(
-  { params }: { params: { lang: 'ru' | 'en', vin: string } },
-  _parent: ResolvingMetadata
+  { params }: { params: { lang: 'ru' | 'en', vin: string } }
 ): Promise<Metadata> {
   const { lang, vin } = params
   const t = (en: string, ru: string) => (lang === 'ru' ? ru : en)
@@ -21,11 +20,11 @@ export async function generateMetadata(
   )
 
   return {
-    // layout применит шаблон "%s — vinops"
-    title,
+    // Делаем относительные ссылки абсолютными в <head>
+    metadataBase: new URL('https://vinops.online'),
+    title, // шаблон из layout: "%s — vinops"
     description,
     alternates: {
-      // относительные URL; станут абсолютными через metadataBase
       canonical: path,
       languages: {
         en: `/en/vin/${vin}`,
