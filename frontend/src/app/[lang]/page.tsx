@@ -51,7 +51,7 @@ export default function Home({ params }: { params: { lang: 'en' | 'ru' } }) {
             value={vin}
             onChange={(e) => setVin(e.target.value)}
             placeholder={t('Enter VIN', 'Введите VIN')}
-            className="input input-lg"
+            className="input input-lg font-mono"
             inputMode="text"
             autoCapitalize="characters"
             autoComplete="off"
