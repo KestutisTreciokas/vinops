@@ -4,5 +4,15 @@
 
 vinops.online, www.vinops.online {
     encode zstd gzip
+
+    # Security headers (base) + remove X-Powered-By from upstream
+    header {
+        -X-Powered-By
+        X-Frame-Options "SAMEORIGIN"
+        X-Content-Type-Options "nosniff"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        # HSTS рекомендуется на прокси, но включим отдельно при необходимости (report-first/CSP — в отдельном спринте)
+    }
+
     reverse_proxy web:3000
 }
