@@ -1,27 +1,14 @@
-export default function Terms({ params }: { params: { lang: 'en' | 'ru' } }) {
-  const t = (en: string, ru: string) => (params.lang === 'ru' ? ru : en)
-  return (
-    <section className="grid gap-6">
-      <header>
-        <h1 className="h1">{t('Terms & Conditions', 'Условия использования')}</h1>
-        <p className="lead mt-2">
-          {t('Placeholder page — content will be added later.',
-             'Заглушка — содержимое добавим позже.')}
-        </p>
-      </header>
+import type { Metadata } from 'next'
+import PageClient from './PageClient'
 
-      <div className="card p-6">
-        <p className="text-sm text-fg-muted">
-          {t('If you have questions, please contact us via email or Telegram.',
-             'Если есть вопросы — свяжитесь по email или в Telegram.')}
-        </p>
-      </div>
-    </section>
-  )
+export default function Page({ params }: { params: { lang: 'en'|'ru' } }) {
+  return <PageClient params={params} />
 }
 
-// --- MS-06 SEO metadata (canonical + hreflang) ---
-export async function generateMetadata({ params } : { params: { lang: 'en'|'ru' } }) {
+// --- MS-06 SEO metadata (server) ---
+export async function generateMetadata(
+  { params }: { params: { lang: 'en'|'ru' } }
+): Promise<Metadata> {
   const { lang } = params
   const t = (en: string, ru: string) => (lang === 'ru' ? ru : en)
   const BASE = 'https://vinops.online'
@@ -31,8 +18,7 @@ export async function generateMetadata({ params } : { params: { lang: 'en'|'ru' 
   const description = t('Terms and conditions for using vinops.', 'Условия использования сервиса vinops.')
 
   return {
-    // layout применит шаблон "%s — vinops"
-    title,
+    title, // layout применит шаблон "%s — vinops"
     description,
     alternates: {
       canonical,
