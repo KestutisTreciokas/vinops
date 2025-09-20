@@ -1,12 +1,12 @@
 export const dynamic = 'force-static';
 
-export function GET() {
+export async function GET() {
   return new Response('ok', {
+    headers: { 'Content-Type': 'text/plain; charset=utf-8' },
     status: 200,
-    headers: { 'content-type': 'text/plain; charset=utf-8' },
   });
 }
 
-export function HEAD() {
+export async function HEAD() {
   return new Response(null, { status: 200 });
 }
