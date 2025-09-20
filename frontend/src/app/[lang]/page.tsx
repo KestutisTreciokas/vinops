@@ -17,8 +17,8 @@ export async function generateMetadata(
   const title = t('VIN history & car sales analytics', 'История VIN и аналитика продаж авто')
   const description = t('Search cars, see specs and sales history.', 'Ищите авто, смотрите характеристики и историю продаж.')
 
-    metadataBase: new URL('https://vinops.online'),
   return {
+    metadataBase: new URL('https://vinops.online'),
     title, // layout применит шаблон "%s — vinops"
     description,
     alternates: {

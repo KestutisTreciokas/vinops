@@ -17,8 +17,8 @@ export async function generateMetadata(
   const title = t('Contacts', 'Контакты')
   const description = t('Get in touch with vinops.', 'Свяжитесь с vinops.')
 
-    metadataBase: new URL('https://vinops.online'),
   return {
+    metadataBase: new URL('https://vinops.online'),
     title, // layout применит шаблон "%s — vinops"
     description,
     alternates: {
