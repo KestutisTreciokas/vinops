@@ -1,18 +1,31 @@
-// /root/work/vinops.restore/frontend/src/app/sitemap.ts
 import type { MetadataRoute } from 'next'
 
-export default function sitemap(): MetadataRoute.Sitemap {
-  const base = process.env.NEXT_PUBLIC_SITE_URL || 'https://vinops.online'
-  const now = new Date()
+const siteUrl = 'https://vinops.online'
+const langs = ['en','ru'] as const
+const routes = ['', '/cars', '/contacts', '/terms'] as const
 
-  return [
-    { url: `${base}/en`, lastModified: now, changeFrequency: 'daily', priority: 1 },
-    { url: `${base}/ru`, lastModified: now, changeFrequency: 'daily', priority: 1 },
-    { url: `${base}/en/cars`, lastModified: now },
-    { url: `${base}/ru/cars`, lastModified: now },
-    { url: `${base}/en/contacts`, lastModified: now },
-    { url: `${base}/ru/contacts`, lastModified: now },
-    { url: `${base}/en/terms`, lastModified: now },
-    { url: `${base}/ru/terms`, lastModified: now },
-  ]
+export default function sitemap(): MetadataRoute.Sitemap {
+  const now = new Date()
+  const entries: MetadataRoute.Sitemap = []
+
+  for (const path of routes) {
+    for (const lang of langs) {
+      const url = `${siteUrl}/${lang}${path}`
+      entries.push({
+        url,
+        lastModified: now,
+        changeFrequency: path === '' ? 'weekly' : 'monthly',
+        priority: path === '' ? 1 : 0.6,
+        alternates: {
+          languages: {
+            en: `${siteUrl}/en${path}`,
+            ru: `${siteUrl}/ru${path}`,
+            'x-default': `${siteUrl}/en${path}`,
+          },
+        },
+      })
+    }
+  }
+
+  return entries
 }
