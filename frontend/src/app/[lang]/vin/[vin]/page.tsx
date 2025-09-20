@@ -1,6 +1,6 @@
 import type { Metadata, ResolvingMetadata } from 'next'
 import LotInfo from '@/components/vin2/LotInfo'
-import Specs from '@/components/vin2/Specs'
+import VinSpecs from '@/components/vin2/VinSpecs'
 import History from '@/components/vin2/History'
 import VinGallery from '@/components/vin2/Gallery'
 import sample from '@/mock/vin-sample'
@@ -80,7 +80,7 @@ export default function VinPage({ params }: { params: { lang: 'ru'|'en', vin: st
 
         {/* Правая колонка: характеристики и инфо по лоту */}
         <div className="lg:col-span-5 space-y-6">
-          <Specs specs={data.specs} />
+          <VinSpecs specs={data.specs} lang={lang} />
           <LotInfo lot={data.lot} history={data.history} lang={lang} />
         </div>
 
