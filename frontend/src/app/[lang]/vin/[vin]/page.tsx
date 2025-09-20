@@ -6,8 +6,6 @@ import VinGallery from '@/components/vin2/Gallery'
 import sample from '@/mock/vin-sample'
 import SeoVinJsonLd from './_SeoVinJsonLd'
 
-const BASE_URL = 'https://vinops.online'
-
 export async function generateMetadata(
   { params }: { params: { lang: 'ru' | 'en', vin: string } },
   _parent: ResolvingMetadata
@@ -16,7 +14,6 @@ export async function generateMetadata(
   const t = (en: string, ru: string) => (lang === 'ru' ? ru : en)
 
   const path = `/${lang}/vin/${vin}`
-  const canonical = `${BASE_URL}${path}`
   const title = t(`VIN ${vin}`, `VIN ${vin}`)
   const description = t(
     `Vehicle details, photos and sale history for VIN ${vin}.`,
@@ -24,18 +21,20 @@ export async function generateMetadata(
   )
 
   return {
-    title, // layout will apply template "%s — vinops"
+    // layout применит шаблон "%s — vinops"
+    title,
     description,
     alternates: {
-      canonical,
+      // относительные URL; станут абсолютными через metadataBase
+      canonical: path,
       languages: {
-        en: `${BASE_URL}/en/vin/${vin}`,
-        ru: `${BASE_URL}/ru/vin/${vin}`,
-        'x-default': `${BASE_URL}/en/vin/${vin}`,
+        en: `/en/vin/${vin}`,
+        ru: `/ru/vin/${vin}`,
+        'x-default': `/en/vin/${vin}`,
       },
     },
     openGraph: {
-      url: canonical,
+      url: path,
       title: `${title} — vinops`,
       description,
       type: 'website',
