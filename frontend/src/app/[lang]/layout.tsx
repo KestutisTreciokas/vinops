@@ -10,6 +10,7 @@ const NAV = [
 ]
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://vinops.online'),
   title: { default: 'vinops', template: '%s — vinops' },
 }
 
@@ -68,4 +69,9 @@ function LangSwitcher({ lang }: { lang: 'en' | 'ru' }) {
       </a>
     </div>
   )
+}
+
+export const dynamicParams = false
+export function generateStaticParams() {
+  return [{ lang: 'en' }, { lang: 'ru' }]
 }
