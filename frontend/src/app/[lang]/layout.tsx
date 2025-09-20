@@ -51,7 +51,6 @@ export default function LangLayout({
           <div>© {new Date().getFullYear()} vinops</div>
           <div className="flex items-center gap-4">
             <a href="mailto:request@vinops.online">request@vinops.online</a>
-            <a href="https://t.me/keustis" target="_blank" rel="noreferrer">@keustis</a>
           </div>
         </div>
       </footer>
