@@ -49,23 +49,12 @@ export default function VinPage({ params }: { params: { lang: 'ru'|'en', vin: st
   const data = sample
   const t = (en: string, ru: string) => (lang === 'ru' ? ru : en)
 
-  // --- H1: Year Make Model, Trim | fallback "VIN {vin}"
-  const specs: any = (data as any)?.specs || {}
-  const titleBase = [specs.year, specs.make, specs.model].filter(Boolean).join(' ')
-  const h1Title = titleBase ? `${titleBase}${specs.trim ? `, ${specs.trim}` : ''}` : `VIN ${vin}`
-
   return (
     <div className="container mx-auto px-4">
       {/* JSON-LD */}
       <SeoVinJsonLd lang={lang} vin={vin} />
 
-      {/* H1 + VIN-chip */}
-      <div className="flex items-start justify-between gap-3 mb-2">
-        <h1 className="h1">{h1Title}</h1>
-        <span className="badge" title={t('Vehicle VIN','VIN автомобиля')}>{vin}</span>
-      </div>
-
-      {/* Описание под заголовком */}
+      {/* Описание под заголовком из layout */}
       <p className="lead mb-6">
         {lang === 'ru'
           ? 'Актуальная информация по лоту, фото, характеристики и история.'

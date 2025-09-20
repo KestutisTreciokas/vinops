@@ -1,441 +1,411 @@
 #!/usr/bin/env bash
-set -Eeuo pipefail
+# bin/diag.sh — Read-only диагностика проекта и окружения
+# Создаёт снимок состояния в context/context-YYYY-MM-DD_HHMMSS-Europe_Warsaw/ и пакует в .tar.gz
+# Политики: без разрушающих действий; падать нельзя (всегда exit 0); секреты маскируются в отчётах.
 
-# ==============================================================================
-# vinops.restore — сбор диагностического контекста (read-only)
-# Сохраняет системную/репозитории/докер/Next/SEO/БД/логи в context/context-<TS>-Europe_Warsaw/
-# Никаких перезапусков, билдов, миграций или записей в БД — только чтение.
-# ==============================================================================
+###############################################################################
+# Глобальные установки (без 'set -e', мы не падаем на ошибках)
+###############################################################################
+umask 022
+export LC_ALL=C
+export LANG=C
+TZ_WARS=Europe/Warsaw
+NOW_LOCAL="$(date '+%Y-%m-%d %H:%M')"
+NOW_WARS="$(TZ="$TZ_WARS" date '+%Y-%m-%d %H:%M')"
+STAMP="$(TZ="$TZ_WARS" date '+%Y-%m-%d_%H%M%S')-Europe_Warsaw"
+EXIT_CODE=0
 
-# --- Ошибки и подсказки -------------------------------------------------------
-on_err() {
-  local exit_code=$?
-  echo "[ERROR] Script failed at line ${BASH_LINENO[0]} with exit code ${exit_code}." >&2
-  echo "        Tip: run with '--help' to see options; check that Docker/Compose/Node are installed." >&2
-  exit "$exit_code"
-}
-trap on_err ERR
-
-# --- Опции --------------------------------------------------------------------
-REPO_ROOT=""
-HOST_URL=""
-LOG_LINES="300"
-SHOW_HELP="false"
+###############################################################################
+# Параметры
+###############################################################################
+REPO=""
+HOST=""
+LOGS_TAIL=300
+OUT_DIR=""
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --repo) REPO_ROOT="${2:-}"; shift 2 ;;
-    --host) HOST_URL="${2:-}"; shift 2 ;;
-    --logs) LOG_LINES="${2:-300}"; shift 2 ;;
-    -h|--help) SHOW_HELP="true"; shift ;;
-    *) echo "[WARN] Unknown argument: $1" >&2; shift ;;
+    --repo) REPO="$2"; shift 2 ;;
+    --host) HOST="$2"; shift 2 ;;
+    --logs) LOGS_TAIL="$2"; shift 2 ;;
+    --out)  OUT_DIR="$2"; shift 2 ;;
+    *) echo "WARN: unknown arg: $1" >&2; shift ;;
   esac
 done
 
-if [[ "$SHOW_HELP" == "true" ]]; then
-  cat <<'HLP'
-Usage: bash bin/diag.sh [--repo /path/to/repo] [--host https://domain] [--logs N]
+###############################################################################
+# Утилиты
+###############################################################################
+info(){ echo "[INFO] $*" >&2; }
+warn(){ echo "[WARN] $*" >&2; }
 
-Options:
-  --repo PATH    : Явно указать корень репозитория.
-  --host URL     : Публичный хост/домен (например, https://vinops.online или http://localhost:3000).
-  --logs N       : Сколько строк логов сохранять (по умолчанию 300).
-  -h, --help     : Показать помощь.
+# Безопасный раннер (не рушит процесс), пишет в файл, добавляет шапку с датой/ТЗ
+run_to_file(){
+  local outfile="$1"; shift
+  {
+    echo "### cmd: $*"
+    echo "### at:  $(date '+%Y-%m-%d %H:%M')  local | $(TZ="$TZ_WARS" date '+%Y-%m-%d %H:%M')  $TZ_WARS"
+    "$@" 2>&1 || echo "!!! command failed (non-fatal)"
+  } > "$outfile"
+}
 
-Скрипт read-only. Все артефакты — в context/context-<YYYY-MM-DD_HHMMSS>-Europe_Warsaw/.
-HLP
-  exit 0
+# Сбор всех docker-compose*.yml в корне репо
+compose_args_from_repo(){
+  local repo="$1"
+  local args=()
+  local found=0
+  while IFS= read -r f; do
+    [[ -n "$f" ]] || continue
+    args+=("-f" "$f")
+    found=1
+  done < <(cd "$repo" 2>/dev/null && ls -1 docker-compose*.yml 2>/dev/null || true)
+  if [[ $found -eq 0 ]]; then
+    # нет файлов — вернём пустой список, docker compose сам попробует дефолты
+    :
+  fi
+  printf "%s " "${args[@]}"
+}
+
+# Маскирование значений в парах KEY=VALUE (используется при публикации env)
+mask_keyvals(){
+  # Маскируем ВСЕ значения (по заданию для env в инспекциях)
+  sed -E 's#^([A-Za-z0-9_]+)=.*#\1=***#'
+}
+
+# Быстрая проверка статуса HTTP (код + заголовки) и размера тела
+http_probe(){
+  local base="$1"
+  local path="$2"
+  local outdir="$3"
+  local safe_url="${base%/}${path}"
+  # HEAD
+  curl -ksSI "$safe_url" > "${outdir}/HEAD_${path//\//_}.txt" 2>&1 || true
+  # GET размер
+  local size; size="$(curl -ksS "$safe_url" -o /dev/null -w '%{size_download}' 2>/dev/null || echo 0)"
+  echo "size_bytes: $size" > "${outdir}/SIZE_${path//\//_}.txt"
+}
+
+# Нормализованная печать “UNKNOWN: как проверить”
+unknown_note(){
+  local what="$1"; local how="$2"
+  echo "- UNKNOWN: ${what}"
+  echo "  How to check: ${how}"
+}
+
+###############################################################################
+# Автодетект корня репозитория и выходной директории
+###############################################################################
+if [[ -z "$REPO" ]]; then
+  if git rev-parse --show-toplevel >/dev/null 2>&1; then
+    REPO="$(git rev-parse --show-toplevel 2>/dev/null)"
+  else
+    REPO="$PWD"
+    warn "git root not found; using PWD: $REPO"
+  fi
 fi
 
-# --- Утилиты и проверки -------------------------------------------------------
-has() { command -v "$1" >/dev/null 2>&1; }
-nullifempty() { [[ -n "${1-}" ]] && echo "$1" || echo ""; }
-
-# --- Поиск корня репозитория --------------------------------------------------
-find_repo_root() {
-  if [[ -n "${REPO_ROOT}" ]]; then
-    echo "$REPO_ROOT"
-    return 0
-  fi
-  # 1) если запускают из bin/
-  local here; here="$(pwd)"
-  if [[ -d ".git" ]]; then echo "$here"; return 0; fi
-  # 2) поднимаемся вверх до 6 уровней
-  local d="$here"
-  for _ in {1..6}; do
-    d="$(dirname "$d")"
-    if [[ -d "$d/.git" ]]; then echo "$d"; return 0; fi
-  done
-  # 3) эвристика из истории чата
-  if [[ -d "/root/work/vinops.restore/.git" ]]; then echo "/root/work/vinops.restore"; return 0; fi
-  echo "[FATAL] Can't detect repo root. Use --repo /path/to/repo" >&2
-  exit 2
-}
-
-REPO_ROOT="$(find_repo_root)"
-cd "$REPO_ROOT"
-
-# --- Таймстемпы и директории --------------------------------------------------
-TS="$(TZ=Europe/Warsaw date '+%Y-%m-%d_%H%M%S-Europe_Warsaw')"
-CTX_DIR="$REPO_ROOT/context/context-${TS}"
-mkdir -p "$CTX_DIR"
-
-# Короткий README в контекст
-cat > "$CTX_DIR/README.md" <<EOF
-# Snapshot: ${TS}
-
-This folder contains read-only diagnostics of the repo and runtime:
-- Git state, system info, timezones, Node/Next versions
-- Docker Compose config, running containers, ports, images, redacted inspect
-- Next.js artifacts: routes tree, manifests (if present)
-- Public endpoints (HEAD/GET), SEO tags (canonical/hreflang)
-- Database (Postgres) schema overview (tables only) — if accessible
-- Cron/timers — host & containers (read-only)
-- Logs: last ${LOG_LINES} lines per key services
-- Configs: docker-compose*.yml, Dockerfile*, .env*.masked
-EOF
-
-# --- Хелперы вывода/маскировки ------------------------------------------------
-secdir() { mkdir -p "$CTX_DIR/$1"; echo "$CTX_DIR/$1"; }
-
-mask_env_stream() {
-  # Маскируем чувствительные ключи вида KEY=VALUE
-  # Совпадения по ключу (без учёта регистра): secret, password, passwd, pwd, token, key, api, dsn, url, connection, auth, cookie, session
-  awk -F= 'BEGIN{IGNORECASE=1}
-    $1 ~ /(secret|password|passwd|pwd|token|key|api|dsn|url|connection|auth|cookie|session)/ {
-      print $1"=***REDACTED***"; next
-    }
-    { print $0 }'
-}
-
-mask_docker_inspect_json() {
-  # Если есть jq — аккуратно маскируем .Config.Env
-  if has jq; then
-    jq 'if .[]?.Config?.Env then
-          .[].Config.Env |= (map( capture("(?<k>^[^=]+)=(?<v>.*)") | .k as $k |
-            if ($k|ascii_downcase) | test("(secret|password|passwd|pwd|token|key|api|dsn|url|connection|auth|cookie|session)")
-            then "\($k)=***REDACTED***" else "\($k)=***" + (.v|tostring|gsub(".+";"REDACTED")) + "***" end
-          ))
-        else . end'
-  else
-    cat
-  fi
-}
-
-hr() { printf -- "================================================================================\n"; }
-
-note() {
-  printf -- "\n## %s\n" "$1"
-  [[ $# -gt 1 ]] && printf -- "# %s\n" "$2"
-}
-
-# --- 01: Git ------------------------------------------------------------------
-{
-  note "GIT — branch, last 10 commits, status, tags" "Подтверждаем актуальную ветку и незакоммиченные изменения"
-  echo "[repo] $REPO_ROOT"
-  git rev-parse --is-inside-work-tree >/dev/null 2>&1 || { echo "Not a git repo"; exit 0; }
-  echo "branch: $(git rev-parse --abbrev-ref HEAD)"
-  echo
-  echo "[last 10 commits]"
-  git --no-pager log --oneline -n 10
-  echo
-  echo "[status]"
-  git status -s
-  echo
-  echo "[tags]"
-  git tag --list | tail -n 50
-} > "$(secdir 01_git)/git.txt" 2>&1 || true
-
-# --- 02: System ---------------------------------------------------------------
-{
-  note "SYSTEM — OS/Kernel/CPU/RAM/Disk" "Базовые ресурсы"
-  echo "[lsb_release]"; (lsb_release -a 2>/dev/null || true)
-  echo; echo "[uname -a]"; uname -a || true
-  echo; echo "[lscpu]"; (lscpu 2>/dev/null || true)
-  echo; echo "[free -h]"; (free -h 2>/dev/null || true)
-  echo; echo "[df -h]"; df -h || true
-} > "$(secdir 02_system)/system.txt" 2>&1 || true
-
-# --- 03: Timezones ------------------------------------------------------------
-{
-  note "TIME — local & Europe/Warsaw" "Фиксируем абсолютные временные метки"
-  echo "Local:        $(date -Iseconds)"
-  echo "Europe/Warsaw: $(TZ=Europe/Warsaw date -Iseconds)"
-} > "$(secdir 03_time)/time.txt" 2>&1 || true
-
-# --- 04: Node & Next ----------------------------------------------------------
-{
-  note "RUNTIME — Node/Package managers/Next" "Версии инструментов"
-  echo "[node]"; (node -v 2>/dev/null || echo "node: not found")
-  echo "[pnpm]"; (pnpm -v 2>/dev/null || echo "pnpm: not found")
-  echo "[npm ]"; (npm -v  2>/dev/null || echo "npm : not found")
-  echo "[yarn]"; (yarn -v 2>/dev/null || echo "yarn: not found")
-  echo "[npx ]"; (npx -v  2>/dev/null || echo "npx : not found")
-  echo "[next]"; (next -v 2>/dev/null || echo "next: not found")
-} > "$(secdir 04_runtime)/node_next.txt" 2>&1 || true
-
-# --- 05: Repo layout ----------------------------------------------------------
-{
-  note "REPO LAYOUT — дерево ключевых каталогов" "Что участвует в сборке"
-  echo "[tree: frontend/src/app (если есть)]"
-  if [[ -d "$REPO_ROOT/frontend/src/app" ]]; then
-    (cd "$REPO_ROOT/frontend/src/app" && find . -maxdepth 4 -type d | sort)
-    echo "participates: YES (Next.js App Router expected)"
-  else
-    echo "not found: $REPO_ROOT/frontend/src/app"
-  fi
-  echo
-  echo "[tree: app (если есть)]"
-  if [[ -d "$REPO_ROOT/app" ]]; then
-    (cd "$REPO_ROOT/app" && find . -maxdepth 3 -type d | sort)
-    echo "participates: UNKNOWN (check Dockerfile/build context)"
-  else
-    echo "not found: $REPO_ROOT/app"
-  fi
-  echo
-  echo "[infra/docker/* if present]"
-  (ls -la "$REPO_ROOT/docker" 2>/dev/null || echo "no docker/ dir")
-  echo
-  echo "[Dockerfile(s) at repo root]"
-  (ls -la "$REPO_ROOT"/Dockerfile* 2>/dev/null || echo "no Dockerfile* at root")
-} > "$(secdir 05_layout)/layout.txt" 2>&1 || true
-
-# --- 06: Docker & Compose -----------------------------------------------------
-DC_DIR="$(secdir 06_docker)"
-{
-  note "DOCKER COMPOSE — config" "Собираем единую конфигурацию (-f для всех известных файлов)"
-  COMPOSE_FILES=()
-  for f in docker-compose.prod.yml docker-compose.db.yml docker-compose.hostfix.yml docker-compose.health.yml docker-compose.yml; do
-    [[ -f "$REPO_ROOT/$f" ]] && COMPOSE_FILES+=("-f" "$REPO_ROOT/$f")
-  done
-  if has docker && has docker compose && [[ ${#COMPOSE_FILES[@]} -gt 0 ]]; then
-    echo "[compose files] ${COMPOSE_FILES[*]}"
-    docker compose "${COMPOSE_FILES[@]}" config 2>&1 | tee "$DC_DIR/compose.config.yml" >/dev/null || true
-    echo
-    echo "[services]"
-    (docker compose "${COMPOSE_FILES[@]}" config --services || true)
-  else
-    echo "docker compose not available or compose files missing"
-  fi
-} > "$DC_DIR/compose.txt" 2>&1 || true
-
-{
-  note "DOCKER — ps / images / ports" "Что запущено и на каких портах слушает"
-  echo "[docker ps]"
-  (docker ps --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}' 2>/dev/null || true)
-  echo
-  echo "[docker images]"
-  (docker images --format 'table {{.Repository}}\t{{.Tag}}\t{{.ID}}\t{{.Size}}\t{{.CreatedSince}}' 2>/dev/null || true)
-  echo
-  echo "[ss -tulpn | grep LISTEN]"
-  (ss -tulpn 2>/dev/null | grep LISTEN || true)
-} > "$DC_DIR/runtime.txt" 2>&1 || true
-
-# docker inspect (редакция env)
-if has docker; then
-  for cname in $(docker ps --format '{{.Names}}'); do
-    docker inspect "$cname" 2>/dev/null | mask_docker_inspect_json > "$DC_DIR/inspect-${cname}.json" || true
-  done
+if [[ -z "$OUT_DIR" ]]; then
+  OUT_DIR="$REPO/context"
 fi
+mkdir -p "$OUT_DIR" || true
 
-# --- 07: Next.js — артефакты и маршруты --------------------------------------
-NX_DIR="$(secdir 07_next)"
+REPORT_DIR="$OUT_DIR/context-${STAMP}"
+mkdir -p "$REPORT_DIR" || true
+
+###############################################################################
+# README
+###############################################################################
+cat > "$REPORT_DIR/README.txt" <<README_EOF
+Snapshot generated by bin/diag.sh
+Local time:        $NOW_LOCAL
+Europe/Warsaw:     $NOW_WARS
+Repo root:         $REPO
+Host (target):     ${HOST:-UNKNOWN}
+Logs tail (lines): $LOGS_TAIL
+
+All files are read-only snapshots for handover.
+README_EOF
+
+###############################################################################
+# 00. OS / Host
+###############################################################################
+mkdir -p "$REPORT_DIR/00_os_host"
+run_to_file "$REPORT_DIR/00_os_host/lsb_release.txt" bash -lc "lsb_release -a 2>/dev/null || cat /etc/os-release 2>/dev/null || uname -a"
+run_to_file "$REPORT_DIR/00_os_host/uname.txt"        uname -a
+run_to_file "$REPORT_DIR/00_os_host/lscpu.txt"        lscpu
+run_to_file "$REPORT_DIR/00_os_host/free.txt"         free -h
+run_to_file "$REPORT_DIR/00_os_host/df.txt"           df -h
 {
-  note "NEXT ARTIFACTS — .next, manifests" "Проверяем, что собрано/развёрнуто"
-  for root in "$REPO_ROOT/frontend" "$REPO_ROOT"; do
-    if [[ -d "$root/.next" ]]; then
-      echo "[found] $root/.next"
-      ls -la "$root/.next" || true
-      [[ -d "$root/.next/server" ]] && ls -la "$root/.next/server" || true
-      [[ -f "$root/.next/server/app-paths-manifest.json" ]] && cp -f "$root/.next/server/app-paths-manifest.json" "$NX_DIR/app-paths-manifest.json" || true
-      [[ -f "$root/.next/server/server.js" ]] && cp -f "$root/.next/server/server.js" "$NX_DIR/server.js" || true
-    fi
-  done
+  echo "Local:        $(date '+%Y-%m-%d %H:%M')"
+  echo "Europe/Warsaw: $(TZ="$TZ_WARS" date '+%Y-%m-%d %H:%M')"
+} > "$REPORT_DIR/00_os_host/time.txt"
 
+###############################################################################
+# 01. Git
+###############################################################################
+mkdir -p "$REPORT_DIR/01_git"
+( cd "$REPO" 2>/dev/null \
+  && { git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "UNKNOWN_BRANCH"; } \
+) > "$REPORT_DIR/01_git/branch.txt" 2>&1
+( cd "$REPO" 2>/dev/null \
+  && git log --oneline -n 20 2>/dev/null || true \
+) > "$REPORT_DIR/01_git/last_commits.txt"
+( cd "$REPO" 2>/dev/null && git status -s 2>/dev/null || true ) > "$REPORT_DIR/01_git/status.txt"
+( cd "$REPO" 2>/dev/null && git tag -l 2>/dev/null || true ) > "$REPORT_DIR/01_git/tags.txt"
+( cd "$REPO" 2>/dev/null && git remote -v 2>/dev/null || true ) > "$REPORT_DIR/01_git/remotes.txt"
+
+###############################################################################
+# 02. Repo layout (и участие в сборке)
+###############################################################################
+mkdir -p "$REPORT_DIR/02_repo_layout"
+LAYOUT_FILE="$REPORT_DIR/02_repo_layout/layout.txt"
+{
+  echo "# Tree (depth 3):"
+  (cd "$REPO" 2>/dev/null && find . -maxdepth 3 -type d \( -path "./.git" -o -path "./node_modules" \) -prune -o -type d -print | sed 's#^\./##' | sort)
   echo
-  note "NEXT ROUTES — файловая иерархия app/*" "Ищем page.tsx/layout.tsx/head.tsx и динамические сегменты"
-  if [[ -d "$REPO_ROOT/frontend/src/app" ]]; then
-    (cd "$REPO_ROOT/frontend/src/app" && \
-      find . -type f \( -name 'page.tsx' -o -name 'layout.tsx' -o -name 'head.tsx' \) \
-        -printf '%p\n' | sort)
-    echo
-    echo "[dynamic segments]"
-    (cd "$REPO_ROOT/frontend/src/app" && \
-      find . -type d -regex '.*/\[.*\].*' -printf '%p\n' | sort)
+  echo "# Participation in build (heuristics via compose & next.config.*):"
+  # Соберём список контекстов сборки из compose
+  COMPOSE_ARGS=( $(compose_args_from_repo "$REPO") )
+  if docker compose "${COMPOSE_ARGS[@]}" config >/dev/null 2>&1; then
+    docker compose "${COMPOSE_ARGS[@]}" config 2>/dev/null | awk '
+      $1=="services:" { in=1; next }
+      in && $1~/^[a-zA-Z0-9_-]+:$/ { svc=$1; gsub(":","",svc) }
+      in && $1=="build:" { build=1 }
+      in && build && $1=="context:" { ctx=$2; gsub("\"","",ctx); gsub("'\'","",ctx); print "service="svc"  build_context="ctx; build=0 }
+    ' || true
   else
-    echo "No frontend/src/app directory"
+    echo "UNKNOWN: docker compose config failed"
   fi
-} > "$NX_DIR/next.txt" 2>&1 || true
-
-# --- 08: Public endpoints -----------------------------------------------------
-PUB_DIR="$(secdir 08_public)"
-guess_host() {
-  if [[ -n "$HOST_URL" ]]; then echo "$HOST_URL"; return 0; fi
-  # попробуем угадать из Caddyfile
-  if [[ -f "$REPO_ROOT/caddy/Caddyfile" ]]; then
-    local h
-    h="$(grep -Eo 'vinops\.online' "$REPO_ROOT/caddy/Caddyfile" || true)"
-    [[ -n "$h" ]] && echo "https://vinops.online" && return 0
+  # next.config.* присутствует?
+  if ls "$REPO"/frontend/next.config.* >/dev/null 2>&1; then
+    echo "frontend participates (next.config.* present)"
   fi
-  # дефолт из контекста
-  echo "https://vinops.online"
-}
-HOST_URL="$(guess_host)"
+} > "$LAYOUT_FILE"
 
-curl_smart_head() {
-  local url="$1"
-  echo "[HEAD] $url"
-  curl -k -sS -I "$url" || true
-}
+###############################################################################
+# 03. Node/JS toolchain
+###############################################################################
+mkdir -p "$REPORT_DIR/03_node_js"
+run_to_file "$REPORT_DIR/03_node_js/node.txt"  node -v
+run_to_file "$REPORT_DIR/03_node_js/npm.txt"   npm -v
+run_to_file "$REPORT_DIR/03_node_js/pnpm.txt"  sh -lc "pnpm -v"      # may fail
+run_to_file "$REPORT_DIR/03_node_js/yarn.txt"  sh -lc "yarn -v"      # may fail
+run_to_file "$REPORT_DIR/03_node_js/npx.txt"   npx --version
+run_to_file "$REPORT_DIR/03_node_js/next.txt"  sh -lc "next -v"      # may fail
 
-curl_smart_get() {
-  local url="$1"
-  echo "[GET-SNIPPET] $url"
-  curl -k -sS "$url" | sed -n '1,160p' || true
-}
+###############################################################################
+# 04. Docker / Compose
+###############################################################################
+mkdir -p "$REPORT_DIR/04_docker"
+run_to_file "$REPORT_DIR/04_docker/docker_version.txt"        docker version
+run_to_file "$REPORT_DIR/04_docker/docker_compose_version.txt" docker compose version
+COMPOSE_ARGS=( $(compose_args_from_repo "$REPO") )
+run_to_file "$REPORT_DIR/04_docker/compose_config.yaml"       docker compose "${COMPOSE_ARGS[@]}" config
+run_to_file "$REPORT_DIR/04_docker/compose_ps.txt"            docker compose "${COMPOSE_ARGS[@]}" ps
+run_to_file "$REPORT_DIR/04_docker/images.txt"                sh -lc 'docker images --format "table {{.Repository}}\t{{.Tag}}\t{{.Size}}"'
+run_to_file "$REPORT_DIR/04_docker/ports_listen.txt"          sh -lc "ss -tulpn | grep LISTEN || true"
 
-{
-  note "PUBLIC — HEAD / GET (snippet)" "Фиксируем коды и ключевые заголовки"
-  echo "Host: $HOST_URL"
-  for p in "/" "/en" "/ru" "/en/cars" "/ru/cars" "/en/contacts" "/ru/contacts" "/en/terms" "/ru/terms" "/robots.txt" "/sitemap.xml"; do
-    curl_smart_head "${HOST_URL}${p}"
-    echo
-  done
-} > "$PUB_DIR/http-head.txt" 2>&1 || true
+###############################################################################
+# 05. Container inspections (env keys masked)
+###############################################################################
+mkdir -p "$REPORT_DIR/05_containers"
+# Определим сервисы и их роль
+SERVICES="$(docker compose "${COMPOSE_ARGS[@]}" ps --services 2>/dev/null | tr -s ' ' | tr -d '\r' || true)"
+ROLE_WEB=""; ROLE_DB=""; ROLE_PROXY=""
+for s in $SERVICES; do
+  if [[ -z "$ROLE_WEB"   && "$s" =~ (web|app|frontend) ]]; then ROLE_WEB="$s"; fi
+  if [[ -z "$ROLE_DB"    && "$s" =~ (db|postgres)      ]]; then ROLE_DB="$s"; fi
+  if [[ -z "$ROLE_PROXY" && "$s" =~ (proxy|caddy|nginx) ]]; then ROLE_PROXY="$s"; fi
+done
 
-{
-  for p in "/en" "/ru" "/en/cars" "/ru/cars" "/en/contacts" "/ru/contacts" "/en/terms" "/ru/terms"; do
-    curl_smart_get "${HOST_URL}${p}"
-    echo
-  done
-} > "$PUB_DIR/http-get-snippets.txt" 2>&1 || true
-
-# --- 09: SEO checks -----------------------------------------------------------
-SEO_DIR="$(secdir 09_seo)"
-{
-  note "SEO — robots.txt / sitemap.xml" "Сохраняем как есть"
-  curl -k -sS "${HOST_URL}/robots.txt" -o "$SEO_DIR/robots.txt" || true
-  curl -k -sS "${HOST_URL}/sitemap.xml" -o "$SEO_DIR/sitemap.xml" || echo "no sitemap" > "$SEO_DIR/sitemap.missing.txt"
-} >/dev/null 2>&1 || true
-
-extract_links() { grep -Eo '<link[^>]+rel="(canonical|alternate)"[^>]*>' | sed -E 's/^[[:space:]]+//'; }
-
-{
-  note "SEO — canonical/hreflang scan" "Проверяем на ключевых страницах (grep)"
-  for p in "/en" "/ru" "/en/cars" "/ru/cars" "/en/contacts" "/ru/contacts" "/en/terms" "/ru/terms"; do
-    echo "[scan] ${HOST_URL}${p}"
-    body="$(curl -k -sS "${HOST_URL}${p}" || true)"
-    canon=$(printf "%s" "$body" | grep -c 'rel="canonical"')
-    alt=$(printf "%s"  "$body" | grep -c 'rel="alternate"')
-    echo "counts: canonical=${canon} alternate=${alt}"
-    printf "%s" "$body" | extract_links | head -n 8
-    echo
-  done
-} > "$SEO_DIR/canonical_hreflang.txt" 2>&1 || true
-
-{
-  note "SEO — JSON-LD templates in repo" "Ищем *.json ld и *.JsonLd.tsx"
-  (cd "$REPO_ROOT" && \
-    grep -RIl --exclude-dir='.git' -E '(application/ld\+json|JsonLd)' 2>/dev/null || true)
-} > "$SEO_DIR/jsonld_scan.txt" 2>&1 || true
-
-# --- 10: Database (Postgres — схемы, без данных) ------------------------------
-DB_DIR="$(secdir 10_db)"
-if has docker; then
-  DB_CANDIDATES=$(docker ps --format '{{.Names}} {{.Image}}' | awk '/postgres/ {print $1}')
-  for c in $DB_CANDIDATES; do
+for role in WEB DB PROXY; do
+  svc_var="ROLE_${role}"
+  svc="${!svc_var}"
+  [[ -n "$svc" ]] || continue
+  cid="$(docker compose "${COMPOSE_ARGS[@]}" ps -q "$svc" 2>/dev/null || true)"
+  if [[ -n "$cid" ]]; then
     {
-      note "DB — $c : psql meta" "conninfo, список таблиц, размеры (если доступно)"
-      docker exec "$c" sh -lc 'psql -At -U "${POSTGRES_USER:-postgres}" -d "${POSTGRES_DB:-postgres}" -c "\conninfo" 2>&1' || true
-      docker exec "$c" sh -lc 'psql -At -U "${POSTGRES_USER:-postgres}" -d "${POSTGRES_DB:-postgres}" -c "\dt" 2>&1' || true
-      docker exec "$c" sh -lc 'psql -At -U "${POSTGRES_USER:-postgres}" -d "${POSTGRES_DB:-postgres}" -c "SELECT schemaname||\'.\'||relname AS table, pg_size_pretty(pg_total_relation_size(relid)) AS size FROM pg_catalog.pg_statio_user_tables ORDER BY pg_total_relation_size(relid) DESC;" 2>&1' || true
-    } > "$DB_DIR/${c}.txt" 2>&1 || true
-  done
-fi
-
-# --- 11: ETL / Cron / Timers (read-only) --------------------------------------
-CRON_DIR="$(secdir 11_cron)"
-{
-  note "HOST CRON" "crontab -l; systemd timers (если доступны)"
-  (crontab -l 2>/dev/null || echo "no crontab for current user") || true
-  echo
-  if has systemctl; then
-    systemctl list-timers --all 2>/dev/null || true
-  else
-    echo "systemctl not available"
+      echo "# docker inspect (names/ids)"
+      docker inspect -f 'Name={{.Name}} Id={{.Id}} Image={{.Config.Image}}' "$cid" 2>/dev/null || true
+      echo
+      echo "# Env (values masked)"
+      docker inspect -f '{{range .Config.Env}}{{println .}}{{end}}' "$cid" 2>/dev/null \
+        | mask_keyvals || true
+      echo
+      echo "# Ports"
+      docker inspect -f '{{json .NetworkSettings.Ports}}' "$cid" 2>/dev/null || true
+    } > "$REPORT_DIR/05_containers/${role,,}_${svc}.txt"
   fi
-} > "$CRON_DIR/host_cron.txt" 2>&1 || true
+done
 
-if has docker; then
-  for c in $(docker ps --format '{{.Names}}'); do
-    {
-      note "CONTAINER CRON — $c" "Ищем крон и периодические задания"
-      docker exec "$c" sh -lc 'crontab -l 2>/dev/null || true' || true
-      docker exec "$c" sh -lc 'ls -la /etc/cron* 2>/dev/null || true' || true
-      docker exec "$c" sh -lc 'ps aux 2>/dev/null | grep -E "cron|crond|node|python" | grep -v grep || true' || true
-    } > "$CRON_DIR/cron-${c}.txt" 2>&1 || true
-  done
+###############################################################################
+# 06. Next.js / SSR артефакты
+###############################################################################
+mkdir -p "$REPORT_DIR/06_next_ssr"
+FRONT="$REPO/frontend"
+if [[ -d "$FRONT" ]]; then
+  run_to_file "$REPORT_DIR/06_next_ssr/tree_app_paths.txt"   sh -lc "cd '$FRONT' && find src/app -type f \\( -name 'page.*' -o -name 'route.*' -o -name 'layout.*' \\) | sort"
+  run_to_file "$REPORT_DIR/06_next_ssr/.next_presence.txt"   sh -lc "cd '$FRONT' && ls -la .next 2>/dev/null || echo 'NO .next (build artifact not found)'"
+  run_to_file "$REPORT_DIR/06_next_ssr/.next_sizes.txt"      sh -lc "cd '$FRONT' && du -sh .next 2>/dev/null || true"
+  run_to_file "$REPORT_DIR/06_next_ssr/server_app.txt"       sh -lc "cd '$FRONT' && ls -la .next/server/app 2>/dev/null || echo 'NO .next/server/app'"
+  run_to_file "$REPORT_DIR/06_next_ssr/manifests.txt"        sh -lc "cd '$FRONT' && ls -la .next/server/app-paths-manifest.json 2>/dev/null || echo 'NO app-paths-manifest.json'"
+else
+  echo "frontend dir not found" > "$REPORT_DIR/06_next_ssr/NOTICE.txt"
 fi
 
-# --- 12: Logs (compose services) ----------------------------------------------
-LOG_DIR="$(secdir 12_logs)"
-if has docker && has docker compose; then
-  COMPOSE_FILES=()
-  for f in docker-compose.prod.yml docker-compose.db.yml docker-compose.hostfix.yml docker-compose.health.yml docker-compose.yml; do
-    [[ -f "$REPO_ROOT/$f" ]] && COMPOSE_FILES+=("-f" "$REPO_ROOT/$f")
+###############################################################################
+# 07. Public Endpoints (если хост известен/детектирован)
+###############################################################################
+# Детект хоста из исходников, если не задан: ищем 'https://vinops.online'
+if [[ -z "$HOST" ]]; then
+  if grep -R "https://vinops.online" "$REPO" >/dev/null 2>&1; then
+    HOST="https://vinops.online"
+  fi
+fi
+
+mkdir -p "$REPORT_DIR/07_endpoints"
+if [[ -n "$HOST" ]]; then
+  ENDPOINTS=( "/" "/health" "/robots.txt" "/sitemap.xml" "/sitemaps/vin.xml" "/sitemaps/vin/en-0.xml" "/sitemaps/vin/ru-0.xml" "/en" "/ru" )
+  for p in "${ENDPOINTS[@]}"; do
+    http_probe "$HOST" "$p" "$REPORT_DIR/07_endpoints"
   done
-  if [[ ${#COMPOSE_FILES[@]} -gt 0 ]]; then
-    SERVICES=$(docker compose "${COMPOSE_FILES[@]}" config --services 2>/dev/null || true)
-    for s in $SERVICES; do
-      docker compose "${COMPOSE_FILES[@]}" logs --no-color --tail "$LOG_LINES" "$s" > "$LOG_DIR/${s}.log" 2>&1 || true
+else
+  unknown_note "Public host URL" "Run: ./bin/diag.sh --host https://vinops.online" > "$REPORT_DIR/07_endpoints/UNKNOWN.txt"
+fi
+
+###############################################################################
+# 08. SEO snapshot
+###############################################################################
+mkdir -p "$REPORT_DIR/08_seo"
+if [[ -n "$HOST" ]]; then
+  run_to_file "$REPORT_DIR/08_seo/robots.txt"     curl -ksS "${HOST%/}/robots.txt"
+  run_to_file "$REPORT_DIR/08_seo/sitemap.xml"    curl -ksSI "${HOST%/}/sitemap.xml"
+  # Главная EN для json-ld + canonical/hreflang
+  HTML_TMP="$REPORT_DIR/08_seo/home_en.html"
+  curl -ksS "${HOST%/}/en" > "$HTML_TMP" 2>/dev/null || true
+  grep -i 'application/ld+json' "$HTML_TMP"    > "$REPORT_DIR/08_seo/jsonld_hits.txt" 2>/dev/null || true
+  grep -Ei '<link[^>]+rel="(canonical|alternate)"' "$HTML_TMP" > "$REPORT_DIR/08_seo/links_rel.txt" 2>/dev/null || true
+else
+  unknown_note "SEO endpoints (robots/sitemap/json-ld)" "Provide --host and re-run." > "$REPORT_DIR/08_seo/UNKNOWN.txt"
+fi
+
+###############################################################################
+# 09. Static/CDN
+###############################################################################
+mkdir -p "$REPORT_DIR/09_static"
+if [[ -d "$REPO/public" ]]; then
+  (cd "$REPO/public" && find . -type f | sed 's#^\./##' | head -n 200) > "$REPORT_DIR/09_static/public_inventory.txt"
+  if [[ -n "$HOST" ]]; then
+    # Выборочно попробуем несколько типичных файлов (если существуют локально)
+    for f in icon.svg favicon.ico robots.txt "svg/brand/property-1-brand-theme-light-size-56.svg"; do
+      if [[ -f "$REPO/public/$f" ]]; then
+        http_probe "$HOST" "/$f" "$REPORT_DIR/09_static"
+      fi
     done
   fi
+else
+  echo "No public/ directory in repo" > "$REPORT_DIR/09_static/NOTICE.txt"
 fi
 
-# --- 13: Configs & .env (masked) ----------------------------------------------
-CFG_DIR="$(secdir 13_configs)"
-{
-  note "COPY CONFIGS" "docker-compose*, Dockerfile*, next.config*, Caddyfile"
-  (cp -f "$REPO_ROOT"/docker-compose*.yml "$CFG_DIR"/ 2>/dev/null || true)
-  (cp -f "$REPO_ROOT"/Dockerfile* "$CFG_DIR"/ 2>/dev/null || true)
-  (cp -f "$REPO_ROOT/frontend/next.config.mjs" "$CFG_DIR"/ 2>/dev/null || true)
-  (cp -f "$REPO_ROOT/caddy/Caddyfile" "$CFG_DIR"/ 2>/dev/null || true)
-} > "$CFG_DIR/_copy.log" 2>&1 || true
+###############################################################################
+# 10. Database (Postgres, только read-only инвентарь)
+###############################################################################
+mkdir -p "$REPORT_DIR/10_db"
+DB_SVC=""
+for s in $SERVICES; do
+  if [[ "$s" =~ (db|postgres) ]]; then DB_SVC="$s"; break; fi
+done
 
-# .env* (masked)
-{
-  note ".env MASKED" "значения секретов скрыты"
-  for envf in $(find "$REPO_ROOT" -maxdepth 2 -type f -name ".env*" 2>/dev/null | sort); do
-    echo "[mask] $envf"
-    (cat "$envf" | mask_env_stream) > "$CFG_DIR/$(basename "$envf").masked.txt" || true
-  done
-} > "$CFG_DIR/env_masking.txt" 2>&1 || true
+if [[ -n "$DB_SVC" ]]; then
+  # Попытаемся вытащить имя БД и пользователя из env контейнера (значения НЕ логируем)
+  DB_USER="$(docker compose "${COMPOSE_ARGS[@]}" exec -T "$DB_SVC" sh -lc 'echo "${POSTGRES_USER:-postgres}"' 2>/dev/null || echo postgres)"
+  DB_NAME="$(docker compose "${COMPOSE_ARGS[@]}" exec -T "$DB_SVC" sh -lc 'echo "${POSTGRES_DB:-postgres}"' 2>/dev/null || echo postgres)"
+  # \conninfo
+  run_to_file "$REPORT_DIR/10_db/conninfo.txt" docker compose "${COMPOSE_ARGS[@]}" exec -T "$DB_SVC" psql -U "$DB_USER" -d "$DB_NAME" -c '\conninfo'
+  # Схемы/таблицы
+  run_to_file "$REPORT_DIR/10_db/tables.txt"   docker compose "${COMPOSE_ARGS[@]}" exec -T "$DB_SVC" psql -U "$DB_USER" -d "$DB_NAME" -c '\dt *.*'
+  # Размеры таблиц (топ 100)
+  run_to_file "$REPORT_DIR/10_db/sizes.txt"    docker compose "${COMPOSE_ARGS[@]}" exec -T "$DB_SVC" psql -U "$DB_USER" -d "$DB_NAME" -c "SELECT schemaname||'.'||relname AS rel, pg_total_relation_size(c.oid) AS bytes FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE relkind='r' ORDER BY 2 DESC LIMIT 100;"
+  # Активные подключения (агрегировано)
+  run_to_file "$REPORT_DIR/10_db/connections.txt" docker compose "${COMPOSE_ARGS[@]}" exec -T "$DB_SVC" psql -U "$DB_USER" -d "$DB_NAME" -c "SELECT state, count(*) FROM pg_stat_activity GROUP BY state;"
+else
+  unknown_note "Postgres container/service" "Check: docker compose ps --services | grep -E 'db|postgres'." > "$REPORT_DIR/10_db/UNKNOWN.txt"
+fi
 
-# Также снимем текущие переменные окружения (masked)
-(printenv 2>/dev/null | mask_env_stream) > "$CFG_DIR/printenv.masked.txt" || true
+###############################################################################
+# 11. ETL / Jobs / Cron (инвентарь)
+###############################################################################
+mkdir -p "$REPORT_DIR/11_jobs"
+run_to_file "$REPORT_DIR/11_jobs/repo_cron_grep.txt" sh -lc "cd '$REPO' && grep -RIl --line-number -E '(cron|crontab|systemd|schedule|node-cron)' || true"
+run_to_file "$REPORT_DIR/11_jobs/repo_dirs.txt"      sh -lc "cd '$REPO' && ls -la jobs collector scripts 2>/dev/null || true"
 
-# --- 14: Static / public ------------------------------------------------------
-STAT_DIR="$(secdir 14_static)"
-{
-  note "PUBLIC STATIC" "карта крупных файлов"
-  PUB="$REPO_ROOT/frontend/public"
-  if [[ -d "$PUB" ]]; then
-    echo "[dir] $PUB"
-    # top-50 по размеру
-    (cd "$PUB" && find . -type f -printf '%s\t%p\n' | sort -nr | head -n 50) > "$STAT_DIR/public_top50.txt" || true
-  else
-    echo "no frontend/public"
+###############################################################################
+# 12. Logs (docker compose logs --tail N)
+###############################################################################
+mkdir -p "$REPORT_DIR/12_logs"
+for role in WEB DB PROXY; do
+  svc_var="ROLE_${role}"
+  svc="${!svc_var}"
+  if [[ -n "$svc" ]]; then
+    run_to_file "$REPORT_DIR/12_logs/${role,,}_${svc}.log" docker compose "${COMPOSE_ARGS[@]}" logs --tail "$LOGS_TAIL" "$svc"
   fi
-} > "$STAT_DIR/static.txt" 2>&1 || true
+done
 
-# --- Индекс секций ------------------------------------------------------------
+###############################################################################
+# 13. Configs (копии без секретов)
+###############################################################################
+mkdir -p "$REPORT_DIR/13_configs"
+# docker-compose*.yml, Dockerfile*, next.config.*, tsconfig*, package.json, .env*
+( cd "$REPO" 2>/dev/null && \
+    tar -cf - $(ls -1 docker-compose*.yml 2>/dev/null) 2>/dev/null ) | tar -xf - -C "$REPORT_DIR/13_configs" 2>/dev/null || true
+( cd "$REPO" 2>/dev/null && \
+    tar -cf - $(ls -1 Dockerfile* 2>/dev/null) 2>/dev/null ) | tar -xf - -C "$REPORT_DIR/13_configs" 2>/dev/null || true
+( cd "$REPO/frontend" 2>/dev/null && \
+    tar -cf - $(ls -1 next.config.* 2>/dev/null) 2>/dev/null ) | tar -xf - -C "$REPORT_DIR/13_configs" 2>/dev/null || true
+( cd "$REPO" 2>/dev/null && \
+    tar -cf - $(ls -1 tsconfig* package.json 2>/dev/null) 2>/dev/null ) | tar -xf - -C "$REPORT_DIR/13_configs" 2>/dev/null || true
+
+# .env* → в отчёт кладём ТОЛЬКО ключи с маской
+ENV_OUT="$REPORT_DIR/13_configs/env_keys_masked.txt"
 {
-  echo "Sections:"
-  find "$CTX_DIR" -maxdepth 2 -type f -printf '%P\n' | sort
-} > "$CTX_DIR/INDEX.txt" || true
+  for f in "$REPO"/.env "$REPO"/.env.*; do
+    [[ -f "$f" ]] || continue
+    echo "# $f"
+    sed -n 's/^\([A-Za-z0-9_]\+\)=.*/\1=***/p' "$f" || true
+    echo
+  done
+} > "$ENV_OUT"
 
-# --- Архивация ----------------------------------------------------------------
-cd "$REPO_ROOT/context"
-TAR="context-${TS}.tar.gz"
-tar -czf "$TAR" "context-${TS}" || true
-echo "Saved: $REPO_ROOT/context/${TAR}"
+###############################################################################
+# 99. Summary: риски/UNKNOWN
+###############################################################################
+SUMMARY="$REPORT_DIR/99_summary_risks.txt"
+{
+  echo "Detected risks / UNKNOWN (auto):"
+  # Host unknown
+  if [[ -z "$HOST" ]]; then
+    unknown_note "Public host URL not detected" "./bin/diag.sh --host https://vinops.online"
+  fi
+  # .next отсутствует
+  if [[ ! -d "$REPO/frontend/.next" ]]; then
+    unknown_note "Next.js build artifacts (.next) not found" "Build container produces them; check: ls -la '$REPO/frontend/.next'"
+  fi
+  # compose config fail?
+  if ! docker compose "${COMPOSE_ARGS[@]}" config >/dev/null 2>&1; then
+    unknown_note "docker compose config" "Run: docker compose $(compose_args_from_repo "$REPO") config"
+  fi
+  # Postgres доступ
+  if [[ -z "$DB_SVC" ]]; then
+    unknown_note "Postgres service not detected" "docker compose ps --services | grep -E 'db|postgres'"
+  fi
+} > "$SUMMARY"
+
+###############################################################################
+# Упаковка архива
+###############################################################################
+ARCHIVE_PATH="$OUT_DIR/context-${STAMP}.tar.gz"
+( cd "$OUT_DIR" 2>/dev/null && tar -czf "context-${STAMP}.tar.gz" "context-${STAMP}" ) || true
+ABS_ARCHIVE="$(cd "$(dirname "$ARCHIVE_PATH")" 2>/dev/null && pwd)/$(basename "$ARCHIVE_PATH")"
+echo "$ABS_ARCHIVE"
+
+exit $EXIT_CODE
