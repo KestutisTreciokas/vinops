@@ -5,28 +5,25 @@ export default function Page({ params }: { params: { lang: 'en'|'ru' } }) {
   return <PageClient params={params} />
 }
 
-// --- MS-06 SEO metadata (server) ---
 export async function generateMetadata(
   { params }: { params: { lang: 'en'|'ru' } }
 ): Promise<Metadata> {
   const { lang } = params
   const t = (en: string, ru: string) => (lang === 'ru' ? ru : en)
-  const BASE = 'https://vinops.online'
   const PATH = ''
-  const canonical = `${BASE}/${lang}${PATH}`
+  const canonical = `/${lang}${PATH}`
   const title = t('VIN history & car sales analytics', 'История VIN и аналитика продаж авто')
   const description = t('Search cars, see specs and sales history.', 'Ищите авто, смотрите характеристики и историю продаж.')
 
   return {
-    metadataBase: new URL('https://vinops.online'),
-    title, // layout применит шаблон "%s — vinops"
+    title,
     description,
     alternates: {
       canonical,
       languages: {
-        en: `${BASE}/en${PATH}`,
-        ru: `${BASE}/ru${PATH}`,
-        'x-default': `${BASE}/en${PATH}`,
+        en: `/en${PATH}`,
+        ru: `/ru${PATH}`,
+        'x-default': `/en${PATH}`,
       },
     },
     openGraph: {
@@ -38,4 +35,3 @@ export async function generateMetadata(
     robots: { index: true, follow: true },
   }
 }
-// --- /MS-06 ---

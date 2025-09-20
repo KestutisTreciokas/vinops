@@ -35,9 +35,9 @@ export default function Features({ lang }: { lang: 'en'|'ru' }) {
       <h2 className="text-xl font-semibold mb-6">{t('What you get', 'Что вы получите')}</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {items.map((it, i) => (
-          <div key={i} className="card feature-card border rounded-2xl p-4 bg-bg-surface">
+          <div key={i} className="card feature-card card-accent border rounded-2xl p-4 bg-bg-surface">
             <div className="flex items-start gap-4">
-              <div className="brand-tint text-brand flex items-center justify-center w-10 h-10 rounded-xl shrink-0">
+              <div className="icon-chip flex items-center justify-center w-10 h-10 rounded-xl shrink-0">
                 {it.icon}
               </div>
               <div>
