@@ -111,3 +111,5 @@ CREATE INDEX IF NOT EXISTS images_vin_idx
 CREATE INDEX IF NOT EXISTS images_lot_id_idx
   ON images (lot_id);
 -- === /MS-02-01 additions ===
+
+-- Rollback strategy: documented in README.migrations.md; this file avoids destructive ops.

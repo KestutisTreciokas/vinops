@@ -61,3 +61,5 @@ CREATE TABLE IF NOT EXISTS images (
   created_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at   TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+-- Rollback strategy: documented in README.migrations.md; this file avoids destructive ops.
