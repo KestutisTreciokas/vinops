@@ -8,7 +8,7 @@
     "start": "next start -p 3000",
     "lint": "next lint",
     "typecheck": "tsc -p tsconfig.json",
-    "ci:versions": "node -v && node -p \"'Next.js v' + require('next/package.json').version\" && node -p \"'TypeScript ' + require('typescript/package.json').version\"",
+    "ci:versions": "node -v && npx --yes next@14.2.5 -v && npx --yes typescript@5.6.2 -v",
     "ci:lint": "next lint",
     "ci:typecheck": "tsc -p tsconfig.json"
   },
@@ -21,14 +21,13 @@
     "autoprefixer": "^10.4.20",
     "postcss": "^8.4.41",
     "tailwindcss": "^3.4.10",
-    "typescript": "5.6.2",
+    "typescript": "^5.6.2",
     "@types/node": "^20.12.12",
     "@types/react": "^18.3.3",
-    "eslint": "8.57.1",
+    "eslint": "^8.57.0",
     "eslint-config-next": "14.2.5"
   },
   "engines": {
-    "node": ">=20.14 <21",
-    "npm": ">=10 <11"
+    "node": ">=20.14 <21"
   }
 }

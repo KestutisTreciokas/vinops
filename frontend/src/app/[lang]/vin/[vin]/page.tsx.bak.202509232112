@@ -5,7 +5,6 @@ import History from '@/components/vin2/History'
 import VinGallery from '@/components/vin2/Gallery'
 import sample from '@/mock/vin-sample'
 import SeoVinJsonLd from './_SeoVinJsonLd'
-import VinChipCopy from '@/components/VinChipCopy'
 
 export async function generateMetadata(
   { params }: { params: { lang: 'ru' | 'en', vin: string } }
@@ -22,7 +21,7 @@ export async function generateMetadata(
 
   return {
     metadataBase: new URL('https://vinops.online'),
-    title,
+    title, // шаблон из root layout: "%s — vinops"
     description,
     alternates: {
       canonical: path,
@@ -60,7 +59,7 @@ export default function VinPage({ params }: { params: { lang: 'ru'|'en', vin: st
       {/* H1 + VIN-chip */}
       <div className="flex items-start justify-between gap-3 mb-2">
         <h1 className="h1">{h1Title}</h1>
-        <VinChipCopy vin={vin.toUpperCase()} lang={lang} />
+        <span className="badge" title={t('Vehicle VIN','VIN автомобиля')}>{vin}</span>
       </div>
 
       {/* Описание под заголовком */}

@@ -72,6 +72,7 @@ export default function CatalogPage({ params }: { params: { lang: Lang } }) {
     })
     
     
+    // @ts-expect-error – href is narrowed; string URL for same-path query update is acceptable
     router.replace((`${pathname}${q}` ))
   
   
@@ -83,6 +84,7 @@ export default function CatalogPage({ params }: { params: { lang: Lang } }) {
     const q = buildQuery(sp, { make:'', model:'', gen:'', yfrom:'', yto:'', page:'1' })
     
     
+    // @ts-expect-error – href is narrowed; string URL for same-path query update is acceptable
     router.replace((`${pathname}${q}` ))
   
   
@@ -94,6 +96,7 @@ export default function CatalogPage({ params }: { params: { lang: Lang } }) {
     const q = buildQuery(sp, { type:id, page:'1' })
     
     
+    // @ts-expect-error – href is narrowed; string URL for same-path query update is acceptable
     router.replace((`${pathname}${q}` ))
   
   
@@ -125,6 +128,7 @@ export default function CatalogPage({ params }: { params: { lang: Lang } }) {
     const q = buildQuery(sp, { page:String(next) })
     
     
+    // @ts-expect-error – href is narrowed; string URL for same-path query update is acceptable
     router.replace((`${pathname}${q}` ))
   
   
