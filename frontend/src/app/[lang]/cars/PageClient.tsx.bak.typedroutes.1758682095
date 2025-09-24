@@ -73,8 +73,7 @@ export default function CatalogPage({ params }: { params: { lang: Lang } }) {
     })
     
     
-    
-router.replace(`${pathname}${q}` as Route)
+    router.replace((`${pathname}${q}` ))
   
   
   }
@@ -85,8 +84,7 @@ router.replace(`${pathname}${q}` as Route)
     const q = buildQuery(sp, { make:'', model:'', gen:'', yfrom:'', yto:'', page:'1' })
     
     
-    
-router.replace(`${pathname}${q}` as Route)
+    router.replace((`${pathname}${q}` ))
   
   
   }
@@ -97,8 +95,7 @@ router.replace(`${pathname}${q}` as Route)
     const q = buildQuery(sp, { type:id, page:'1' })
     
     
-    
-router.replace(`${pathname}${q}` as Route)
+    router.replace((`${pathname}${q}` ))
   
   
   }
@@ -129,8 +126,7 @@ router.replace(`${pathname}${q}` as Route)
     const q = buildQuery(sp, { page:String(next) })
     
     
-    
-router.replace(`${pathname}${q}` as Route)
+    router.replace((`${pathname}${q}` ))
   
   
   }

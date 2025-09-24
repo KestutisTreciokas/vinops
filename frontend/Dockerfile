@@ -1,34 +1,33 @@
-# 1) deps (с dev-зависимостями для сборки)
+# --- deps ---
 FROM node:20-alpine AS deps
-RUN apk add --no-cache libc6-compat
 WORKDIR /app
-COPY package*.json ./
-RUN npm ci
-
-# 2) build
-FROM node:20-alpine AS build
-RUN apk add --no-cache libc6-compat
-WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
-COPY --from=deps /app/package*.json ./
-COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
-RUN npm run build
+COPY package*.json ./
+RUN npm ci || npm install --no-audit --no-fund
 
-# 3) prod runner (standalone)
+# --- build ---
+FROM node:20-alpine AS build
+WORKDIR /app
+ENV NEXT_TELEMETRY_DISABLED=1
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+RUN node -v && npm run build
+
+# --- runner ---
 FROM node:20-alpine AS runner
-RUN apk add --no-cache curl
-RUN addgroup -S nodejs && adduser -S nextjs -G nodejs
 WORKDIR /app
 ENV NODE_ENV=production
-ENV PORT=3000
-ENV HOST=0.0.0.0
-# standalone-вывод + статика
+ENV NEXT_TELEMETRY_DISABLED=1
+RUN adduser -D -H -s /sbin/nologin nextjs
+# runtime deps
+COPY --from=build /app/node_modules ./node_modules
+# app
 COPY --from=build /app/.next ./.next
-COPY --from=deps /app/node_modules ./node_modules
-COPY --from=deps /app/package*.json ./
 COPY --from=build /app/public ./public
-COPY --from=build /app/.next/static ./.next/static
+# configs (любая из них может отсутствовать — это нормально)
+COPY --from=build /app/next.config.mjs ./next.config.mjs
+COPY --from=build /app/next.config.js ./next.config.js
+COPY --from=build /app/package.json ./package.json
 USER nextjs
 EXPOSE 3000
 CMD ["node","node_modules/next/dist/bin/next","start","-H","0.0.0.0","-p","3000"]
