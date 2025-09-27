@@ -1,8 +1,4 @@
-# MERGE_REPORT — PR #84 consolidation
-
-- Branch: rebase/pr-84-consolidated
-- Policy: CONFLICT_POLICY (SEO/Public→MAIN; Infra→MAIN; SSOT/OpenAPI→MAIN; App/Code→PR; DB/Migrations→PR)
-- Generated: 2025-09-27 23:13:35 MSK
+# MERGE_REPORT — PR #84 consolidation (post-canon-align)
 
 ## Решения по путям
 | Decision | Path |
