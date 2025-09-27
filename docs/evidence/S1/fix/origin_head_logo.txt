@@ -1,0 +1,14 @@
+HTTP/2 200 
+accept-ranges: bytes
+alt-svc: h3=":443"; ma=2592000
+cache-control: public, max-age=0
+content-type: image/svg+xml
+date: Sat, 27 Sep 2025 03:07:37 GMT
+etag: W/"20cb-1996268e93a"
+last-modified: Fri, 19 Sep 2025 14:37:46 GMT
+referrer-policy: strict-origin-when-cross-origin
+vary: Accept-Encoding
+via: 1.1 Caddy
+x-content-type-options: nosniff
+content-length: 8395
+

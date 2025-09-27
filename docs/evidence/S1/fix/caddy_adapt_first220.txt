@@ -1,0 +1,158 @@
+{
+	"apps": {
+		"http": {
+			"servers": {
+				"srv0": {
+					"listen": [
+						":443"
+					],
+					"routes": [
+						{
+							"match": [
+								{
+									"host": [
+										"vinops.online",
+										"www.vinops.online"
+									]
+								}
+							],
+							"handle": [
+								{
+									"handler": "subroute",
+									"routes": [
+										{
+											"handle": [
+												{
+													"handler": "static_response",
+													"headers": {
+														"Location": [
+															"/en"
+														]
+													},
+													"status_code": 308
+												}
+											],
+											"match": [
+												{
+													"path": [
+														"/"
+													]
+												}
+											]
+										},
+										{
+											"handle": [
+												{
+													"handler": "static_response",
+													"headers": {
+														"Location": [
+															"/en{http.request.uri}"
+														]
+													},
+													"status_code": 308
+												}
+											],
+											"match": [
+												{
+													"not": [
+														{
+															"path_regexp": {
+																"name": "hasLocale",
+																"pattern": "^/(en|ru)(/|$)"
+															}
+														},
+														{
+															"path": [
+																"/favicon.ico",
+																"/icon.svg",
+																"/robots.txt",
+																"/sitemap.xml",
+																"/sitemap*",
+																"/jsonld*",
+																"/_next/*",
+																"/assets/*",
+																"/svg/*",
+																"/api/*",
+																"/cdn-cgi/*"
+															]
+														}
+													]
+												}
+											]
+										},
+										{
+											"handle": [
+												{
+													"encodings": {
+														"gzip": {},
+														"zstd": {}
+													},
+													"handler": "encode",
+													"prefer": [
+														"zstd",
+														"gzip"
+													]
+												}
+											]
+										},
+										{
+											"handle": [
+												{
+													"handler": "subroute",
+													"routes": [
+														{
+															"handle": [
+																{
+																	"handler": "reverse_proxy",
+																	"upstreams": [
+																		{
+																			"dial": "web:3000"
+																		}
+																	]
+																}
+															]
+														}
+													]
+												}
+											],
+											"match": [
+												{
+													"path": [
+														"/favicon.ico",
+														"/icon.svg",
+														"/robots.txt",
+														"/sitemap.xml",
+														"/sitemap*",
+														"/jsonld*",
+														"/_next/*",
+														"/assets/*",
+														"/svg/*",
+														"/api/*",
+														"/cdn-cgi/*"
+													]
+												}
+											]
+										},
+										{
+											"handle": [
+												{
+													"handler": "reverse_proxy",
+													"upstreams": [
+														{
+															"dial": "web:3000"
+														}
+													]
+												}
+											]
+										}
+									]
+								}
+							],
+							"terminal": true
+						}
+					]
+				}
+			}
+		}
+	}
+}

@@ -1,0 +1,11 @@
+HTTP/1.1 404 Not Found
+X-Content-Type-Options: nosniff
+Referrer-Policy: strict-origin-when-cross-origin
+Vary: RSC, Next-Router-State-Tree, Next-Router-Prefetch, Accept-Encoding
+Cache-Control: no-cache, no-store, max-age=0, must-revalidate
+link: </_next/static/media/1510e0c1ce13e1fa-s.p.woff2>; rel=preload; as="font"; crossorigin=""; type="font/woff2", </_next/static/media/1e9c5f05159fb382-s.p.woff2>; rel=preload; as="font"; crossorigin=""; type="font/woff2", </_next/static/media/28b6baa497ac9c87-s.p.woff2>; rel=preload; as="font"; crossorigin=""; type="font/woff2", </_next/static/media/50e46f954eedc33c-s.p.woff2>; rel=preload; as="font"; crossorigin=""; type="font/woff2", </_next/static/media/75d08c222fbf1da5-s.p.woff2>; rel=preload; as="font"; crossorigin=""; type="font/woff2"
+Content-Type: text/html; charset=utf-8
+Date: Sat, 27 Sep 2025 02:42:05 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+

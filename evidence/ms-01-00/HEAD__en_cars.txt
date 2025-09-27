@@ -1,0 +1,20 @@
+HTTP/2 200 
+date: Sat, 27 Sep 2025 16:35:54 GMT
+content-type: text/html; charset=utf-8
+server: cloudflare
+alt-svc: h3=":443"; ma=86400
+cache-control: private, no-cache, no-store, max-age=0, must-revalidate
+link: </_next/static/media/1510e0c1ce13e1fa-s.p.woff2>; rel=preload; as="font"; crossorigin=""; type="font/woff2", </_next/static/media/1e9c5f05159fb382-s.p.woff2>; rel=preload; as="font"; crossorigin=""; type="font/woff2", </_next/static/media/28b6baa497ac9c87-s.p.woff2>; rel=preload; as="font"; crossorigin=""; type="font/woff2", </_next/static/media/50e46f954eedc33c-s.p.woff2>; rel=preload; as="font"; crossorigin=""; type="font/woff2", </_next/static/media/75d08c222fbf1da5-s.p.woff2>; rel=preload; as="font"; crossorigin=""; type="font/woff2"
+referrer-policy: strict-origin-when-cross-origin
+vary: RSC, Next-Router-State-Tree, Next-Router-Prefetch, Accept-Encoding
+via: 1.1 Caddy
+x-content-type-options: nosniff
+cf-cache-status: DYNAMIC
+report-to: {"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=o%2BUuKNP6tipjXr8HCCE14tn%2FRYRR7jBvTdD2AV6T37e3MtNLBHuTychbH24xAxbRcRvxlNUWZDUMIkPxoHuk4K2Hnphs3%2BLjxT%2BvTfs%3D"}]}
+nel: {"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}
+set-cookie: __ddg8_=de15qsQPtoVrLmWU; Path=/; Domain=vinops.online; Expires=Sat, 27 Sep 2025 16:55:54 GMT
+set-cookie: __ddg10_=1758990954; Path=/; Domain=vinops.online; Expires=Sat, 27 Sep 2025 16:55:54 GMT
+set-cookie: __ddg9_=104.23.223.112; Path=/; Domain=vinops.online; Expires=Sat, 27 Sep 2025 16:55:54 GMT
+set-cookie: __ddg1_=ezlRS0Y8hEQEsQvsCJd5; HttpOnly; Path=/; Domain=vinops.online; Expires=Sun, 27 Sep 2026 16:35:54 GMT
+cf-ray: 985c6ab77bebb5b5-ARN
+

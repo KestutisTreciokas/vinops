@@ -1,0 +1,6 @@
+HTTP/2 308 
+alt-svc: h3=":443"; ma=2592000
+location: /en/__neg__
+server: Caddy
+date: Sat, 27 Sep 2025 03:07:37 GMT
+

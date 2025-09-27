@@ -1,0 +1,293 @@
+[
+    {
+        "Id": "885ca46c389b3192c65566cf6430b6bc6a68c3da001eccbff8afc9ce88838d92",
+        "Created": "2025-09-26T23:10:10.700032657Z",
+        "Path": "docker-entrypoint.sh",
+        "Args": [
+            "node",
+            "node_modules/next/dist/bin/next",
+            "start",
+            "-H",
+            "0.0.0.0",
+            "-p",
+            "3000"
+        ],
+        "State": {
+            "Status": "running",
+            "Running": true,
+            "Paused": false,
+            "Restarting": false,
+            "OOMKilled": false,
+            "Dead": false,
+            "Pid": 59088,
+            "ExitCode": 0,
+            "Error": "",
+            "StartedAt": "2025-09-26T23:10:10.947465112Z",
+            "FinishedAt": "0001-01-01T00:00:00Z",
+            "Health": {
+                "Status": "healthy",
+                "FailingStreak": 0,
+                "Log": [
+                    {
+                        "Start": "2025-09-27T02:16:47.270246806+03:00",
+                        "End": "2025-09-27T02:16:47.349095397+03:00",
+                        "ExitCode": 0,
+                        "Output": ""
+                    },
+                    {
+                        "Start": "2025-09-27T02:17:17.349836436+03:00",
+                        "End": "2025-09-27T02:17:17.441881601+03:00",
+                        "ExitCode": 0,
+                        "Output": ""
+                    },
+                    {
+                        "Start": "2025-09-27T02:17:47.44321146+03:00",
+                        "End": "2025-09-27T02:17:47.532569458+03:00",
+                        "ExitCode": 0,
+                        "Output": ""
+                    },
+                    {
+                        "Start": "2025-09-27T02:18:17.533441386+03:00",
+                        "End": "2025-09-27T02:18:17.621490919+03:00",
+                        "ExitCode": 0,
+                        "Output": ""
+                    },
+                    {
+                        "Start": "2025-09-27T02:18:47.622633611+03:00",
+                        "End": "2025-09-27T02:18:47.700437718+03:00",
+                        "ExitCode": 0,
+                        "Output": ""
+                    }
+                ]
+            }
+        },
+        "Image": "sha256:2d701d1bec21fcf72718e0783f69b59ae38d5380796c0f3ccc1dbfaa7b56162b",
+        "ResolvConfPath": "/var/lib/docker/containers/885ca46c389b3192c65566cf6430b6bc6a68c3da001eccbff8afc9ce88838d92/resolv.conf",
+        "HostnamePath": "/var/lib/docker/containers/885ca46c389b3192c65566cf6430b6bc6a68c3da001eccbff8afc9ce88838d92/hostname",
+        "HostsPath": "/var/lib/docker/containers/885ca46c389b3192c65566cf6430b6bc6a68c3da001eccbff8afc9ce88838d92/hosts",
+        "LogPath": "/var/lib/docker/containers/885ca46c389b3192c65566cf6430b6bc6a68c3da001eccbff8afc9ce88838d92/885ca46c389b3192c65566cf6430b6bc6a68c3da001eccbff8afc9ce88838d92-json.log",
+        "Name": "/vinopsrestore-web-1",
+        "RestartCount": 0,
+        "Driver": "overlay2",
+        "Platform": "linux",
+        "MountLabel": "",
+        "ProcessLabel": "",
+        "AppArmorProfile": "docker-default",
+        "ExecIDs": null,
+        "HostConfig": {
+            "Binds": null,
+            "ContainerIDFile": "",
+            "LogConfig": {
+                "Type": "json-file",
+                "Config": {
+                    "max-file": "3",
+                    "max-size": "10m"
+                }
+            },
+            "NetworkMode": "vinopsrestore_webnet",
+            "PortBindings": {},
+            "RestartPolicy": {
+                "Name": "unless-stopped",
+                "MaximumRetryCount": 0
+            },
+            "AutoRemove": false,
+            "VolumeDriver": "",
+            "VolumesFrom": null,
+            "ConsoleSize": [
+                0,
+                0
+            ],
+            "CapAdd": null,
+            "CapDrop": null,
+            "CgroupnsMode": "private",
+            "Dns": null,
+            "DnsOptions": null,
+            "DnsSearch": null,
+            "ExtraHosts": [],
+            "GroupAdd": null,
+            "IpcMode": "private",
+            "Cgroup": "",
+            "Links": null,
+            "OomScoreAdj": 0,
+            "PidMode": "",
+            "Privileged": false,
+            "PublishAllPorts": false,
+            "ReadonlyRootfs": false,
+            "SecurityOpt": null,
+            "UTSMode": "",
+            "UsernsMode": "",
+            "ShmSize": 67108864,
+            "Runtime": "runc",
+            "Isolation": "",
+            "CpuShares": 0,
+            "Memory": 0,
+            "NanoCpus": 0,
+            "CgroupParent": "",
+            "BlkioWeight": 0,
+            "BlkioWeightDevice": null,
+            "BlkioDeviceReadBps": null,
+            "BlkioDeviceWriteBps": null,
+            "BlkioDeviceReadIOps": null,
+            "BlkioDeviceWriteIOps": null,
+            "CpuPeriod": 0,
+            "CpuQuota": 0,
+            "CpuRealtimePeriod": 0,
+            "CpuRealtimeRuntime": 0,
+            "CpusetCpus": "",
+            "CpusetMems": "",
+            "Devices": null,
+            "DeviceCgroupRules": null,
+            "DeviceRequests": null,
+            "MemoryReservation": 0,
+            "MemorySwap": 0,
+            "MemorySwappiness": null,
+            "OomKillDisable": null,
+            "PidsLimit": null,
+            "Ulimits": null,
+            "CpuCount": 0,
+            "CpuPercent": 0,
+            "IOMaximumIOps": 0,
+            "IOMaximumBandwidth": 0,
+            "MaskedPaths": [
+                "/proc/asound",
+                "/proc/acpi",
+                "/proc/interrupts",
+                "/proc/kcore",
+                "/proc/keys",
+                "/proc/latency_stats",
+                "/proc/timer_list",
+                "/proc/timer_stats",
+                "/proc/sched_debug",
+                "/proc/scsi",
+                "/sys/firmware",
+                "/sys/devices/virtual/powercap"
+            ],
+            "ReadonlyPaths": [
+                "/proc/bus",
+                "/proc/fs",
+                "/proc/irq",
+                "/proc/sys",
+                "/proc/sysrq-trigger"
+            ]
+        },
+        "GraphDriver": {
+            "Data": {
+                "ID": "885ca46c389b3192c65566cf6430b6bc6a68c3da001eccbff8afc9ce88838d92",
+                "LowerDir": "/var/lib/docker/overlay2/2dff86905c6c79cf6573b93c9d1d18d5dd7262bf8e8b05645b82f676f4caa021-init/diff:/var/lib/docker/overlay2/e7znmma4xh4813bigre5megfy/diff:/var/lib/docker/overlay2/yzr99hrtz65e1ld3552h51oas/diff:/var/lib/docker/overlay2/nwms2h0qquilbjsesoxovm4es/diff:/var/lib/docker/overlay2/gcla1wwpf8hy0qp7lojs9mmzd/diff:/var/lib/docker/overlay2/vx1bfu2kgmn4s5b2iwgr7aqkm/diff:/var/lib/docker/overlay2/90bhpipkcio0grmaqf7xjuxxb/diff:/var/lib/docker/overlay2/m1a3dt9bx7ukyo49gifbnlr9g/diff:/var/lib/docker/overlay2/mq4h7qsy03lylwvawjmz0dhp6/diff:/var/lib/docker/overlay2/a8fb0c48fdfbe476b2fed71f2c36011f0910ccb29b4e95e3cd603df78c840951/diff:/var/lib/docker/overlay2/a3ce8d4ab5a715283603143af713af0bf35cfe558f33c659cb991bf72525ce62/diff:/var/lib/docker/overlay2/e87f1f6ff8f33231d5ce0cc6ed0c2d39afc483dfff2b81432ff6e9ea0449a5a8/diff:/var/lib/docker/overlay2/2b4c52812ce5784bd955772c00520eebc18bff56ebfae68a0b72166b1318c74f/diff",
+                "MergedDir": "/var/lib/docker/overlay2/2dff86905c6c79cf6573b93c9d1d18d5dd7262bf8e8b05645b82f676f4caa021/merged",
+                "UpperDir": "/var/lib/docker/overlay2/2dff86905c6c79cf6573b93c9d1d18d5dd7262bf8e8b05645b82f676f4caa021/diff",
+                "WorkDir": "/var/lib/docker/overlay2/2dff86905c6c79cf6573b93c9d1d18d5dd7262bf8e8b05645b82f676f4caa021/work"
+            },
+            "Name": "overlay2"
+        },
+        "Mounts": [],
+        "Config": {
+            "Hostname": "885ca46c389b",
+            "Domainname": "",
+            "User": "nextjs",
+            "AttachStdin": false,
+            "AttachStdout": true,
+            "AttachStderr": true,
+            "ExposedPorts": {
+                "3000/tcp": {}
+            },
+            "Tty": false,
+            "OpenStdin": false,
+            "StdinOnce": false,
+            "Env": [
+                "PORT=3000",
+                "NODE_ENV=production",
+                "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+                "NODE_VERSION=20.19.5",
+                "YARN_VERSION=1.22.22",
+                "NEXT_TELEMETRY_DISABLED=1"
+            ],
+            "Cmd": [
+                "node",
+                "node_modules/next/dist/bin/next",
+                "start",
+                "-H",
+                "0.0.0.0",
+                "-p",
+                "3000"
+            ],
+            "Healthcheck": {
+                "Test": [
+                    "CMD-SHELL",
+                    "node -e \"require('http').get('http://127.0.0.1:3000/health',r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))\""
+                ],
+                "Interval": 30000000000,
+                "Timeout": 5000000000,
+                "StartPeriod": 15000000000,
+                "Retries": 10
+            },
+            "Image": "vinops-web:latest",
+            "Volumes": null,
+            "WorkingDir": "/app",
+            "Entrypoint": [
+                "docker-entrypoint.sh"
+            ],
+            "OnBuild": null,
+            "Labels": {
+                "com.docker.compose.config-hash": "646cd2e06cd5210e0659917ae12cda459dcd3717ac1d53f60ae85161adf29de6",
+                "com.docker.compose.container-number": "1",
+                "com.docker.compose.depends_on": "",
+                "com.docker.compose.image": "sha256:2d701d1bec21fcf72718e0783f69b59ae38d5380796c0f3ccc1dbfaa7b56162b",
+                "com.docker.compose.oneoff": "False",
+                "com.docker.compose.project": "vinopsrestore",
+                "com.docker.compose.project.config_files": "/root/work/vinops.restore/docker-compose.prod.yml,/root/work/vinops.restore/docker-compose.override.yml",
+                "com.docker.compose.project.working_dir": "/root/work/vinops.restore",
+                "com.docker.compose.replace": "web-1",
+                "com.docker.compose.service": "web",
+                "com.docker.compose.version": "2.39.2"
+            }
+        },
+        "NetworkSettings": {
+            "Bridge": "",
+            "SandboxID": "a0864a969982207d5d1e073d860c80258d6f0e74e5c0fb69b3900565790e5f0a",
+            "SandboxKey": "/var/run/docker/netns/a0864a969982",
+            "Ports": {
+                "3000/tcp": null
+            },
+            "HairpinMode": false,
+            "LinkLocalIPv6Address": "",
+            "LinkLocalIPv6PrefixLen": 0,
+            "SecondaryIPAddresses": null,
+            "SecondaryIPv6Addresses": null,
+            "EndpointID": "",
+            "Gateway": "",
+            "GlobalIPv6Address": "",
+            "GlobalIPv6PrefixLen": 0,
+            "IPAddress": "",
+            "IPPrefixLen": 0,
+            "IPv6Gateway": "",
+            "MacAddress": "",
+            "Networks": {
+                "vinopsrestore_webnet": {
+                    "IPAMConfig": null,
+                    "Links": null,
+                    "Aliases": [
+                        "vinopsrestore-web-1",
+                        "web"
+                    ],
+                    "MacAddress": "ee:e8:4e:36:ed:bb",
+                    "DriverOpts": null,
+                    "GwPriority": 0,
+                    "NetworkID": "32694492502c95f4549a3e4435aca688ec88d99c7de208675a1ed1367d4cc86b",
+                    "EndpointID": "f076f7dc1b80112ea633d25aa4feaa665f0986498333b8bb200b78c6d4aeb760",
+                    "Gateway": "172.19.0.1",
+                    "IPAddress": "172.19.0.2",
+                    "IPPrefixLen": 16,
+                    "IPv6Gateway": "",
+                    "GlobalIPv6Address": "",
+                    "GlobalIPv6PrefixLen": 0,
+                    "DNSNames": [
+                        "vinopsrestore-web-1",
+                        "web",
+                        "885ca46c389b"
+                    ]
+                }
+            }
+        }
+    }
+]

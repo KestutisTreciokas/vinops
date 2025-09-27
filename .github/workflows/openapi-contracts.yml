@@ -7,6 +7,7 @@ on:
       - 'contracts/openapi.yaml'
       - '.github/workflows/openapi-contracts.yml'
   pull_request:
+    branches: [ main, master ]
     paths:
       - 'contracts/openapi.yaml'
       - '.github/workflows/openapi-contracts.yml'
@@ -32,8 +33,15 @@ jobs:
       - name: Lint OpenAPI (Redocly)
         run: npx -y @redocly/cli@1.16.0 lint contracts/openapi.yaml --format=stylish | tee oas-lint.txt
 
-      - name: Bundle OpenAPI (dereference)
-        run: npx -y @redocly/cli@1.16.0 bundle contracts/openapi.yaml --output contracts/openapi.bundled.yaml --ext yaml
+      # ВАЖНО: bundling выполняется в изолированном каталоге, чтобы npm не видел package.json фронтенда
+      - name: Bundle OpenAPI (dereference, isolated)
+        shell: bash
+        run: |
+          set +e
+          mkdir -p /tmp/oas
+          cd /tmp/oas
+          npx --yes -p @redocly/cli@1.16.0 redocly bundle "$GITHUB_WORKSPACE/contracts/openapi.yaml" \
+            --output "$GITHUB_WORKSPACE/contracts/openapi.bundled.yaml" --ext yaml
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4

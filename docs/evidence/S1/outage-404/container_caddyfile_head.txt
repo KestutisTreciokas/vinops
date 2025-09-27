@@ -1,0 +1,29 @@
+     1	# Caddyfile — vinops.online (API без strip пути)
+     2	vinops.online, www.vinops.online {
+     3		encode zstd gzip
+     4	
+     5		# Базовые security-заголовки (HSTS на периметре, не здесь)
+     6		header {
+     7	    Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+     8			X-Frame-Options "SAMEORIGIN"
+     9			X-Content-Type-Options "nosniff"
+    10			Referrer-Policy "strict-origin-when-cross-origin"
+    11		}
+    12	
+    13		# API: важно — НЕ использовать handle_path (он срезает /api)
+    14		@api path /api/*
+    15		handle @api {
+    16			reverse_proxy vinopsrestore-web-1:3000 {
+    17				header_up Host {host}
+    18				header_up X-Forwarded-Proto {scheme}
+    19			}
+    20		}
+    21	
+    22		# Остальной трафик — на Next
+    23		handle {
+    24			reverse_proxy vinopsrestore-web-1:3000 {
+    25				header_up Host {host}
+    26				header_up X-Forwarded-Proto {scheme}
+    27			}
+    28		}
+    29	}

@@ -1,0 +1,1 @@
+2f1e7da2db9aab85d3aa5ac2160903ef2d4e224ff161609f0ba0016b2820cbbf  /root/work/vinops.restore/caddy/Caddyfile

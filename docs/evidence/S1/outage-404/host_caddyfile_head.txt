@@ -1,0 +1,26 @@
+     1	vinops.online {
+     2	  encode zstd gzip
+     3	
+     4	  # === Static passthrough ===
+     5	  @static path /favicon.ico /robots.txt /sitemap.xml /sitemap* /jsonld* /_next/* /assets/*
+     6	
+     7	  # === Explicit root redirect (fix P0) ===
+     8	  @root path /
+     9	  handle @root {
+    10	    redir /en 308
+    11	  }
+    12	
+    13	  # === Locale redirect for everything that is not /en|/ru and not static ===
+    14	  @noLocale {
+    15	    not path_regexp hasLocale ^/(en|ru)(/|$)
+    16	    not path /favicon.ico /robots.txt /sitemap.xml /sitemap* /jsonld* /_next/* /assets/*
+    17	  }
+    18	  handle @noLocale {
+    19	    redir /en{uri} 308
+    20	  }
+    21	
+    22	  # === Main app proxy ===
+    23	  handle {
+    24	    reverse_proxy web:3000
+    25	  }
+    26	}

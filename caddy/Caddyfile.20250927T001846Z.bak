@@ -1,0 +1,16 @@
+vinops.online {
+  encode zstd gzip
+
+  @static path /favicon.ico /robots.txt /sitemap.xml /sitemap* /jsonld* /_next/* /assets/*
+
+  # редирект всех путей без локали (кроме статики) на /en{uri}
+  @noLocale {
+    not path /en* /ru* /favicon.ico /robots.txt /sitemap.xml /sitemap* /jsonld* /_next/* /assets/*
+  }
+  redir @noLocale /en{uri} 308
+
+  # основная проксировка в Next
+  handle {
+    reverse_proxy web:3000
+  }
+}

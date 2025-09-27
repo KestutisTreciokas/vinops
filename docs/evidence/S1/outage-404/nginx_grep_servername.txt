@@ -1,0 +1,4 @@
+/etc/nginx/sites-enabled/vinops.conf:2:  server_name vinops.online www.vinops.online;
+/etc/nginx/sites-enabled/vinops.conf:46:  server_name vinops.online www.vinops.online;
+/etc/nginx/sites-available/vinops.conf:2:  server_name vinops.online www.vinops.online;
+/etc/nginx/sites-available/vinops.conf:46:  server_name vinops.online www.vinops.online;

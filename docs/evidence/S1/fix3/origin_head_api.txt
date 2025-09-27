@@ -1,0 +1,18 @@
+HTTP/2 200 
+access-control-allow-headers: Content-Type, Accept, Accept-Language
+access-control-allow-methods: GET, OPTIONS
+alt-svc: h3=":443"; ma=2592000
+cache-control: public, max-age=30, stale-while-revalidate=120
+content-type: application/json; charset=utf-8
+date: Sat, 27 Sep 2025 03:03:48 GMT
+referrer-policy: strict-origin-when-cross-origin
+vary: RSC, Next-Router-State-Tree, Next-Router-Prefetch
+vary: Origin, Accept-Language
+via: 1.1 Caddy
+x-api-version: 1
+x-content-type-options: nosniff
+x-fallback: stub
+x-ratelimit-limit: 60
+x-ratelimit-remaining: 59
+x-ratelimit-reset: 1758942288
+
