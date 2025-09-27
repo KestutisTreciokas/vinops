@@ -1,6 +1,6 @@
 'use client'
 import Link from 'next/link'
-
+import type { Route } from 'next';
 export default function VinSidebar() {
   return (
     <aside className="card sticky top-4">
@@ -9,7 +9,7 @@ export default function VinSidebar() {
         <p className="text-[var(--fg-muted)]">
           Оставьте заявку — мы пришлём детальную информацию по лоту.
         </p>
-        <Link href="/ru/contacts" className="btn btn-primary btn-lg w-full">
+        <Link href={"/ru/contacts" as Route} className="btn btn-primary btn-lg w-full">
           Связаться
         </Link>
 
