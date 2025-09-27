@@ -1,6 +1,6 @@
 # MERGE_REPORT — PR #84 (консолидация по CONFLICT_POLICY)
 
-- Regenerated: 2025-09-27 22:58 CEST
+- Regenerated: 2025-09-27 22:59 CEST
 - Base: main 34c4cbaae1ca
 - PR head: 3e6de7349665
 - Policy: docs/merges/PR-84/CONFLICT_POLICY.md
