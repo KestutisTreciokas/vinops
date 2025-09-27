@@ -1,4 +1,4 @@
-# MERGE_REPORT — PR #84 consolidation (post-canon-align)
+# MERGE_REPORT — PR #84 consolidation (post-canon-align v2)
 
 ## Решения по путям
 | Decision | Path |
