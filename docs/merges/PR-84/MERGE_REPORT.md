@@ -108,3 +108,6 @@
 - Coverage: 94/94
 - Canonical guards: see CANONICAL_PROOF.md
 - Dev smoke note: NOOP pg-pool guard for /en without DB
+
+### Post-merge note
+- Merged into `main` at: d892cd4ee478
