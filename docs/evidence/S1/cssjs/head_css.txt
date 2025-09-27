@@ -1,6 +1,0 @@
-HTTP/2 200 
-date: Sat, 27 Sep 2025 03:08:55 GMT
-content-type: text/css; charset=UTF-8
-server: cloudflare
-alt-svc: h3=":443"; ma=86400
-cache-control: public, max-age=31536000, immutable

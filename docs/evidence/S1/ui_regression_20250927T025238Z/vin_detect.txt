@@ -1,1 +1,0 @@
-VIN_PATH=/en/vin/1FTEW1EG

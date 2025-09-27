@@ -1,3 +1,0 @@
-/en/cars
-/en/contacts
-/en/terms

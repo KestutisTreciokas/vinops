@@ -1,6 +1,0 @@
-HTTP/1.1 308 Permanent Redirect
-Connection: close
-Location: https://vinops.online/
-Server: Caddy
-Date: Sat, 27 Sep 2025 02:41:58 GMT
-

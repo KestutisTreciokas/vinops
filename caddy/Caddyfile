@@ -1,25 +1,16 @@
+{
+	email admin@vinops.online
+}
 vinops.online, www.vinops.online {
-  encode zstd gzip
-
-  # Исключения (не должны редиректиться — статика, API, служебные)
-  @static path /favicon.ico /icon.svg /robots.txt /sitemap.xml /sitemap* /jsonld* /_next/* /assets/* /svg/* /api/* /cdn-cgi/*
-
-  # Корень → /en (строгий 308). Важно: правило — ДО всего прочего.
-  @root path /
-  redir @root /en 308
-
-  # Любой путь, который НЕ под /en|/ru и не из @static → /en{uri}
-  @noLocale {
-    not path_regexp hasLocale ^/(en|ru)(/|$)
-    not path /favicon.ico /icon.svg /robots.txt /sitemap.xml /sitemap* /jsonld* /_next/* /assets/* /svg/* /api/* /cdn-cgi/*
-  }
-  redir @noLocale /en{uri} 308
-
-  # Сначала исключения — через приложение (для корректных заголовков/кэша)
-  handle @static {
-    reverse_proxy web:3000
-  }
-
-  # Остальное — в Next (включая /en/* и /ru/*)
-  reverse_proxy web:3000
+	encode zstd gzip
+	@health {
+		path /healthz
+	}
+	respond @health "ok" 200
+	reverse_proxy web:3000
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		X-Content-Type-Options "nosniff"
+	}
 }

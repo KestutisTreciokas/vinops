@@ -1,2 +1,0 @@
-[list] /data/caddy/certificates (max depth 3)
-[openssl] показать CN/SAN у основного сертификата (если найден)

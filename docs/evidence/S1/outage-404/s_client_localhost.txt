@@ -1,9 +1,0 @@
-CONNECTION ESTABLISHED
-Protocol version: TLSv1.3
-Ciphersuite: TLS_AES_128_GCM_SHA256
-Peer certificate: CN = vinops.online
-Hash used: SHA256
-Signature type: ECDSA
-Verification: OK
-Server Temp Key: X25519, 253 bits
-DONE
