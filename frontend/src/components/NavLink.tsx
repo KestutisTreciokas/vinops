@@ -1,23 +1,26 @@
 'use client'
 import Link from 'next/link'
+import type { Route } from 'next';
 import { usePathname } from 'next/navigation'
-import clsx from 'clsx'
+import { ReactNode } from 'react'
 
 export default function NavLink({
   href,
   children,
-  exact = false,
   className = '',
 }: {
   href: string
-  children: React.ReactNode
-  exact?: boolean
+  children: ReactNode
   className?: string
 }) {
-  const pathname = usePathname() || '/'
-  const isActive = exact ? pathname === href : pathname.startsWith(href)
+  const pathname = usePathname()
+  const isActive =
+    pathname === href || (href !== '/' && pathname?.startsWith(href + '/'))
+
+  const cls = `nav-link ${className}${isActive ? ' nav-link-active' : ''}`
+
   return (
-    <Link href={href} className={clsx('nav-link', isActive && 'nav-link-active', className)}>
+    <Link href={typeof href === "string" ? { pathname: href } : href} className={cls} aria-current={isActive ? 'page' : undefined}>
       {children}
     </Link>
   )
