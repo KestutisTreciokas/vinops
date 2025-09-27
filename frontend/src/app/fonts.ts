@@ -1,15 +1,29 @@
-import { Inter, JetBrains_Mono } from 'next/font/google'
+import localFont from 'next/font/local'
 
-export const inter = Inter({
-  subsets: ['latin', 'cyrillic'],
-  display: 'swap',
+export const ptSans = localFont({
+  src: [
+    { path: '../../public/fonts/pt-sans/pt-sans-latin-400-normal.woff2',    weight: '400', style: 'normal' },
+    { path: '../../public/fonts/pt-sans/pt-sans-cyrillic-400-normal.woff2', weight: '400', style: 'normal' },
+    { path: '../../public/fonts/pt-sans/pt-sans-latin-700-normal.woff2',    weight: '700', style: 'normal' },
+    { path: '../../public/fonts/pt-sans/pt-sans-cyrillic-700-normal.woff2', weight: '700', style: 'normal' },
+  ],
   variable: '--font-sans',
-  weight: ['400','500','600','700'],
+  display: 'swap',
+  preload: true,
+  fallback: ['system-ui','-apple-system','Segoe UI','Roboto','Arial','Noto Sans','Liberation Sans','sans-serif'],
 })
 
-export const mono = JetBrains_Mono({
-  subsets: ['latin'],
-  display: 'swap',
+export const ptMono = localFont({
+  src: [
+    { path: '../../public/fonts/pt-mono/pt-mono-latin-400-normal.woff2',    weight: '400', style: 'normal' },
+    { path: '../../public/fonts/pt-mono/pt-mono-cyrillic-400-normal.woff2', weight: '400', style: 'normal' },
+  ],
   variable: '--font-mono',
-  weight: ['400','500','600','700'],
+  display: 'swap',
+  preload: true,
+  fallback: ['ui-monospace','SFMono-Regular','Menlo','Monaco','Consolas','Liberation Mono','Courier New','monospace'],
 })
+
+// Совместимость существующих импортов:
+export const inter = ptSans
+export const mono  = ptMono

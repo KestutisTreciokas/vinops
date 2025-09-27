@@ -2,7 +2,14 @@
 
 Монорепозиторий: frontend/, backend/, общие скрипты и CI.
 
-### VIN API
-Для загрузки реальных данных укажите базовый URL бэкенда:
+## Toolchain
+- Node: >=20.14 <21 (`.nvmrc`=v20)
+- Next: 14.2.5
+- TypeScript: 5.6.x
+- CI выводит версии и запускает lint/typecheck (см. `.github/workflows/toolchain-check.yml`).
 
-Если переменная не задана или API недоступно, страница использует мок `src/mock/vin-sample.ts`.
+## Toolchain
+- Node: >=20.14 <21 (`.nvmrc`=v20)
+- Next: 14.2.5
+- TypeScript: 5.6.x
+- CI выводит версии и запускает lint/typecheck (см. `.github/workflows/toolchain-check.yml`).

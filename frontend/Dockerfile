@@ -1,33 +1,33 @@
-# 1) deps
+# --- deps ---
 FROM node:20-alpine AS deps
-RUN apk add --no-cache libc6-compat
 WORKDIR /app
+ENV NEXT_TELEMETRY_DISABLED=1
 COPY package*.json ./
-RUN npm ci
+RUN npm ci || npm install --no-audit --no-fund
 
-# 2) build (с доменом на этапе билда)
+# --- build ---
 FROM node:20-alpine AS build
-RUN apk add --no-cache libc6-compat
 WORKDIR /app
+ENV NEXT_TELEMETRY_DISABLED=1
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-ARG NEXT_PUBLIC_SITE_URL=https://vinops.online
-ENV NEXT_PUBLIC_SITE_URL=${NEXT_PUBLIC_SITE_URL}
-ENV NEXT_TELEMETRY_DISABLED=1
-RUN npm run build
+RUN node -v && npm run build
 
-# 3) runner
+# --- runner ---
 FROM node:20-alpine AS runner
-ENV HOSTNAME=0.0.0.0
-ENV PORT=3000
-ENV NODE_OPTIONS=--dns-result-order=ipv4first
-RUN addgroup -S nodejs && adduser -S nextjs -G nodejs
 WORKDIR /app
 ENV NODE_ENV=production
-ENV PORT=3000
-COPY --from=build /app/.next/standalone ./
+ENV NEXT_TELEMETRY_DISABLED=1
+RUN adduser -D -H -s /sbin/nologin nextjs
+# runtime deps
+COPY --from=build /app/node_modules ./node_modules
+# app
+COPY --from=build /app/.next ./.next
 COPY --from=build /app/public ./public
-COPY --from=build /app/.next/static ./.next/static
+# configs (любая из них может отсутствовать — это нормально)
+COPY --from=build /app/next.config.mjs ./next.config.mjs
+COPY --from=build /app/next.config.js ./next.config.js
+COPY --from=build /app/package.json ./package.json
 USER nextjs
 EXPOSE 3000
-CMD ["node", "server.js"]
+CMD ["node","node_modules/next/dist/bin/next","start","-H","0.0.0.0","-p","3000"]

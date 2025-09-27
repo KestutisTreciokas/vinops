@@ -1,48 +1,65 @@
-CREATE EXTENSION IF NOT EXISTS pgcrypto;
+-- 0001_init.sql — Baseline schema (repo-first, no data loss)
+-- vinops DB: vehicles, lots, sale_events, images
+-- NOTE: Constraints/indices go to 0002_constraints.sql
 
 CREATE TABLE IF NOT EXISTS vehicles (
-  vin CHAR(17) PRIMARY KEY,
-  make TEXT, model TEXT, year INTEGER,
-  body TEXT, fuel TEXT, transmission TEXT, drive TEXT, engine TEXT
+  vin        TEXT PRIMARY KEY,   -- normalized VIN (upper-case, no I/O/Q) — constraint in 0002
+  vin_raw    TEXT,               -- optional original user-provided VIN
+  make       TEXT,
+  model      TEXT,
+  year       INTEGER,
+  body       TEXT,
+  fuel       TEXT,
+  transmission TEXT,
+  drive      TEXT,
+  engine     TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 CREATE TABLE IF NOT EXISTS lots (
-  id BIGSERIAL PRIMARY KEY,
-  vin CHAR(17) NOT NULL REFERENCES vehicles(vin) ON DELETE CASCADE,
-  source TEXT NOT NULL DEFAULT 'COPART',
-  site_code TEXT, city TEXT, region TEXT, country TEXT, tz TEXT,
+  id                  BIGSERIAL PRIMARY KEY,
+  vin                 TEXT NOT NULL,  -- FK to vehicles(vin) in 0002
+  source              TEXT,
+  site_code           TEXT,
+  city                TEXT,
+  region              TEXT,
+  country             TEXT,
+  tz                  TEXT,
   auction_datetime_utc TIMESTAMPTZ,
-  retail_value_usd NUMERIC,
-  status TEXT
+  retail_value_usd    NUMERIC(12,2),
+  status              TEXT,           -- domain check in 0002
+  created_at          TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at          TIMESTAMPTZ NOT NULL DEFAULT now()
 );
-CREATE INDEX IF NOT EXISTS idx_lots_vin ON lots(vin);
-CREATE INDEX IF NOT EXISTS idx_lots_auction_dt ON lots(auction_datetime_utc DESC);
 
 CREATE TABLE IF NOT EXISTS sale_events (
-  id BIGSERIAL PRIMARY KEY,
-  vin CHAR(17) NOT NULL REFERENCES vehicles(vin) ON DELETE CASCADE,
-  lot_id BIGINT REFERENCES lots(id) ON DELETE CASCADE,
-  sale_date DATE,
-  status TEXT,
-  final_bid_usd NUMERIC,
-  currency TEXT,
-  collected_via TEXT
+  id             BIGSERIAL PRIMARY KEY,
+  vin            TEXT NOT NULL,  -- FK to vehicles(vin) in 0002
+  lot_id         BIGINT,         -- FK to lots(id) in 0002
+  sale_date      TIMESTAMPTZ,
+  status         TEXT,           -- domain check in 0002
+  final_bid_usd  NUMERIC(12,2),
+  currency       CHAR(3),        -- ISO-4217 (check in 0002)
+  collected_via  TEXT,
+  created_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at     TIMESTAMPTZ NOT NULL DEFAULT now()
 );
-CREATE INDEX IF NOT EXISTS idx_sale_events_vin ON sale_events(vin);
-CREATE INDEX IF NOT EXISTS idx_sale_events_date ON sale_events(sale_date DESC);
 
 CREATE TABLE IF NOT EXISTS images (
-  id BIGSERIAL PRIMARY KEY,
-  vin CHAR(17) NOT NULL REFERENCES vehicles(vin) ON DELETE CASCADE,
-  lot_id BIGINT REFERENCES lots(id) ON DELETE CASCADE,
-  seq INTEGER,
-  variant TEXT,
-  storage_key TEXT,
-  source_url TEXT,
-  width INTEGER,
-  height INTEGER,
-  bytes INTEGER,
-  content_hash TEXT
+  id           BIGSERIAL PRIMARY KEY,
+  vin          TEXT NOT NULL,    -- FK to vehicles(vin) in 0002
+  lot_id       BIGINT,           -- FK to lots(id) in 0002
+  seq          INTEGER NOT NULL, -- display order
+  variant      TEXT,             -- e.g., 'thumb','full','map','doc'
+  storage_key  TEXT,
+  source_url   TEXT,
+  width        INTEGER,
+  height       INTEGER,
+  bytes        BIGINT,
+  content_hash TEXT,
+  created_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at   TIMESTAMPTZ NOT NULL DEFAULT now()
 );
-CREATE INDEX IF NOT EXISTS idx_images_vin ON images(vin);
-CREATE INDEX IF NOT EXISTS idx_images_lot_seq ON images(lot_id, seq);
+
+-- Rollback strategy: documented in README.migrations.md; this file avoids destructive ops.

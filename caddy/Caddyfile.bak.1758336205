@@ -1,0 +1,8 @@
+{
+    email request@vinops.online
+}
+
+vinops.online, www.vinops.online {
+    encode zstd gzip
+    reverse_proxy web:3000
+}
