@@ -1,28 +1,6 @@
-Node: v20.14.0
-npm: 10.7.0
+Node: v12.22.9
+npm: 8.5.1
 --- curl /en ---
-HTTP/1.1 200 OK
-X-Content-Type-Options: nosniff
-Referrer-Policy: strict-origin-when-cross-origin
-Vary: RSC, Next-Router-State-Tree, Next-Router-Prefetch, Accept-Encoding
-link: </_next/static/media/1510e0c1ce13e1fa-s.p.woff2>; rel=preload; as="font"; crossorigin=""; type="font/woff2", </_next/static/media/1e9c5f05159fb382-s.p.woff2>; rel=preload; as="font"; crossorigin=""; type="font/woff2", </_next/static/media/28b6baa497ac9c87-s.p.woff2>; rel=preload; as="font"; crossorigin=""; type="font/woff2", </_next/static/media/50e46f954eedc33c-s.p.woff2>; rel=preload; as="font"; crossorigin=""; type="font/woff2", </_next/static/media/75d08c222fbf1da5-s.p.woff2>; rel=preload; as="font"; crossorigin=""; type="font/woff2"
-x-nextjs-cache: HIT
-Cache-Control: no-store, must-revalidate
-Content-Type: text/html; charset=utf-8
+
 --- curl VIN ---
-HTTP/1.1 200 OK
-X-Content-Type-Options: nosniff
-Referrer-Policy: strict-origin-when-cross-origin
-Vary: RSC, Next-Router-State-Tree, Next-Router-Prefetch, Accept-Encoding
-link: </_next/static/media/1510e0c1ce13e1fa-s.p.woff2>; rel=preload; as="font"; crossorigin=""; type="font/woff2", </_next/static/media/1e9c5f05159fb382-s.p.woff2>; rel=preload; as="font"; crossorigin=""; type="font/woff2", </_next/static/media/28b6baa497ac9c87-s.p.woff2>; rel=preload; as="font"; crossorigin=""; type="font/woff2", </_next/static/media/50e46f954eedc33c-s.p.woff2>; rel=preload; as="font"; crossorigin=""; type="font/woff2", </_next/static/media/75d08c222fbf1da5-s.p.woff2>; rel=preload; as="font"; crossorigin=""; type="font/woff2"
-Cache-Control: no-store, must-revalidate
-Content-Type: text/html; charset=utf-8
-Date: Sat, 27 Sep 2025 20:14:55 GMT
---- google-fonts grep (should be empty) ---
-../_logs/321321.log
-../_logs/<NAME>.20250927T185029Z.log
-../scripts/smoke_cars.sh
-../scripts/smoke_home_features.sh
-../context/mini-sprint-1_20250919T194728Z/build_web.log
-../frontend/FRONTEND.md
-../frontend/.next/server/src/middleware.js
+
