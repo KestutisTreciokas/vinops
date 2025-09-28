@@ -26,7 +26,7 @@ export function getPool(): Pool {
     if (stmtMs > 0) q.push(`SET statement_timeout = ${stmtMs}`);
 
     // Последовательно, игнорируя возможные ошибки SET.
-    q.reduce((p, sql) => p.then(() => client.query(sql).catch(()=>{})), Promise.resolve());
+    q.reduce<Promise<void>>((p, sql) => p.then(() => client.query(sql).then(() => undefined).catch(() => undefined)), Promise.resolve());
   });
 
   _pool.on('error', (err) => {
