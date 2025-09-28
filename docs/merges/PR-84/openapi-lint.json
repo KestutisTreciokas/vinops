@@ -1,0 +1,161 @@
+npm warn EBADENGINE Unsupported engine {
+npm warn EBADENGINE   package: '@redocly/cli@2.2.2',
+npm warn EBADENGINE   required: { node: '>=22.12.0 || >=20.19.0 <21.0.0', npm: '>=10' },
+npm warn EBADENGINE   current: { node: 'v20.14.0', npm: '10.7.0' }
+npm warn EBADENGINE }
+npm warn EBADENGINE Unsupported engine {
+npm warn EBADENGINE   package: '@redocly/openapi-core@2.2.2',
+npm warn EBADENGINE   required: { node: '>=22.12.0 || >=20.19.0 <21.0.0', npm: '>=10' },
+npm warn EBADENGINE   current: { node: 'v20.14.0', npm: '10.7.0' }
+npm warn EBADENGINE }
+npm warn EBADENGINE Unsupported engine {
+npm warn EBADENGINE   package: '@redocly/respect-core@2.2.2',
+npm warn EBADENGINE   required: { node: '>=22.12.0 || >=20.19.0 <21.0.0', npm: '>=10' },
+npm warn EBADENGINE   current: { node: 'v20.14.0', npm: '10.7.0' }
+npm warn EBADENGINE }
+
+⚠️ Warning: failed to satisfy expected node version. Expected: ">=22.12.0 || >=20.19.0 <21.0.0", Current "v20.14.0"
+
+No configurations were provided -- using built in recommended configuration by default.
+
+validating docs/merges/PR-84/_tmp/openapi.pr.yaml...
+{
+  "totals": {
+    "errors": 3,
+    "warnings": 5,
+    "ignored": 0
+  },
+  "version": "2.2.2",
+  "problems": [
+    {
+      "ruleId": "nullable-type-sibling",
+      "severity": "error",
+      "message": "The `type` field must be defined when the `nullable` field is used.",
+      "location": [
+        {
+          "source": {
+            "ref": "docs/merges/PR-84/_tmp/openapi.pr.yaml"
+          },
+          "pointer": "#/components/schemas/VehicleAggregate/properties/currentLot/nullable",
+          "reportOnKey": false
+        }
+      ],
+      "suggest": []
+    },
+    {
+      "ruleId": "security-defined",
+      "severity": "error",
+      "message": "Every operation should have security defined on it or on the root level.",
+      "location": [
+        {
+          "source": {
+            "ref": "docs/merges/PR-84/_tmp/openapi.pr.yaml"
+          },
+          "pointer": "#/paths/~1api~1v1~1vehicles~1{vin}/get",
+          "reportOnKey": true
+        }
+      ],
+      "suggest": []
+    },
+    {
+      "ruleId": "security-defined",
+      "severity": "error",
+      "message": "Every operation should have security defined on it or on the root level.",
+      "location": [
+        {
+          "source": {
+            "ref": "docs/merges/PR-84/_tmp/openapi.pr.yaml"
+          },
+          "pointer": "#/paths/~1api~1v1~1search/get",
+          "reportOnKey": true
+        }
+      ],
+      "suggest": []
+    },
+    {
+      "ruleId": "info-license",
+      "severity": "warn",
+      "message": "Info object should contain `license` field.",
+      "location": [
+        {
+          "source": {
+            "ref": "docs/merges/PR-84/_tmp/openapi.pr.yaml"
+          },
+          "pointer": "#/info",
+          "reportOnKey": true
+        }
+      ],
+      "suggest": []
+    },
+    {
+      "ruleId": "no-server-example.com",
+      "severity": "warn",
+      "message": "Server `url` should not point to example.com or localhost.",
+      "location": [
+        {
+          "source": {
+            "ref": "docs/merges/PR-84/_tmp/openapi.pr.yaml"
+          },
+          "pointer": "#/servers/1/url",
+          "reportOnKey": false
+        }
+      ],
+      "suggest": []
+    },
+    {
+      "ruleId": "tag-description",
+      "severity": "warn",
+      "message": "Tag object should contain `description` field.",
+      "location": [
+        {
+          "source": {
+            "ref": "docs/merges/PR-84/_tmp/openapi.pr.yaml"
+          },
+          "pointer": "#/tags/0/description",
+          "reportOnKey": true
+        }
+      ],
+      "suggest": []
+    },
+    {
+      "ruleId": "tag-description",
+      "severity": "warn",
+      "message": "Tag object should contain `description` field.",
+      "location": [
+        {
+          "source": {
+            "ref": "docs/merges/PR-84/_tmp/openapi.pr.yaml"
+          },
+          "pointer": "#/tags/1/description",
+          "reportOnKey": true
+        }
+      ],
+      "suggest": []
+    },
+    {
+      "ruleId": "no-invalid-media-type-examples",
+      "severity": "warn",
+      "message": "Example validation errored: \"nullable\" cannot be used without \"type\".",
+      "location": [
+        {
+          "source": {
+            "ref": "docs/merges/PR-84/_tmp/openapi.pr.yaml"
+          },
+          "pointer": "#/paths/~1api~1v1~1vehicles~1{vin}/get/responses/200/content/application~1json/schema",
+          "reportOnKey": false
+        }
+      ],
+      "from": {
+        "source": {
+          "ref": "docs/merges/PR-84/_tmp/openapi.pr.yaml"
+        },
+        "pointer": "#/paths/~1api~1v1~1vehicles~1{vin}/get/responses/200/content/application~1json"
+      },
+      "suggest": []
+    }
+  ]
+}docs/merges/PR-84/_tmp/openapi.pr.yaml: validated in 49ms
+
+❌ Validation failed with 3 errors and 5 warnings.
+run `redocly lint --generate-ignore-file` to add all problems to the ignore file.
+

@@ -1,0 +1,67 @@
+#!/usr/bin/env bash
+# Usage: deploy <image_sha> <target_env: prod|dev>
+# Requires: PROJECT_DIR, GHCR_IMAGE_WEB, GHCR_IMAGE_API in .env
+# Optional (passed as env by CI): GHCR_PULL_USER, GHCR_PULL_TOKEN
+set +e +u
+IMAGE_SHA="$1"
+TARGET_ENV="$2"
+if [ -z "$IMAGE_SHA" ] || [ -z "$TARGET_ENV" ]; then
+  echo '{"ok":false,"step":"deploy","error":"usage: deploy <image_sha> <prod|dev>"}'
+  exit 2
+fi
+
+. "${PROJECT_DIR}/.env"
+
+mkdir -p "${PROJECT_DIR}/releases" || true
+STATE="${PROJECT_DIR}/releases/current.json"
+[ -f "$STATE" ] || echo '{"prod_sha":null,"prod_prev_sha":null}' > "$STATE"
+
+# Determine desired tags
+if [ "$TARGET_ENV" = "prod" ]; then
+  WEB_TAG="prod"
+  API_TAG="prod"
+else
+  WEB_TAG="sha-${IMAGE_SHA}"
+  API_TAG="sha-${IMAGE_SHA}"
+fi
+
+# Persist previous SHA if switching prod
+CURR_SHA="$(grep -E '^WEB_IMAGE_TAG=' "${PROJECT_DIR}/.env" 2>/dev/null | cut -d= -f2 | sed 's/^sha-//;s/^prod$//' )"
+if [ -n "$CURR_SHA" ]; then
+  # naive JSON update without jq
+  TMP="$(mktemp)"
+  if [ -f "$STATE" ]; then
+    sed 's/}/,"prod_prev_sha":"'"$CURR_SHA"'","updated_by":"deploy"}/' "$STATE" | sed '0,/"prod_prev_sha":/s//"prod_prev_sha":"'"$CURR_SHA"'"/' > "$TMP" || echo '{"prod_prev_sha":"'"$CURR_SHA"'"}' > "$TMP"
+  else
+    echo '{"prod_prev_sha":"'"$CURR_SHA"'"}' > "$TMP"
+  fi
+  mv "$TMP" "$STATE"
+fi
+
+# Update .env with tags
+grep -q '^WEB_IMAGE_TAG=' "${PROJECT_DIR}/.env" && sed -i 's/^WEB_IMAGE_TAG=.*/WEB_IMAGE_TAG='"$WEB_TAG"'/' "${PROJECT_DIR}/.env" || echo "WEB_IMAGE_TAG=$WEB_TAG" >> "${PROJECT_DIR}/.env"
+grep -q '^API_IMAGE_TAG=' "${PROJECT_DIR}/.env" && sed -i 's/^API_IMAGE_TAG=.*/API_IMAGE_TAG='"$API_TAG"'/' "${PROJECT_DIR}/.env" || echo "API_IMAGE_TAG=$API_TAG" >> "${PROJECT_DIR}/.env"
+
+# GHCR login if creds available
+if [ -n "$GHCR_PULL_USER" ] && [ -n "$GHCR_PULL_TOKEN" ]; then
+  echo "$GHCR_PULL_TOKEN" | docker login ghcr.io -u "$GHCR_PULL_USER" --password-stdin || true
+fi
+
+cd "$PROJECT_DIR" || exit 1
+docker compose pull || true
+docker compose up -d || true
+
+# Save prod_sha on prod deploy
+if [ "$TARGET_ENV" = "prod" ]; then
+  TMP="$(mktemp)"
+  SHA_TO_WRITE="$IMAGE_SHA"
+  if [ -f "$STATE" ]; then
+    sed 's/}/,"prod_sha":"'"$SHA_TO_WRITE"'","updated_by":"deploy"}/' "$STATE" | sed '0,/"prod_sha":/s//"prod_sha":"'"$SHA_TO_WRITE"'"/' > "$TMP" || echo '{"prod_sha":"'"$SHA_TO_WRITE"'"}' > "$TMP"
+  else
+    echo '{"prod_sha":"'"$SHA_TO_WRITE"'"}' > "$TMP"
+  fi
+  mv "$TMP" "$STATE"
+fi
+
+echo '{"ok":true,"step":"deploy","target_env":"'"$TARGET_ENV"'","image_sha":"'"$IMAGE_SHA"'"}'
+exit 0

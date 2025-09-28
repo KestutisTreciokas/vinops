@@ -1,10 +1,5 @@
 import { Pool } from 'pg';
 
-// NOOP_DB_GUARD: enable smoke without real PG
-type Queryable = { query: (text:any, params?:any[]) => Promise<any>; on?: (...a:any[])=>any };
-const __PG_READY = !!(process.env.DATABASE_URL || process.env.PGHOST || process.env.PGUSER);
-let pool: Queryable;
-
 let _pool: Pool | null = null;
 
 export function getPool(): Pool {
@@ -31,11 +26,8 @@ export function getPool(): Pool {
     if (stmtMs > 0) q.push(`SET statement_timeout = ${stmtMs}`);
 
     // Последовательно, игнорируя возможные ошибки SET.
-    void (async () => {
-      for (const sql of q) {
-        try { await client.query(sql) } catch {}
-      }
-    })();;});
+    q.reduce<Promise<void>>((p, sql) => p.then(() => client.query(sql).then(() => undefined).catch(() => undefined)), Promise.resolve());
+  });
 
   _pool.on('error', (err) => {
     console.error('[pg pool error]', (err && (err as any).message) || err);
@@ -43,5 +35,3 @@ export function getPool(): Pool {
 
   return _pool;
 }
-
-export { pool };

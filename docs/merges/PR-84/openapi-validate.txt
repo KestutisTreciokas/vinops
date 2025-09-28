@@ -1,0 +1,84 @@
+Error: Invalid arguments
+
+Validates an API definition against the Swagger 2.0 or OpenAPI 3.0 schema.
+Returns a non-zero exit code if validation fails.
+
+Usage:
+    swagger-cli validate [options] <file>
+
+Options:
+    --no-schema             Do NOT validate against the Swagger/OpenAPI JSON schema
+
+    --no-spec               Do NOT validate against the Swagger/OpenAPI specification
+
+    -d, --debug             Show debug output
+
+SWAGGER_VALIDATE:PR=FAIL
+Error: Invalid arguments
+
+Validates an API definition against the Swagger 2.0 or OpenAPI 3.0 schema.
+Returns a non-zero exit code if validation fails.
+
+Usage:
+    swagger-cli validate [options] <file>
+
+Options:
+    --no-schema             Do NOT validate against the Swagger/OpenAPI JSON schema
+
+    --no-spec               Do NOT validate against the Swagger/OpenAPI specification
+
+    -d, --debug             Show debug output
+
+SWAGGER_VALIDATE:MAIN=FAIL
+
+⚠️ Warning: failed to satisfy expected node version. Expected: ">=22.12.0 || >=20.19.0 <21.0.0", Current "v20.14.0"
+
+No configurations were provided -- using built in recommended configuration by default.
+
+validating contracts/openapi.yaml...
+contracts/openapi.yaml: validated in 51ms
+
+❌ Validation failed with 3 errors and 5 warnings.
+run `redocly lint --generate-ignore-file` to add all problems to the ignore file.
+
+
+⚠️ Warning: failed to satisfy expected node version. Expected: ">=22.12.0 || >=20.19.0 <21.0.0", Current "v20.14.0"
+
+redocly <command>
+
+Commands:
+  redocly stats [api]                       Show statistics for an API descripti
+                                            on.
+  redocly split [api]                       Split an API description into a mult
+                                            i-file structure.
+  redocly join [apis...]                    Join multiple API descriptions into
+                                            one [experimental].
+  redocly push [files...]                   Push documents to Reunite.
+  redocly lint [apis...]                    Lint an API or Arazzo description.
+  redocly bundle [apis...]                  Bundle a multi-file API description
+                                            to a single file.
+  redocly check-config                      Lint the Redocly configuration file.
+  redocly login                             Log in to Redocly.
+  redocly logout                            Clear your stored credentials.
+  redocly preview                           Preview Redocly project using one of
+                                             the product NPM packages.
+  redocly build-docs [api]                  Produce API documentation as an HTML
+                                             file
+  redocly translate <locale>                Creates or updates translations.yaml
+                                             files and fills them with missing b
+                                            uilt-in translations and translation
+                                            s from the redocly.yaml and sidebars
+                                            .yaml files.
+  redocly eject <type> [path]               Helper function to eject project ele
+                                            ments for customization.
+  redocly respect [files...]                Run Arazzo tests.
+  redocly generate-arazzo <descriptionPath  Auto-generate arazzo description fil
+  >                                         e from an API description.
+  redocly completion                        Generate autocomplete script for `re
+                                            docly` command.
+
+Options:
+  --version  Show version number.                                      [boolean]
+  --help     Show help.                                                [boolean]
+
+Unknown arguments: format, diff, /work/docs/merges/PR-84/_tmp/openapi.main.yaml, /work/contracts/openapi.yaml

@@ -1,28 +1,41 @@
-import type { Metadata } from 'next'
-import React from 'react'
-import { buildVinMeta, buildVehicleJsonLd } from './seo'
-
-export async function generateMetadata(
-  { params }: { params: { lang: 'en'|'ru', vin: string } }
-): Promise<Metadata> {
-  const { lang, vin } = params
-  return buildVinMeta(lang, vin)
-}
+import Script from 'next/script'
 
 export default function VinLayout({
-  children, params
+  params, children,
 }: {
-  children: React.ReactNode,
-  params: { lang: 'en'|'ru', vin: string }
+  params: { lang: 'en'|'ru'; vin: string },
+  children: React.ReactNode
 }) {
-  const { lang, vin } = params
-  const ld = buildVehicleJsonLd(lang, vin)
+  const vehicle = {
+    "@context": "https://schema.org",
+    "@type": "Vehicle",
+    "vehicleIdentificationNumber": params.vin
+  }
+  const breadcrumbs = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": params.lang === "ru" ? "Главная" : "Home" },
+      { "@type": "ListItem", "position": 2, "name": "VIN " + params.vin }
+    ]
+  }
+
   return (
     <>
+      {/* Вставляем JSON-LD именно в <head> через beforeInteractive */}
+      <Script
+        id="ld-vehicle"
+        type="application/ld+json"
+        strategy="beforeInteractive"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(vehicle) }}
+      />
+      <Script
+        id="ld-breadcrumbs"
+        type="application/ld+json"
+        strategy="beforeInteractive"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbs) }}
+      />
       {children}
-      <script id="ld-vehicle" type="application/ld+json"
-        // eslint-disable-next-line react/no-danger
-        dangerouslySetInnerHTML={{ __html: ld }} />
     </>
   )
 }

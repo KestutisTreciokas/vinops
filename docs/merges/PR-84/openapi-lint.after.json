@@ -1,0 +1,106 @@
+{
+  "totals": {
+    "errors": 1,
+    "warnings": 5,
+    "ignored": 0
+  },
+  "version": "1.25.4",
+  "problems": [
+    {
+      "ruleId": "spec",
+      "severity": "error",
+      "message": "The `type` field must be defined when the `nullable` field is used.",
+      "location": [
+        {
+          "source": {
+            "ref": "contracts/openapi.yaml"
+          },
+          "pointer": "#/components/schemas/VehicleAggregate/properties/currentLot/nullable",
+          "reportOnKey": false
+        }
+      ],
+      "suggest": []
+    },
+    {
+      "ruleId": "info-license-strict",
+      "severity": "warn",
+      "message": "License object should contain `url` field.",
+      "location": [
+        {
+          "source": {
+            "ref": "contracts/openapi.yaml"
+          },
+          "pointer": "#/info/license/url",
+          "reportOnKey": true
+        }
+      ],
+      "suggest": []
+    },
+    {
+      "ruleId": "no-server-example.com",
+      "severity": "warn",
+      "message": "Server `url` should not point to example.com or localhost.",
+      "location": [
+        {
+          "source": {
+            "ref": "contracts/openapi.yaml"
+          },
+          "pointer": "#/servers/1/url",
+          "reportOnKey": false
+        }
+      ],
+      "suggest": []
+    },
+    {
+      "ruleId": "tag-description",
+      "severity": "warn",
+      "message": "Tag object should contain `description` field.",
+      "location": [
+        {
+          "source": {
+            "ref": "contracts/openapi.yaml"
+          },
+          "pointer": "#/tags/0/description",
+          "reportOnKey": true
+        }
+      ],
+      "suggest": []
+    },
+    {
+      "ruleId": "tag-description",
+      "severity": "warn",
+      "message": "Tag object should contain `description` field.",
+      "location": [
+        {
+          "source": {
+            "ref": "contracts/openapi.yaml"
+          },
+          "pointer": "#/tags/1/description",
+          "reportOnKey": true
+        }
+      ],
+      "suggest": []
+    },
+    {
+      "ruleId": "no-invalid-media-type-examples",
+      "severity": "warn",
+      "message": "Example validation errored: \"nullable\" cannot be used without \"type\".",
+      "location": [
+        {
+          "source": {
+            "ref": "contracts/openapi.yaml"
+          },
+          "pointer": "#/paths/~1api~1v1~1vehicles~1{vin}/get/responses/200/content/application~1json/schema",
+          "reportOnKey": false
+        }
+      ],
+      "from": {
+        "source": {
+          "ref": "contracts/openapi.yaml"
+        },
+        "pointer": "#/paths/~1api~1v1~1vehicles~1{vin}/get/responses/200/content/application~1json"
+      },
+      "suggest": []
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "production": [
+    "UNKNOWN_SEED_VIN_PROD"
+  ],
+  "development": [
+    "UNKNOWN_SEED_VIN_DEV"
+  ]
+}

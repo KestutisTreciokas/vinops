@@ -1,0 +1,5 @@
+== RESULT ==
+[development] missing: NONE
+[production ] missing: NONE
+[ARTIFACTS] /root/work/vinops.restore/docs/releases/env_snapshot.txt
+[ARTIFACTS] /root/work/vinops.restore/docs/releases/env_diff.txt

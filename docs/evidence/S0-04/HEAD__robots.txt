@@ -1,0 +1,12 @@
+[HEAD] /robots.txt
+HTTP/1.1 200 OK
+X-Content-Type-Options: nosniff
+Referrer-Policy: strict-origin-when-cross-origin
+vary: RSC, Next-Router-State-Tree, Next-Router-Prefetch
+x-nextjs-cache: HIT
+cache-control: public, max-age=0, must-revalidate
+content-type: text/plain
+Date: Sat, 27 Sep 2025 22:05:53 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+

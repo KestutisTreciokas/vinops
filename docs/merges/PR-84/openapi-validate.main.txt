@@ -1,0 +1,1 @@
+/work/docs/merges/PR-84/_tmp/openapi.main.yaml is valid
