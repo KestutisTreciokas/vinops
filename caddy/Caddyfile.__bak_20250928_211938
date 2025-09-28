@@ -4,7 +4,7 @@
 
 vinops.online, www.vinops.online {
   header {
-        X-Release-Sha 085e4b00fd0c
+    X-Release-Sha 085e4b00fd0c
   }
   encode zstd gzip
 
@@ -36,27 +36,21 @@ vinops.online, www.vinops.online {
 
   # Статику и остальное проксируем в Next
   handle @static {
-  reverse_proxy web:3000 {
-    header_down X-Release-Sha 085e4b00fd0c
+    reverse_proxy web:3000
   }
-  }
-  reverse_proxy web:3000 {
-    header_down X-Release-Sha 085e4b00fd0c
-  }
+  reverse_proxy web:3000
 }
 
 # --- dev host block [MS-0.5-03] ---
 dev.vinops.online {
   header {
-        X-Release-Sha 085e4b00fd0c
+    X-Release-Sha 085e4b00fd0c
   }
   @root path /
   redir @root /en 308
 
   # отдельный dev-бэкенд на docker-сети vinops_dev_net
-  reverse_proxy vinops-dev-web:3000 {
-    header_down X-Release-Sha 085e4b00fd0c
-  }
+  reverse_proxy vinops-dev-web:3000
 
   # за CF-прокси достаточно Origin TLS
   tls internal
