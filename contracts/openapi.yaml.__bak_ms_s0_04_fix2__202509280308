@@ -102,6 +102,7 @@ paths:
                         unit: mi
                         brand: ACTUAL
                     currentLot:
+                    c  type: object
                       lotId: 12345678
                       vin: WAUZZZAAAAAAAAAAA
                       source: copart
@@ -568,7 +569,7 @@ components:
         vehicle:
           $ref: '#/components/schemas/VehicleDto'
         currentLot:
-          type: object
+        c  type: object
           nullable: true
           allOf:
           - $ref: '#/components/schemas/LotDto'

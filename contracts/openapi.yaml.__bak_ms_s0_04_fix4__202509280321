@@ -568,7 +568,6 @@ components:
         vehicle:
           $ref: '#/components/schemas/VehicleDto'
         currentLot:
-          type: object
           nullable: true
           allOf:
           - $ref: '#/components/schemas/LotDto'

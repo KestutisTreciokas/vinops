@@ -1,0 +1,11 @@
+[HEAD] /en/vin/TESTVIN1234567890
+HTTP/1.1 200 OK
+X-Content-Type-Options: nosniff
+Referrer-Policy: strict-origin-when-cross-origin
+Vary: RSC, Next-Router-State-Tree, Next-Router-Prefetch, Accept-Encoding
+Cache-Control: private, no-cache, no-store, max-age=0, must-revalidate
+Content-Type: text/html; charset=utf-8
+Date: Sat, 27 Sep 2025 22:05:53 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+

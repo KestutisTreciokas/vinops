@@ -1,0 +1,14 @@
+[HEAD] /en
+HTTP/1.1 200 OK
+X-Content-Type-Options: nosniff
+Referrer-Policy: strict-origin-when-cross-origin
+Vary: RSC, Next-Router-State-Tree, Next-Router-Prefetch, Accept-Encoding
+x-nextjs-cache: HIT
+Cache-Control: s-maxage=31536000, stale-while-revalidate
+ETag: "1222a0qllgpcfu"
+Content-Type: text/html; charset=utf-8
+Content-Length: 16180
+Date: Sat, 27 Sep 2025 22:05:53 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+

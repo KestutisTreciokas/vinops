@@ -19,7 +19,6 @@ servers:
 tags:
 - name: vehicles
 - name: search
-security: []
 paths:
   /api/v1/vehicles/{vin}:
     get:
@@ -568,7 +567,6 @@ components:
         vehicle:
           $ref: '#/components/schemas/VehicleDto'
         currentLot:
-          type: object
           nullable: true
           allOf:
           - $ref: '#/components/schemas/LotDto'

@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+# Usage: rollback
+# Uses ${PROJECT_DIR}/releases/current.json to find prod_prev_sha and rewinds to it
+set +e +u
+STATE="${PROJECT_DIR}/releases/current.json"
+if [ ! -f "$STATE" ]; then
+  echo '{"ok":false,"step":"rollback","error":"no current.json"}'
+  exit 11
+fi
+PREV="$(grep -o '"prod_prev_sha"[^"]*"[^"]*"' "$STATE" 2>/dev/null | head -n1 | cut -d\" -f4)"
+if [ -z "$PREV" ] || [ "$PREV" = "null" ]; then
+  echo '{"ok":false,"step":"rollback","error":"prod_prev_sha is empty"}'
+  exit 12
+fi
+# Switch tags locally to previous sha
+sed -i 's/^WEB_IMAGE_TAG=.*/WEB_IMAGE_TAG=sha-'"$PREV"'/' "${PROJECT_DIR}/.env"
+sed -i 's/^API_IMAGE_TAG=.*/API_IMAGE_TAG=sha-'"$PREV"'/' "${PROJECT_DIR}/.env"
+cd "$PROJECT_DIR" || exit 1
+docker compose pull || true
+docker compose up -d || true
+echo '{"ok":true,"step":"rollback","to_sha":"'"$PREV"'"}'
+exit 0

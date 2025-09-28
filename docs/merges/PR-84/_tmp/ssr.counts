@@ -1,0 +1,7 @@
+CANON_EN=2
+HREFLANG_EN=2
+JSONLD_EN=0
+CANON_VIN=2
+HREFLANG_VIN=2
+JSONLD_VIN=0
+GFONTS_TOTAL=/work/docs/merges/PR-84/html_en.head.html:0 /work/docs/merges/PR-84/html_en.html:0 /work/docs/merges/PR-84/html_vin_en.head.html:0 /work/docs/merges/PR-84/html_vin_en.html:0

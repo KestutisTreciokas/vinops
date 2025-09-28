@@ -1,0 +1,7 @@
+npm warn deprecated @apidevtools/swagger-cli@4.0.4: This package has been abandoned. Please switch to using the actively maintained @redocly/cli
+/work/docs/merges/PR-84/_tmp/openapi.pr.yaml is valid
+npm notice
+npm notice New major version of npm available! 10.7.0 -> 11.6.1
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.6.1
+npm notice To update run: npm install -g npm@11.6.1
+npm notice

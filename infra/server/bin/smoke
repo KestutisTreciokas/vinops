@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+# Usage: smoke <base_url> <seed_vin>
+# Returns JSON with checks and overall ok field; exit 0 on ok, 10 on failure.
+set +e +u
+BASE="$1"
+VIN="$2"
+if [ -z "$BASE" ] || [ -z "$VIN" ]; then
+  echo '{"ok":false,"error":"usage: smoke <base_url> <seed_vin>"}'
+  exit 2
+fi
+
+TMPD="$(mktemp -d)"
+HEAD_EN_CODE="$(curl -sk -o "$TMPD/en.html" -w "%{http_code}" "$BASE/en")"
+VIN_URL="$BASE/en/vin/$VIN"
+VIN_CODE="$(curl -sk -D "$TMPD/vin.h" -o "$TMPD/vin.html" -w "%{http_code}" "$VIN_URL")"
+ROB_CODE="$(curl -sk -o /dev/null -w "%{http_code}" "$BASE/robots.txt")"
+SITE_CODE="$(curl -sk -o /dev/null -w "%{http_code}" "$BASE/sitemap.xml")"
+
+CANON="$(grep -i '<link[^>]*rel="canonical"' "$TMPD/vin.html" | wc -l)"
+HREF_EN="$(grep -i 'hreflang="en"' "$TMPD/vin.html" | wc -l)"
+HREF_RU="$(grep -i 'hreflang="ru"' "$TMPD/vin.html" | wc -l)"
+HREF_XD="$(grep -i 'hreflang="x-default"' "$TMPD/vin.html" | wc -l)"
+LD_VEH="$(grep -i 'application/ld+json' "$TMPD/vin.html" | grep -i 'Vehicle' | wc -l)"
+LD_BRD="$(grep -i 'application/ld+json' "$TMPD/vin.html" | grep -i 'BreadcrumbList' | wc -l)"
+
+OK_HEAD=$([ "$HEAD_EN_CODE" = "200" ] && echo ok || echo fail)
+OK_ROB=$([ "$ROB_CODE" = "200" ] && echo ok || echo fail)
+OK_SIT=$([ "$SITE_CODE" = "200" ] && echo ok || echo fail)
+OK_VIN=$([ "$VIN_CODE" = "200" ] && [ "$CANON" -ge 1 ] && [ "$HREF_EN" -ge 1 ] && [ "$HREF_RU" -ge 1 ] && [ "$HREF_XD" -ge 1 ] && [ "$LD_VEH" -ge 1 ] && [ "$LD_BRD" -ge 1 ] && echo ok || echo fail)
+
+OVERALL=ok
+for x in "$OK_HEAD" "$OK_ROB" "$OK_SIT" "$OK_VIN"; do
+  [ "$x" = "ok" ] || OVERALL=fail
+done
+
+echo '{"ok":"'"$OVERALL"'","checks":{"en":'"$HEAD_EN_CODE"',"robots":'"$ROB_CODE"',"sitemap":'"$SITE_CODE"',"vin":{"code":'"$VIN_CODE"',"canonical":'"$CANON"',"hreflang_en":'"$HREF_EN"',"hreflang_ru":'"$HREF_RU"',"hreflang_xdefault":'"$HREF_XD"',"ld_vehicle":'"$LD_VEH"',"ld_breadcrumb":'"$LD_BRD"'}}}'
+[ "$OVERALL" = "ok" ] && exit 0 || exit 10

@@ -1,0 +1,9 @@
+[development] OPEN https://github.com/KestutisTreciokas/vinops/settings/environments/2010839103
+- COMPOSE_PROJECT_NAME == vinops_dev
+- PROJECT_DIR          == /srv/vinops
+- DEV_BASE_URL         == https://dev.vinops.online   (без завершающего /)
+
+[production]  OPEN https://github.com/KestutisTreciokas/vinops/settings/environments/2010839104
+- COMPOSE_PROJECT_NAME == vinops_prod
+- PROJECT_DIR          == /srv/vinops
+- PROD_BASE_URL        == https://vinops.online       (без завершающего /)
