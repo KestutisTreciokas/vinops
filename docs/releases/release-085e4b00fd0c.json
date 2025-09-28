@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "timestamp": "2025-09-28 23:18",
+  "sha": "085e4b00fd0c",
+  "event": "cf",
+  "status": "ok",
+  "env": "dev",
+  "from_sha": "",
+  "to_sha": "",
+  "current_after": "085e4b00fd0c",
+  "prev_after": "3a93b9937715",
+  "hosts": { "prod": "vinops.online", "dev": "dev.vinops.online" },
+  "build": { "id": null, "etag": null },
+  "note": "cf-only warmup complete"
+}

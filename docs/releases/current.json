@@ -1,5 +1,8 @@
 {
-  "prod_sha": null,
-  "prod_prev_sha": null,
-  "updated_at": "2025-09-28 05:01 Europe/Warsaw"
+  "version": 1,
+  "timestamp": "2025-09-28 23:18",
+  "current_sha": "085e4b00fd0c",
+  "prev_sha": "3a93b9937715",
+  "hosts": { "prod": "vinops.online", "dev": "dev.vinops.online" },
+  "last_event": { "type": "cf", "status": "ok", "env": "dev", "ref": "085e4b00fd0c", "note": "cf-only warmup complete" }
 }
