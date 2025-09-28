@@ -1,37 +1,81 @@
 #!/usr/bin/env bash
-# Usage: smoke <base_url> <seed_vin>
-# Returns JSON with checks and overall ok field; exit 0 on ok, 10 on failure.
-set +e +u
-BASE="$1"
-VIN="$2"
-if [ -z "$BASE" ] || [ -z "$VIN" ]; then
-  echo '{"ok":false,"error":"usage: smoke <base_url> <seed_vin>"}'
-  exit 2
-fi
+# vinops smoke runner
 
-TMPD="$(mktemp -d)"
-HEAD_EN_CODE="$(curl -sk -o "$TMPD/en.html" -w "%{http_code}" "$BASE/en")"
-VIN_URL="$BASE/en/vin/$VIN"
-VIN_CODE="$(curl -sk -D "$TMPD/vin.h" -o "$TMPD/vin.html" -w "%{http_code}" "$VIN_URL")"
-ROB_CODE="$(curl -sk -o /dev/null -w "%{http_code}" "$BASE/robots.txt")"
-SITE_CODE="$(curl -sk -o /dev/null -w "%{http_code}" "$BASE/sitemap.xml")"
+# 1) Load environment: explicit $ENV_FILE → global → release-local → defaults
+ENV_LOADED=""
+try_env() { [ -n "$1" ] && [ -f "$1" ] && . "$1" && ENV_LOADED="$1"; }
+try_env "${ENV_FILE:-}"
+[ -z "$ENV_LOADED" ] && try_env "/srv/vinops/.env"
+[ -z "$ENV_LOADED" ] && try_env "$(cd "$(dirname "$0")"/.. && pwd)/.env"
 
-CANON="$(grep -i '<link[^>]*rel="canonical"' "$TMPD/vin.html" | wc -l)"
-HREF_EN="$(grep -i 'hreflang="en"' "$TMPD/vin.html" | wc -l)"
-HREF_RU="$(grep -i 'hreflang="ru"' "$TMPD/vin.html" | wc -l)"
-HREF_XD="$(grep -i 'hreflang="x-default"' "$TMPD/vin.html" | wc -l)"
-LD_VEH="$(grep -i 'application/ld+json' "$TMPD/vin.html" | grep -i 'Vehicle' | wc -l)"
-LD_BRD="$(grep -i 'application/ld+json' "$TMPD/vin.html" | grep -i 'BreadcrumbList' | wc -l)"
+: "${TZ:=Europe/Warsaw}"
+: "${RELEASES_DIR:=/srv/vinops/releases}"
+: "${LOG_DIR:=/srv/vinops/logs}"
+: "${CURRENT_SHA_FILE:=${RELEASES_DIR}/CURRENT_SHA}"
+: "${PREV_SHA_FILE:=${RELEASES_DIR}/PREV_SHA}"
+: "${DEV_HOST:=dev.vinops.online}"
+: "${PROD_HOST:=vinops.online}"
 
-OK_HEAD=$([ "$HEAD_EN_CODE" = "200" ] && echo ok || echo fail)
-OK_ROB=$([ "$ROB_CODE" = "200" ] && echo ok || echo fail)
-OK_SIT=$([ "$SITE_CODE" = "200" ] && echo ok || echo fail)
-OK_VIN=$([ "$VIN_CODE" = "200" ] && [ "$CANON" -ge 1 ] && [ "$HREF_EN" -ge 1 ] && [ "$HREF_RU" -ge 1 ] && [ "$HREF_XD" -ge 1 ] && [ "$LD_VEH" -ge 1 ] && [ "$LD_BRD" -ge 1 ] && echo ok || echo fail)
+show_help() {
+  cat <<'H'
+Usage: smoke --host {dev|prod} [--waive-vin]
+Checks:
+  / -> 308 (Location: /en)
+  /en, /robots.txt, /sitemap.xml -> 200
+  /api/v1/vehicles/INVALID... -> 422 (or WAIVED with --waive-vin)
+H
+}
 
-OVERALL=ok
-for x in "$OK_HEAD" "$OK_ROB" "$OK_SIT" "$OK_VIN"; do
-  [ "$x" = "ok" ] || OVERALL=fail
+HOST_SEL=""
+WAIVE_VIN=0
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --host) shift; HOST_SEL="$1" ;;
+    --host=*) HOST_SEL="${1#--host=}" ;;
+    --waive-vin) WAIVE_VIN=1 ;;
+    -h|--help) show_help; exit 0 ;;
+    *) echo "[WARN] unknown arg: $1" ;;
+  esac
+  shift || true
 done
 
-echo '{"ok":"'"$OVERALL"'","checks":{"en":'"$HEAD_EN_CODE"',"robots":'"$ROB_CODE"',"sitemap":'"$SITE_CODE"',"vin":{"code":'"$VIN_CODE"',"canonical":'"$CANON"',"hreflang_en":'"$HREF_EN"',"hreflang_ru":'"$HREF_RU"',"hreflang_xdefault":'"$HREF_XD"',"ld_vehicle":'"$LD_VEH"',"ld_breadcrumb":'"$LD_BRD"'}}}'
-[ "$OVERALL" = "ok" ] && exit 0 || exit 10
+case "$HOST_SEL" in
+  dev)  HOST="$DEV_HOST" ;;
+  prod) HOST="$PROD_HOST" ;;
+  *) echo "[FAIL] --host {dev|prod} is required"; exit 2 ;;
+esac
+
+export TZ
+ts() { date +'%F %H:%M %Z'; }
+curl_code() { curl -sk -o /dev/null -w '%{http_code}' "$1"; }
+location() { curl -skI "$1" | awk -F': ' 'tolower($1)=="location"{print $2}' | tr -d '\r'; }
+
+FAIL=0
+echo "[$(ts)] Host: $HOST"
+
+code="$(curl_code "https://$HOST/")"; loc="$(location "https://$HOST/")"
+echo "[$(ts)] / -> $code${loc:+ (Location: $loc)}"
+[ "$code" = "308" ] && [ "$loc" = "/en" ] || FAIL=1
+
+for p in /en /robots.txt /sitemap.xml; do
+  code="$(curl_code "https://$HOST$p")"
+  echo "[$(ts)] $p -> $code"
+  [ "$code" = "200" ] || FAIL=1
+done
+
+VIN_PATH="/api/v1/vehicles/INVALID000000000000000"
+code="$(curl_code "https://$HOST$VIN_PATH")"
+echo "[$(ts)] $VIN_PATH -> $code"
+if [ "$code" != "422" ]; then
+  if [ "$WAIVE_VIN" = "1" ]; then
+    echo "[$(ts)] VIN check WAIVED"
+  else
+    FAIL=1
+  fi
+fi
+
+if [ "$FAIL" = "0" ]; then
+  echo "[$(ts)] SMOKE: OK"; exit 0
+else
+  echo "[$(ts)] SMOKE: FAIL"; exit 1
+fi

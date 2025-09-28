@@ -97,7 +97,7 @@ purge_everything() {
         "$CF_API/zones/$zone/purge_cache")"
   http="$(echo "$out" | tail -n1 | sed 's/^HTTP://')"
   echo "$out" | head -n -1
-  if echo "$out" | head -n -1 | grep -Eq '"success":[[:space:]]*true' && [ "$http" = "200" ]; then
+  if echo "$out" | head -n -1 | grep -q '"success":true' && [ "$http" = "200" ]; then
     log "CF purge_everything: success (HTTP $http)"
     return 0
   else
@@ -126,7 +126,7 @@ purge_by_urls() {
         "$CF_API/zones/$zone/purge_cache")"
   http="$(echo "$out" | tail -n1 | sed 's/^HTTP://')"
   echo "$out" | head -n -1
-  if echo "$out" | head -n -1 | grep -Eq '"success":[[:space:]]*true' && [ "$http" = "200" ]; then
+  if echo "$out" | head -n -1 | grep -q '"success":true' && [ "$http" = "200" ]; then
     log "CF purge_urls: success:true"
     return 0
   else

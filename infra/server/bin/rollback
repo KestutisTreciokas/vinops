@@ -1,22 +1,26 @@
 #!/usr/bin/env bash
-# Usage: rollback
-# Uses ${PROJECT_DIR}/releases/current.json to find prod_prev_sha and rewinds to it
-set +e +u
-STATE="${PROJECT_DIR}/releases/current.json"
-if [ ! -f "$STATE" ]; then
-  echo '{"ok":false,"step":"rollback","error":"no current.json"}'
-  exit 11
-fi
-PREV="$(grep -o '"prod_prev_sha"[^"]*"[^"]*"' "$STATE" 2>/dev/null | head -n1 | cut -d\" -f4)"
-if [ -z "$PREV" ] || [ "$PREV" = "null" ]; then
-  echo '{"ok":false,"step":"rollback","error":"prod_prev_sha is empty"}'
-  exit 12
-fi
-# Switch tags locally to previous sha
-sed -i 's/^WEB_IMAGE_TAG=.*/WEB_IMAGE_TAG=sha-'"$PREV"'/' "${PROJECT_DIR}/.env"
-sed -i 's/^API_IMAGE_TAG=.*/API_IMAGE_TAG=sha-'"$PREV"'/' "${PROJECT_DIR}/.env"
-cd "$PROJECT_DIR" || exit 1
-docker compose pull || true
-docker compose up -d || true
-echo '{"ok":true,"step":"rollback","to_sha":"'"$PREV"'"}'
-exit 0
+# vinops rollback to PREV_SHA (state-file swap)
+
+ENV_LOADED=""
+try_env() { [ -n "$1" ] && [ -f "$1" ] && . "$1" && ENV_LOADED="$1"; }
+try_env "${ENV_FILE:-}"
+[ -z "$ENV_LOADED" ] && try_env "/srv/vinops/.env"
+[ -z "$ENV_LOADED" ] && try_env "$(cd "$(dirname "$0")"/.. && pwd)/.env"
+
+: "${TZ:=Europe/Warsaw}"
+: "${RELEASES_DIR:=/srv/vinops/releases}"
+: "${CURRENT_SHA_FILE:=${RELEASES_DIR}/CURRENT_SHA}"
+: "${PREV_SHA_FILE:=${RELEASES_DIR}/PREV_SHA}"
+
+ts() { date +'%F %H:%M %Z'; }
+
+CUR="$(cat "$CURRENT_SHA_FILE" 2>/dev/null || true)"
+PREV="$(cat "$PREV_SHA_FILE" 2>/dev/null || true)"
+[ -z "$CUR" ]  && { echo "[FAIL] CURRENT_SHA empty"; exit 2; }
+[ -z "$PREV" ] && { echo "[FAIL] PREV_SHA empty"; exit 3; }
+[ -d "$RELEASES_DIR/$PREV" ] || { echo "[FAIL] prev release dir missing: $RELEASES_DIR/$PREV"; exit 4; }
+
+echo "[$(ts)] rollback: $CUR -> $PREV"
+echo "$CUR"  > "$PREV_SHA_FILE"
+echo "$PREV" > "$CURRENT_SHA_FILE"
+echo "[$(ts)] done: CURRENT_SHA=$(cat "$CURRENT_SHA_FILE") PREV_SHA=$(cat "$PREV_SHA_FILE")"
