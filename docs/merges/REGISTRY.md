@@ -11,3 +11,4 @@
 | MS-S0-02 | Политика конфликтов PR #84 | Closed | 2025-09-27 20:35 | CONFLICT_POLICY + DL-MERGE-POLICY |
 | MS-S0-03 | Консолидация PR #84 (rebase/pr-84-consolidated) | Closed | 2025-09-27 22:54 | MERGE_REPORT+CANONICAL_PROOF+NOOP-PG(dev) |
 >>>>>>> origin/main
+| MS-0.5-06 | Артефакты релиза | Closed | 2025-09-28 23:26 | current.json + release-*.json автогенерация |

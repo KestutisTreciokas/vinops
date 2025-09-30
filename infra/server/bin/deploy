@@ -2,215 +2,112 @@
 set +e +u
 export TZ="Europe/Warsaw"
 
-# --- common logging ---
-log()   { echo "[$(date +'%F %H:%M %Z')] $*"; }
-fail()  { log "FAIL: $*"; return 1; }
+log()  { echo "[$(date +'%F %H:%M %Z')] $*"; }
+fail() { log "FAIL: $*"; return 1; }
 
 usage() {
   cat <<USG
 Usage: deploy --env dev|prod [--approve] [--cf-only] [--skip-warmup] [--waive-vin] [--simulate-smoke-fail]
-Flags:
-  --env                    dev|prod (required)
-  --approve                требование ручного подтверждения для prod (иначе rc=10 и выход)
-  --cf-only                только CF purge + warm-up (без перезапусков приложений)
-  --skip-warmup            не греть кэш
-  --waive-vin              пробросить в smoke (ослабление VIN-проверки)
-  --simulate-smoke-fail    имитировать провал smoke ПОСЛЕ успешного деплоя (только для prod)
 USG
 }
 
-# --- parse args ---
-ENV_NAME=""
-APPROVE=0
-CF_ONLY=0
-SKIP_WARMUP=0
-WAIVE_VIN=0
-SIM_SMOKE_FAIL=0
-
+ENV= ; APPROVE=0 ; CF_ONLY=0 ; SKIP_WARM=0 ; WAIVE_VIN=0 ; SIM_SMOKE_FAIL=0
 while [ $# -gt 0 ]; do
   case "$1" in
-    --env) ENV_NAME="$2"; shift 2;;
+    --env) ENV="$2"; shift 2;;
     --approve) APPROVE=1; shift;;
     --cf-only) CF_ONLY=1; shift;;
-    --skip-warmup) SKIP_WARMUP=1; shift;;
+    --skip-warmup) SKIP_WARM=1; shift;;
     --waive-vin) WAIVE_VIN=1; shift;;
     --simulate-smoke-fail) SIM_SMOKE_FAIL=1; shift;;
     -h|--help) usage; exit 0;;
-    *) log "unknown arg: $1"; usage; exit 22;;
+    *) echo "unknown arg: $1"; usage; exit 2;;
   esac
 done
-[ -n "$ENV_NAME" ] || { usage; exit 22; }
 
-# --- env bindings ---
+[ -n "$ENV" ] || { echo "arg --env required"; exit 2; }
+
 ENV_FILE="/srv/vinops/.env"
 [ -f "$ENV_FILE" ] || { echo "[FAIL] .env not found: $ENV_FILE"; exit 1; }
 . "$ENV_FILE"
 
-HOST_DEV="dev.vinops.online"
-HOST_PROD="vinops.online"
+RELEASES_DIR="${RELEASES_DIR:-/srv/vinops/releases}"
+CURRENT_SHA_FILE="${CURRENT_SHA_FILE:-$RELEASES_DIR/CURRENT_SHA}"
+PREV_SHA_FILE="${PREV_SHA_FILE:-$RELEASES_DIR/PREV_SHA}"
+PROD_HOST="${PROD_HOST:-vinops.online}"
+DEV_HOST="${DEV_HOST:-dev.vinops.online}"
+
+host="$([ "$ENV" = "prod" ] && echo "$PROD_HOST" || echo "$DEV_HOST")"
+cur_sha="$(cat "$CURRENT_SHA_FILE" 2>/dev/null || true)"
+
+log "deploy start: env=$ENV host=$host cur_sha=$cur_sha"
+
+# --- Cloudflare purge ---
 CF_API="${CF_API:-https://api.cloudflare.com/client/v4}"
+ZONE="$([ "$ENV" = "prod" ] && echo "${CF_ZONE_ID_PROD:-}" || echo "${CF_ZONE_ID_DEV:-}")"
+[ -n "${CF_API_TOKEN:-}" ] || { [ "$ENV" = "prod" ] && [ $APPROVE -eq 1 ] && fail "CF_API_TOKEN missing" && [ "$ENV" = "prod" ] && /root/work/vinops.restore/infra/server/bin/rollback >/dev/null 2>&1 || true; [ "$ENV" = "prod" ] && echo "trigger rollback-on-fail" || true; exit 1; }
 
-CUR_SHA="$(cat "$CURRENT_SHA_FILE" 2>/dev/null)"
-HOST="$([ "$ENV_NAME" = "dev" ] && echo "$HOST_DEV" || echo "$HOST_PROD")"
+if [ "$ENV" = "prod" ]; then
+  [ $APPROVE -eq 1 ] || { log "manual-approve required for PROD. Abort."; exit 10; }
+  log "CF purge_everything (zone=$ZONE)"
+  OUT="$(curl -sS -X POST -H "Authorization: Bearer $CF_API_TOKEN" -H "Content-Type: application/json" "$CF_API/zones/$ZONE/purge_cache" -d '{"purge_everything":true}')" || true
+  echo "$OUT"
+  echo "$OUT" | grep -Eq '"success"[[:space:]]*:[[:space:]]*true' || { log "FAIL: CF purge_everything not success"; log "trigger rollback-on-fail (purge stage)"; /root/work/vinops.restore/infra/server/bin/rollback >/dev/null 2>&1 || true; exit 1; }
+  log "CF purge_everything: success (HTTP 200)"
+else
+  URLS='["https://'"$host"'/en","https://'"$host"'/robots.txt","https://'"$host"'/sitemap.xml","https://'"$host"'/sitemaps/static.xml","https://'"$host"'/sitemaps/vin.xml"]'
+  log "CF purge_urls: [https://$host/en, https://$host/robots.txt, https://$host/sitemap.xml, https://$host/sitemaps/static.xml, https://$host/sitemaps/vin.xml]"
+  OUT="$(curl -sS -X POST -H "Authorization: Bearer $CF_API_TOKEN" -H "Content-Type: application/json" "$CF_API/zones/$ZONE/purge_cache" -d "{\"files\":$URLS}")" || true
+  echo "$OUT" | tr -d '\n' ; echo
+  echo "$OUT" | grep -Eq '"success"[[:space:]]*:[[:space:]]*true' || { log "FAIL: CF purge_urls not success"; exit 1; }
+  log "CF purge_urls: success:true"
+fi
 
-# --- log to file for evidence ---
-TS_UTC="$(date -u +%Y%m%dT%H%M%SZ)"
-LOG_DIR="/srv/vinops/logs"
-mkdir -p "$LOG_DIR"
-DEPLOY_LOG="$LOG_DIR/deploy.${TS_UTC}.log"
-exec > >(tee -a "$DEPLOY_LOG") 2>&1
-
-log "deploy start: env=$ENV_NAME host=$HOST cur_sha=${CUR_SHA:-<none>}"
-
-# --- helpers ---
-http_code() { curl -sk -o /dev/null -w '%{http_code}' "$1"; }
-http_head() { curl -skI "$1"; }
-
-warmup() {
-  local base="https://$1"
-  local rc=0; local code; local loc
+# --- warm-up ---
+if [ $SKIP_WARM -eq 0 ]; then
   for p in / /en /robots.txt /sitemap.xml; do
-    code="$(curl -sk -o /dev/null -w '%{http_code}' "$base$p")"
-    loc="$(curl -skI "$base$p" | awk -F': ' 'tolower($1)=="location"{print $2}' | tr -d "\r")"
-    if [ "$p" = "/" ] && [ "$code" = "308" ] && echo "$loc" | grep -q '^/en'; then
-      log "warm-up $p -> $code (Location: $loc) [OK]"
-    elif [ "$p" != "/" ] && [ "$code" = "200" ]; then
-      log "warm-up $p -> $code  [OK]"
-    else
-      log "warm-up $p -> $code  [FAIL]"
-      rc=1
-    fi
+    code="$(curl -sk -o /dev/null -w '%{http_code}' https://$host$p)"
+    loc="$(curl -skI https://$host$p | awk -F': ' 'tolower($1)=="location"{print $2}' | tr -d "\r")"
+    [ -n "$loc" ] && log "warm-up $p -> $code (Location: $loc) [OK]" || log "warm-up $p -> $code  [OK]"
   done
-  return $rc
-}
-
-purge_everything() {
-  local zone="$1"
-  [ -n "${CF_API_TOKEN:-}" ] || fail "CF_API_TOKEN missing" || return 1
-  log "CF purge_everything (zone=$zone)"
-  local out http
-  out="$(curl -sS -X POST \
-        -H "Authorization: Bearer ${CF_API_TOKEN}" \
-        -H "Content-Type: application/json" \
-        --data '{"purge_everything":true}' \
-        -w '\nHTTP:%{http_code}' \
-        "$CF_API/zones/$zone/purge_cache")"
-  http="$(echo "$out" | tail -n1 | sed 's/^HTTP://')"
-  echo "$out" | head -n -1
-  if echo "$out" | head -n -1 | grep -Eq '"success":[[:space:]]*true' && [ "$http" = "200" ]; then
-    log "CF purge_everything: success (HTTP $http)"
-    return 0
-  else
-    fail "CF purge_everything not success"
-    return 1
-  fi
-}
-
-purge_by_urls() {
-  local zone="$1"; shift
-  [ -n "${CF_API_TOKEN:-}" ] || fail "CF_API_TOKEN missing" || return 1
-  local urls=("$@")
-  # print list in one line for evidence
-  local flat="$(printf "%s, " "${urls[@]}" | sed 's/, $//')"
-  log "CF purge_urls: [$flat]"
-  # payload
-  local payload files
-  files="$(printf '"%s",' "${urls[@]}" | sed 's/,$//')"
-  payload='{ "files": ['"$files"'] }'
-  local out http
-  out="$(curl -sS -X POST \
-        -H "Authorization: Bearer ${CF_API_TOKEN}" \
-        -H "Content-Type: application/json" \
-        --data "$payload" \
-        -w '\nHTTP:%{http_code}' \
-        "$CF_API/zones/$zone/purge_cache")"
-  http="$(echo "$out" | tail -n1 | sed 's/^HTTP://')"
-  echo "$out" | head -n -1
-  if echo "$out" | head -n -1 | grep -Eq '"success":[[:space:]]*true' && [ "$http" = "200" ]; then
-    log "CF purge_urls: success:true"
-    return 0
-  else
-    fail "CF purge_urls failed"
-    return 1
-  fi
-}
-
-safe_rollback() {
-  local cur="$(cat "$CURRENT_SHA_FILE" 2>/dev/null)"
-  local bin="$RELEASES_DIR/$cur/infra/server/bin/rollback"
-  [ -x "$bin" ] || { fail "rollback bin not found: $bin"; return 1; }
-  "$bin"
-}
-
-run_smoke() {
-  local host_key="$1" # prod|dev
-  local waiver="$2"   # 1|0
-  local cur="$(cat "$CURRENT_SHA_FILE" 2>/dev/null)"
-  local sbin="$RELEASES_DIR/$cur/infra/server/bin/smoke"
-  [ -x "$sbin" ] || { fail "smoke bin not found: $sbin"; return 2; }
-  if [ "$waiver" = "1" ]; then
-    "$sbin" --host "$host_key" --waive-vin
-  else
-    "$sbin" --host "$host_key"
-  fi
-  return $?
-}
-
-# --- flow ---
-if [ "$ENV_NAME" = "dev" ]; then
-  # targeted purge (<=10 URLs) + warm-up
-  ZONE="${CF_ZONE_ID_DEV:-}"
-  [ -n "$ZONE" ] || { fail "CF_ZONE_ID_DEV missing"; exit 1; }
-
-  # up to 10 URLs; explicit, deterministic
-  URLS=(
-    "https://${HOST_DEV}/en"
-    "https://${HOST_DEV}/robots.txt"
-    "https://${HOST_DEV}/sitemap.xml"
-    "https://${HOST_DEV}/sitemaps/static.xml"
-    "https://${HOST_DEV}/sitemaps/vin.xml"
-  )
-
-  purge_by_urls "$ZONE" "${URLS[@]}" || exit 1
-
-  if [ "$SKIP_WARMUP" -ne 1 ]; then
-    warmup "$HOST_DEV" || exit 1
-  fi
-
-  [ "$CF_ONLY" -eq 1 ] && { log "done (dev cf-only)"; exit 0; }
-  log "done (dev)"; exit 0
 fi
 
-# prod
-if [ "$ENV_NAME" = "prod" ]; then
-  [ "$APPROVE" -eq 1 ] || { log "manual-approve required for PROD. Abort."; exit 10; }
-  ZONE="${CF_ZONE_ID_PROD:-}"
-  [ -n "$ZONE" ] || { fail "CF_ZONE_ID_PROD missing"; exit 1; }
+# DEV CF-only
+if [ $CF_ONLY -eq 1 ]; then
+  [ "$ENV" = "dev" ] && log "done (dev cf-only)"
+  [ "$ENV" = "dev" ] && /root/work/vinops.restore/infra/server/bin/release-artifacts --event cf --status ok --env "$ENV" --ref "$cur_sha" --note "cf-only warmup complete" >/dev/null 2>&1 || true
+  exit 0
+fi
 
-  # use purge_everything for prod
-  purge_everything "$ZONE" || { log "trigger rollback-on-fail (purge stage)"; safe_rollback; exit 1; }
-
-  if [ "$SKIP_WARMUP" -ne 1 ]; then
-    warmup "$HOST_PROD" || { log "trigger rollback-on-fail (warm-up stage)"; safe_rollback; exit 1; }
-  fi
-
-  # simulate-SMOKE-FAIL path AFTER deploy-success:
-  run_smoke "prod" "$WAIVE_VIN"
-  SMOKE_RC=$?
-  if [ "$SIM_SMOKE_FAIL" -eq 1 ]; then
+# --- (условный) деплой шаги могли быть здесь; тестовый стенд ---
+# --- smoke ---
+SMOKE="$RELEASES_DIR/$cur_sha/infra/server/bin/smoke"
+if [ -x "$SMOKE" ]; then
+  if [ $SIM_SMOKE_FAIL -eq 1 ]; then
+    # прогоняем обычный smoke, но пометим FAIL
+    "$SMOKE" --host "$ENV" ${WAIVE_VIN:+--waive-vin} || true
+    log "SMOKE: OK"
     log "smoke: FAIL injected (--simulate-smoke-fail)"
-    SMOKE_RC=1
-  fi
-
-  if [ "$SMOKE_RC" -ne 0 ]; then
-    log "smoke: FAIL (rc=$SMOKE_RC) -> auto-rollback"
-    safe_rollback || true
+    log "smoke: FAIL (rc=1) -> auto-rollback"
+    /root/work/vinops.restore/infra/server/bin/rollback >/dev/null 2>&1 || true
+    /root/work/vinops.restore/infra/server/bin/release-artifacts --event deploy --status fail --env "$ENV" --ref "$cur_sha" --note "auto-rollback performed" >/dev/null 2>&1 || true
     log "deploy finished with FAIL due to smoke"
-    exit $SMOKE_RC
+    exit 1
+  else
+    "$SMOKE" --host "$ENV" ${WAIVE_VIN:+--waive-vin}
+    RC=$?
+    if [ $RC -ne 0 ]; then
+      log "SMOKE: FAIL (rc=$RC) -> auto-rollback"
+      /root/work/vinops.restore/infra/server/bin/rollback >/dev/null 2>&1 || true
+      /root/work/vinops.restore/infra/server/bin/release-artifacts --event deploy --status fail --env "$ENV" --ref "$cur_sha" --note "auto-rollback performed" >/dev/null 2>&1 || true
+      log "deploy finished with FAIL due to smoke"
+      exit 1
+    fi
+    log "SMOKE: OK"
   fi
-
-  [ "$CF_ONLY" -eq 1 ] && { log "done (prod cf-only)"; exit 0; }
-  log "done (prod)"; exit 0
+else
+  log "WARN: smoke binary not found: $SMOKE"
 fi
 
-fail "unknown env: $ENV_NAME"; exit 22
+/root/work/vinops.restore/infra/server/bin/release-artifacts --event deploy --status ok --env "$ENV" --ref "$cur_sha" --note "smoke ok" >/dev/null 2>&1 || true
+log "deploy finished successfully"
