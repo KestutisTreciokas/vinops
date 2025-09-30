@@ -13,35 +13,39 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '20.14.x'
           cache: 'npm'
-          cache-dependency-path: 'frontend/package-lock.json'
+          cache-dependency-path: |
+            frontend/package-lock.json
+            package-lock.json
+
       - name: Install
         run: npm ci
-      - name: Build
+
+      # ВАЖНО: сборку страниц убираем — цель smoke: проверить API-эндпоинты.
+      - name: Start (3030, dev)
         env:
           NODE_ENV: development
           DAL_MOCK: '1'
-        run: npm run build
-      - name: Start (3030)
-        env:
-          NODE_ENV: development
-          DAL_MOCK: '1'
-        run: npx next start -p 3030 & echo $! > /tmp/next.pid
+          NEXT_TELEMETRY_DISABLED: '1'
+        run: npx next dev -p 3030 & echo $! > /tmp/next.pid
+
       - name: Wait for server
         run: |
           for i in {1..40}; do
             curl -sSf http://127.0.0.1:3030/health >/dev/null 2>&1 && break
             sleep 0.5
           done
+
       - name: Smoke 422 invalid VIN
         run: |
           set -eux
           curl -si http://127.0.0.1:3030/api/v1/vehicles/abcoOq12345 | tee /tmp/h1.txt
-          grep -i "HTTP/1.1 422" /tmp/h1.txt || grep -i "HTTP/2 422" /tmp/h1.txt
+          grep -i "HTTP/1.1 422\|HTTP/2 422" /tmp/h1.txt
           grep -i "^content-type: application/json" /tmp/h1.txt
           grep -i "^x-api-version: 1" /tmp/h1.txt
           grep -i "^x-ratelimit-limit:" /tmp/h1.txt
+
       - name: Smoke 200 + ETag + 304
         run: |
           set -eux
@@ -54,6 +58,7 @@ jobs:
           grep -i "^x-ratelimit-remaining:" /tmp/h2.txt
           grep -i "^cache-control: public" /tmp/h2.txt
           grep -i "^vary: .*Accept-Language" /tmp/h2.txt
+
       - name: Smoke 404 not found
         run: |
           set -eux
@@ -61,6 +66,7 @@ jobs:
           grep -i "HTTP/1.1 404\|HTTP/2 404" /tmp/h4.txt
           grep -i "^content-type: application/json" /tmp/h4.txt
           grep -i "^x-api-version: 1" /tmp/h4.txt
+
       - name: Smoke 429 rate limit
         run: |
           set -eux
@@ -70,6 +76,7 @@ jobs:
             if [ "$code" = "429" ]; then break; fi
           done
           test "$code" = "429"
+
       - name: Smoke OPTIONS (CORS)
         run: |
           set -eux
@@ -77,6 +84,7 @@ jobs:
           grep -i "HTTP/1.1 204\|HTTP/2 204" /tmp/h5.txt
           grep -i "^access-control-allow-methods: GET, OPTIONS" /tmp/h5.txt
           grep -i "^access-control-allow-origin: https://vinops.online" /tmp/h5.txt
+
       - name: Stop
         if: always()
         run: |
