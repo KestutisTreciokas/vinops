@@ -1,0 +1,12 @@
+{
+  "name": "vinops-tg-bot",
+  "private": true,
+  "version": "0.0.0-s0",
+  "description": "Vinops Telegram bot + Mini App (S0 skeleton)",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "check:config": "node config-check.js"
+  },
+  "engines": { "node": ">=20.0.0" }
+}
