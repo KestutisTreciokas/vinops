@@ -1,0 +1,124 @@
+#!/usr/bin/env bash
+set +e +u
+export TZ="Europe/Warsaw"
+
+log()  { echo "[$(date +'%F %H:%M %Z')] $*"; }
+fail(){ log "FAIL: $*"; return 1; }
+
+ENV_FILE="/srv/vinops/.env"
+[ -f "$ENV_FILE" ] || { echo "[FAIL] .env not found: $ENV_FILE"; exit 1; }
+. "$ENV_FILE"
+
+CF_API="${CF_API:-https://api.cloudflare.com/client/v4}"
+ZID="${CF_ZONE_ID_DEV:-${CF_ZONE_ID_PROD:-}}"
+HOST_DEV="dev.vinops.online"
+TARGET="${DEV_DNS_TARGET:-vinops.online}"
+[ -n "${CF_API_TOKEN:-}" ] || { echo "[FAIL] CF_API_TOKEN missing"; exit 1; }
+[ -n "${ZID:-}" ] || { echo "[FAIL] CF_ZONE_ID_DEV/PROD missing"; exit 1; }
+authH=( -H "Authorization: Bearer ${CF_API_TOKEN}" -H "Content-Type: application/json" )
+
+# --- helpers ---
+success_json(){ printf "%s" "$1" | grep -Eq '"success"[[:space:]]*:[[:space:]]*true'; }
+
+ensure_dns() {
+  log "DNS ensure for $HOST_DEV (target=$TARGET)"
+  q="$(curl -sS "${authH[@]}" "$CF_API/zones/$ZID/dns_records?name=$HOST_DEV")"
+  if ! success_json "$q"; then
+    log "[WARN] DNS list failed (insufficient permissions?). Will verify by smokes instead."
+    return 0
+  fi
+  rid="$(printf "%s" "$q" | sed -n 's/.*"id":"\([A-Za-z0-9]\{32\}\)".*/\1/p' | head -n1)"
+  cur_type="$(printf "%s" "$q" | sed -n 's/.*"type":"\([A-Z]*\)".*/\1/p' | head -n1)"
+  cur_cont="$(printf "%s" "$q" | sed -n 's/.*"content":"\([^"]*\)".*/\1/p' | head -n1)"
+  cur_proxy="$(printf "%s" "$q" | sed -n 's/.*"proxied":\([^,}]*\).*/\1/p' | head -n1)"
+
+  if echo "$TARGET" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$'; then need_type="A"; else need_type="CNAME"; fi
+  body="$(printf '{"type":"%s","name":"%s","content":"%s","ttl":1,"proxied":true}' "$need_type" "$HOST_DEV" "$TARGET")"
+
+  if [ -z "$rid" ]; then
+    log "DNS create ($need_type $HOST_DEV → $TARGET, proxied=true)"
+    out="$(curl -sS -X POST "${authH[@]}" "$CF_API/zones/$ZID/dns_records" --data "$body")"
+    if ! success_json "$out"; then
+      log "[WARN] DNS create refused (likely permissions). Will verify by smokes instead."
+      return 0
+    fi
+    log "DNS created: success"
+  else
+    if [ "$cur_type" != "$need_type" ] || [ "$cur_cont" != "$TARGET" ] || ! printf "%s" "$cur_proxy" | grep -qi true; then
+      log "DNS update ($rid → $need_type/$TARGET proxied=true)"
+      out="$(curl -sS -X PUT "${authH[@]}" "$CF_API/zones/$ZID/dns_records/$rid" --data "$body")"
+      if ! success_json "$out"; then
+        log "[WARN] DNS update refused (likely permissions). Will verify by smokes instead."
+        return 0
+      fi
+      log "DNS updated: success"
+    else
+      log "DNS already desired: type=$cur_type content=$cur_cont proxied=$cur_proxy"
+    fi
+  fi
+}
+
+verify_or_enable_always_https() {
+  # проверим редирект с http на https на стороне края
+  http_code="$(curl -s -o /dev/null -w '%{http_code}' "http://$HOST_DEV/en")"
+  loc="$(curl -sI "http://$HOST_DEV/en" | awk -F': ' 'tolower($1)=="location"{print $2}' | tr -d "\r")"
+  case "$http_code:$loc" in
+    301:https*|308:https*)
+      log "Always HTTPS verified via redirect ($http_code -> $loc) [OK]"
+      return 0;;
+  esac
+
+  # если редиректа нет — попробуем включить настройку через API
+  log "Enable Always HTTPS via API (redirect not observed)"
+  out="$(curl -sS -X PATCH "${authH[@]}" "$CF_API/zones/$ZID/settings/always_use_https" --data '{"value":"on"}')"
+  if success_json "$out"; then
+    log "Always HTTPS: on"
+    return 0
+  fi
+
+  log "[WARN] Always HTTPS API refused (likely permissions)."
+  # финальная повторная проверка (вдруг включено где-то ещё)
+  http_code="$(curl -s -o /dev/null -w '%{http_code}' "http://$HOST_DEV/en")"
+  loc="$(curl -sI "http://$HOST_DEV/en" | awk -F': ' 'tolower($1)=="location"{print $2}' | tr -d "\r")"
+  case "$http_code:$loc" in
+    301:https*|308:https*) log "Always HTTPS verified after retry ($http_code -> $loc) [OK]"; return 0;;
+  esac
+
+  fail "Always HTTPS not in effect (no http→https redirect)"; return 1
+}
+
+purge_and_warmup() {
+  urls=(
+    "https://dev.vinops.online/en"
+    "https://dev.vinops.online/robots.txt"
+    "https://dev.vinops.online/sitemap.xml"
+    "https://dev.vinops.online/sitemaps/static.xml"
+    "https://dev.vinops.online/sitemaps/vin.xml"
+  )
+  json_files="$(printf '"%s",' "${urls[@]}" | sed 's/,$//')"
+  log "CF purge_urls: [${urls[*]}]"
+  out="$(curl -sS -X POST "${authH[@]}" "$CF_API/zones/$ZID/purge_cache" --data "{\"files\":[${json_files}]}")"
+  if ! success_json "$out"; then echo "$out"; fail "purge by URLs failed"; return 1; fi
+  log "CF purge_urls: success:true"
+
+  for p in / /en /health /robots.txt /sitemap.xml; do
+    code="$(curl -sk -o /dev/null -w '%{http_code}' "https://$HOST_DEV$p")"
+    loc="$(curl -skI "https://$HOST_DEV$p" | awk -F': ' 'tolower($1)=="location"{print $2}' | tr -d "\r")"
+    if [ "$p" = "/" ]; then
+      [ "$code" = "308" ] || { log "warm-up $p -> $code (want 308)"; return 1; }
+      log "warm-up $p -> $code${loc:+ (Location: $loc)} [OK]"
+    else
+      [ "$code" = "200" ] || { log "warm-up $p -> $code (want 200)"; return 1; }
+      log "warm-up $p -> $code  [OK]"
+    fi
+  done
+}
+
+main() {
+  log "cf-dev start: zone=$ZID host=$HOST_DEV target=$TARGET"
+  ensure_dns || exit 1
+  verify_or_enable_always_https || exit 1
+  purge_and_warmup || exit 1
+  log "cf-dev: DONE"
+}
+main

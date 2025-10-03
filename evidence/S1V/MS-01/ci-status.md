@@ -1,0 +1,12 @@
+### CI Status
+- repo: KestutisTreciokas/vinops
+- source: [api]
+- workflow: toolchain-check
+- branch: main
+- http_code(runs): 200
+- run_id: 18079769316
+- status: completed
+- conclusion: failure
+- head_sha: e3aefa40971b82e0300e07a109d75e5fd7995201
+- created_at: 2025-09-28T21:03:44Z
+- url: https://github.com/KestutisTreciokas/vinops/actions/runs/18079769316

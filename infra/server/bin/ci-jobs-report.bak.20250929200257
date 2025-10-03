@@ -1,0 +1,83 @@
+#!/usr/bin/env bash
+set +e +u
+export TZ="Europe/Warsaw"
+
+APP_ROOT="/root/work/vinops.restore"
+STATUS_JSON="$APP_ROOT/evidence/S1V/MS-01/ci-status.json"
+OUT_JSON="$APP_ROOT/evidence/S1V/MS-01/ci-jobs.json"
+OUT_MD="$APP_ROOT/evidence/S1V/MS-01/ci-jobs.md"
+mkdir -p "$(dirname "$OUT_JSON")" || true
+
+# --- derive slug ---
+REMOTE="$(git -C "$APP_ROOT" remote get-url origin 2>/dev/null)"
+SLUG_ENV="${GH_REPO_SLUG:-}"
+SLUG_GIT="$(printf "%s" "$REMOTE" | sed -E 's#^.*github\.com[:/]+([^/]+)/([^/.]+)(\.git)?$#\1/\2#')"
+SLUG="${SLUG_ENV:-$SLUG_GIT}"
+
+# --- get run_id (robust: sed fallback first, then jq if present) ---
+RUN_ID=""
+if [ -f "$STATUS_JSON" ]; then
+  RUN_ID="$(sed -n 's/.*"run_id":"\([0-9]\+\)".*/\1/p' "$STATUS_JSON")"
+  if [ -z "$RUN_ID" ] && command -v jq >/dev/null 2>&1; then
+    RUN_ID="$(jq -r '.run_id // empty' "$STATUS_JSON" 2>/dev/null)"
+  fi
+fi
+
+UA="vinops-ci-jobs/1.1"
+AUTH=""
+[ -n "${GH_TOKEN:-}" ] && AUTH="Authorization: Bearer ${GH_TOKEN}"
+
+# --- fallback: latest toolchain-check on main, then latest build(any) ---
+if [ -z "$RUN_ID" ]; then
+  TMP="$(mktemp)"
+  URL_RUNS="https://api.github.com/repos/$SLUG/actions/workflows/toolchain-check.yml/runs?branch=main&per_page=1"
+  curl -sS -H "Accept: application/vnd.github+json" -H "User-Agent: $UA" ${AUTH:+-H "$AUTH"} -o "$TMP" "$URL_RUNS" >/dev/null 2>&1
+  RUN_ID="$(sed -n 's/.*"workflow_runs":\[\{"id":\([0-9]\+\).*/\1/p' "$TMP" | head -n1)"
+  if [ -z "$RUN_ID" ] && command -v jq >/dev/null 2>&1; then
+    RUN_ID="$(jq -r '.workflow_runs[0].id // empty' "$TMP" 2>/dev/null)"
+  fi
+fi
+if [ -z "$RUN_ID" ]; then
+  TMP="$(mktemp)"
+  URL_RUNS="https://api.github.com/repos/$SLUG/actions/workflows/build.yml/runs?per_page=1"
+  curl -sS -H "Accept: application/vnd.github+json" -H "User-Agent: $UA" ${AUTH:+-H "$AUTH"} -o "$TMP" "$URL_RUNS" >/dev/null 2>&1
+  RUN_ID="$(sed -n 's/.*"workflow_runs":\[\{"id":\([0-9]\+\).*/\1/p' "$TMP" | head -n1)"
+  if [ -z "$RUN_ID" ] && command -v jq >/dev/null 2>&1; then
+    RUN_ID="$(jq -r '.workflow_runs[0].id // empty' "$TMP" 2>/dev/null)"
+  fi
+fi
+
+[ -z "$RUN_ID" ] && { echo "[ERR] run_id not found"; exit 0; }
+
+# --- fetch jobs for this run ---
+JOBS_URL="https://api.github.com/repos/$SLUG/actions/runs/$RUN_ID/jobs?per_page=100"
+JTMP="$(mktemp)"
+HTTPJ="$(curl -sS -w "%{http_code}" -H "Accept: application/vnd.github+json" -H "User-Agent: $UA" ${AUTH:+-H "$AUTH"} -o "$JTMP" "$JOBS_URL")"
+
+# --- write filtered JSON (jq if available) ---
+if command -v jq >/dev/null 2>&1; then
+  jq '{total_count, jobs: [.jobs[]? | {id, name, status, conclusion, started_at, completed_at, steps: [.steps[]? | {number, name, status, conclusion}]}]}' "$JTMP" 2>/dev/null > "$OUT_JSON"
+else
+  cp "$JTMP" "$OUT_JSON"
+fi
+
+# --- markdown summary ---
+{
+  echo "### CI Jobs (run_id: $RUN_ID)"
+  echo "- repo: $SLUG"
+  echo "- http: $HTTPJ"
+  echo
+  echo "#### Jobs"
+  if command -v jq >/dev/null 2>&1; then
+    jq -r '.jobs[]? | "* \(.name) — status:\(.status) / conclusion:\(.conclusion) (id:\(.id), steps:\(.steps|length))"' "$OUT_JSON" 2>/dev/null
+  else
+    echo "* (jq not available) raw JSON saved to ci-jobs.json"
+  fi
+  echo
+  echo "#### Failed steps (if any)"
+  if command -v jq >/dev/null 2>&1; then
+    jq -r '.jobs[]? | select(.conclusion=="failure") | . as $j | $j.steps[]? | select(.conclusion=="failure") | "* job:\($j.name) — step #\(.number): \(.name)"' "$OUT_JSON" 2>/dev/null
+  fi
+} > "$OUT_MD"
+
+echo "$OUT_MD"

@@ -1,0 +1,122 @@
+#!/usr/bin/env bash
+set +e +u
+export TZ="Europe/Warsaw"
+
+APP_ROOT="/root/work/vinops.restore"
+OUT_JSON="$APP_ROOT/evidence/S1V/MS-01/ci-status.json"
+OUT_MD="$APP_ROOT/evidence/S1V/MS-01/ci-status.md"
+mkdir -p "$(dirname "$OUT_JSON")" || true
+
+cd "$APP_ROOT" 2>/dev/null || true
+REMOTE="$(git remote get-url origin 2>/dev/null)"
+SLUG_ENV="${GH_REPO_SLUG:-}"
+SLUG_GIT="$(printf "%s" "$REMOTE" | sed -E 's#^.*github\.com[:/]+([^/]+)/([^/.]+)(\.git)?$#\1/\2#')"
+SLUG="${SLUG_ENV:-$SLUG_GIT}"
+
+UA="vinops-ci-status/9.0"
+AUTH_HEADER=""
+[ -n "${GH_TOKEN:-}" ] && AUTH_HEADER="Authorization: Bearer ${GH_TOKEN}"
+
+CANDS=( "build.yml|build" "toolchain-check.yml|toolchain-check" "build-push.yml|build-push" "api-smoke.yml|api-smoke" )
+
+request_runs() { # $1=workflow.yml  $2=branch ('' = any)
+  local wf="$1" br="$2" url tmp code
+  url="https://api.github.com/repos/$SLUG/actions/workflows/$wf/runs?per_page=1"
+  [ -n "$br" ] && url="${url}&branch=${br}"
+  tmp="$(mktemp)"
+  code="$(curl -sS -w "%{http_code}" -H "Accept: application/vnd.github+json" -H "User-Agent: $UA" ${AUTH_HEADER:+-H "$AUTH_HEADER"} -o "$tmp" "$url")"
+  echo "$code"
+  cat "$tmp"
+  rm -f "$tmp"
+}
+
+extract_first() { # stdin: body; stdout: compact json with first run or empty
+  local body; body="$(cat)"
+  if command -v jq >/dev/null 2>&1; then
+    local len; len="$(printf '%s' "$body" | jq '.workflow_runs | length' 2>/dev/null)"
+    if [ -n "$len" ] && [ "$len" -gt 0 ] 2>/dev/null; then
+      printf '%s' "$body" | jq -c '{run_id: .workflow_runs[0].id, status: .workflow_runs[0].status, conclusion: .workflow_runs[0].conclusion, head_sha: .workflow_runs[0].head_sha, created_at: .workflow_runs[0].created_at, html_url: .workflow_runs[0].html_url, head_branch: .workflow_runs[0].head_branch}'
+      return 0
+    fi
+  else
+    # sed/grep fallback (best-effort)
+    echo "$body" | grep -q '"workflow_runs":\[\]' && return 1
+    echo "$body" | grep -q '"workflow_runs":\[' || return 1
+    local rid st cc sha ct url br
+    rid="$(echo "$body" | sed -n 's/.*"workflow_runs":\[\{"id":\([0-9]\+\).*/\1/p' | head -n1)"
+    [ -z "$rid" ] && return 1
+    st="$(echo "$body" | sed -n 's/.*"status":"\([^"]*\)".*/\1/p' | head -n1)"
+    cc="$(echo "$body" | sed -n 's/.*"conclusion":"\([^"]*\)".*/\1/p' | head -n1)"
+    sha="$(echo "$body" | sed -n 's/.*"head_sha":"\([^"]*\)".*/\1/p' | head -n1)"
+    ct="$(echo "$body" | sed -n 's/.*"created_at":"\([^"]*\)".*/\1/p' | head -n1)"
+    url="$(echo "$body" | sed -n 's/.*"html_url":"\([^"]*\)".*/\1/p' | head -n1)"
+    br="$(echo "$body" | sed -n 's/.*"head_branch":"\([^"]*\)".*/\1/p' | head -n1)"
+    printf '{"run_id":"%s","status":"%s","conclusion":"%s","head_sha":"%s","created_at":"%s","html_url":"%s","head_branch":"%s"}' "$rid" "$st" "$cc" "$sha" "$ct" "$url" "$br"
+    return 0
+  fi
+  return 1
+}
+
+pick_best() { # stdout: final json {source,workflow,branch,http_code_runs,run_id,status,conclusion,head_sha,created_at,html_url}
+  local wf name code body first
+
+  # 1) main
+  for cand in "${CANDS[@]}"; do
+    IFS='|' read -r wf name <<<"$cand"
+    code="$(request_runs "$wf" "main" | head -n1)"
+    body="$(request_runs "$wf" "main" | tail -n +2)"
+    if [ "$code" = "200" ]; then
+      first="$(printf '%s' "$body" | extract_first)"
+      if [ -n "$first" ]; then
+        printf '{"source":"api/main","workflow":"%s","branch":"main","http_code_runs":"%s",%s}\n' "$name" "$code" "$(printf '%s' "$first" | sed 's/^{//; s/}$//')"
+        return 0
+      fi
+    fi
+  done
+
+  # 2) any branch
+  for cand in "${CANDS[@]}"; do
+    IFS='|' read -r wf name <<<"$cand"
+    code="$(request_runs "$wf" "" | head -n1)"
+    body="$(request_runs "$wf" "" | tail -n +2)"
+    if [ "$code" = "200" ]; then
+      first="$(printf '%s' "$body" | extract_first)"
+      if [ -n "$first" ]; then
+        local br; br="$(printf '%s' "$first" | sed -n 's/.*"head_branch":"\([^"]*\)".*/\1/p')"
+        printf '{"source":"api/any","workflow":"%s","branch":"%s","http_code_runs":"%s",%s}\n' "$name" "$br" "$code" "$(printf '%s' "$first" | sed 's/^{//; s/}$//')"
+        return 0
+      fi
+    fi
+  done
+
+  # 3) badge fallback
+  local BADGE_URL="https://github.com/$SLUG/actions/workflows/build.yml/badge.svg?branch=main"
+  local BADGE_SVG; BADGE_SVG="$(mktemp)"
+  local HTTPB; HTTPB=$(curl -sSL -w "%{http_code}" -H "User-Agent: $UA" -o "$BADGE_SVG" "$BADGE_URL")
+  local BADGE_CONC; BADGE_CONC="$(tr -d '\r' < "$BADGE_SVG" | grep -Eoi '(passing|failing|unknown|no status)' | head -n1)"
+  printf '{"source":"badge","workflow":"build","branch":"main","http_code_runs":"%s","run_id":"","status":"badge","conclusion":"%s","head_sha":"","created_at":"","html_url":"https://github.com/%s/actions/workflows/build.yml"}\n' "$HTTPB" "$BADGE_CONC" "$SLUG"
+}
+
+BEST="$(pick_best)"
+printf '%s\n' "$BEST" > "$OUT_JSON"
+
+# helper to read field without jq
+jget(){ key="$1"; sed -n 's/.*"'"$key"'":"\([^"]*\)".*/\1/p' "$OUT_JSON"; }
+
+{
+  echo '### CI Status'
+  echo "- repo: $SLUG"
+  echo "- source: $(jget source || echo UNKNOWN)"
+  echo "- workflow: $(jget workflow || echo UNKNOWN)"
+  echo "- branch: $(jget branch || echo UNKNOWN)"
+  echo "- http_code(runs): $(jget http_code_runs || echo UNKNOWN)"
+  echo "- run_id: $(jget run_id || echo UNKNOWN)"
+  echo "- status: $(jget status || echo UNKNOWN)"
+  echo "- conclusion: $(jget conclusion || echo UNKNOWN)"
+  echo "- head_sha: $(jget head_sha || echo UNKNOWN)"
+  echo "- created_at: $(jget created_at || echo UNKNOWN)"
+  echo "- url: $(jget html_url || echo UNKNOWN)"
+} > "$OUT_MD"
+
+# print path to JSON for callers
+echo "$OUT_JSON"

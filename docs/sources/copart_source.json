@@ -1,0 +1,28 @@
+{
+  "source": "copart",
+  "channel": "UNKNOWN",
+  "http": {
+    "url": "UNKNOWN",
+    "auth": { "type": "none", "api_key": "UNKNOWN" }
+  },
+  "s3": {
+    "endpoint": "UNKNOWN",
+    "bucket": "UNKNOWN",
+    "region": "UNKNOWN",
+    "access_key_id": "UNKNOWN",
+    "secret_access_key": "UNKNOWN"
+  },
+  "sftp": {
+    "host": "UNKNOWN",
+    "user": "UNKNOWN",
+    "key_path": "UNKNOWN",
+    "password": "UNKNOWN"
+  },
+  "update_window_minutes": 15,
+  "schedule_cron": "*/15 * * * *",
+  "timezone": "UTC",
+  "headers_version": "copart_v1",
+  "rate_limit": { "requests_per_minute": "UNKNOWN" },
+  "limitations": "UNKNOWN",
+  "notes": ""
+}

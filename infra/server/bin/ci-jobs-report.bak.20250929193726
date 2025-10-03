@@ -1,0 +1,97 @@
+#!/usr/bin/env bash
+set +e +u
+export TZ="Europe/Warsaw"
+
+APP_ROOT="/root/work/vinops.restore"
+OUT_JSON="$APP_ROOT/evidence/S1V/MS-01/ci-jobs.json"
+OUT_MD="$APP_ROOT/evidence/S1V/MS-01/ci-jobs.md"
+mkdir -p "$(dirname "$OUT_JSON")" || true
+
+# 0) Подхватываем окружение (если есть)
+[ -f /srv/vinops/.env ] && . /srv/vinops/.env
+
+REMOTE="$(git -C "$APP_ROOT" remote get-url origin 2>/dev/null)"
+SLUG_ENV="${GH_REPO_SLUG:-}"
+SLUG_GIT="$(printf "%s" "$REMOTE" | sed -E 's#^.*github\.com[:/]+([^/]+)/([^/.]+)(\.git)?$#\1/\2#')"
+SLUG="${SLUG_ENV:-$SLUG_GIT}"
+
+UA="vinops-ci-jobs/1.0"
+AUTH=()
+[ -n "${GH_TOKEN:-}" ] && AUTH=(-H "Authorization: Bearer ${GH_TOKEN}")
+
+# 1) Берём run_id из существующего ci-status.json, иначе — спрашиваем API по toolchain-check@main
+CIST="$APP_ROOT/evidence/S1V/MS-01/ci-status.json"
+RUN_ID="$(sed -n 's/.*"run_id":\("? \)\?\([0-9]\+\).*/\2/p' "$CIST" 2>/dev/null | head -n1)"
+WF="toolchain-check"
+BR="main"
+
+if ! [[ "$RUN_ID" =~ ^[0-9]+$ ]]; then
+  URL_RUNS="https://api.github.com/repos/$SLUG/actions/workflows/${WF}.yml/runs?branch=${BR}&per_page=1"
+  RUNS_JSON="$(mktemp)"
+  HTTPR="$(curl -sS -w "%{http_code}" -H "Accept: application/vnd.github+json" -H "User-Agent: $UA" "${AUTH[@]}" -o "$RUNS_JSON" "$URL_RUNS")"
+  if [ "$HTTPR" = "200" ]; then
+    RUN_ID="$(sed -n 's/.*"workflow_runs":\[\{"id":\([0-9]\+\).*/\1/p' "$RUNS_JSON" | head -n1)"
+  fi
+fi
+
+[ -z "$RUN_ID" ] && { echo "[ERR] run_id not found"; exit 0; }
+
+# 2) Тянем jobs
+JOBS_URL="https://api.github.com/repos/$SLUG/actions/runs/$RUN_ID/jobs?per_page=100"
+JOBS_JSON="$(mktemp)"
+HTTPJ="$(curl -sS -w "%{http_code}" -H "Accept: application/vnd.github+json" -H "User-Agent: $UA" "${AUTH[@]}" -o "$JOBS_JSON" "$JOBS_URL")"
+
+# 3) Парсим: список jobs + шаги в упавших
+JOB_LINES="$(tr -d '\r' < "$JOBS_JSON" | awk '
+  /"jobs":\[/,/\]\}/ {
+    if ($0 ~ /"id":[0-9]+/) { match($0, /"id":([0-9]+)/, a); jid=a[1]; }
+    if ($0 ~ /"name":"/)   { match($0, /"name":"([^"]*)"/, b); jname=b[1]; }
+    if ($0 ~ /"conclusion":"/) { match($0, /"conclusion":"([^"]*)"/, c); jconc=c[1]; }
+    if ($0 ~ /"status":"completed"/ && jname && jconc) {
+      printf("job_id=%s  job=%s  conclusion=%s\n", jid, jname, jconc);
+      jname=""; jconc="";
+    }
+  }')"
+
+# 4) Для неуспешных соберём шаги
+FAILED_IDS="$(printf "%s\n" "$JOB_LINES" | awk '$0 !~ /conclusion=success/ {print $1}' | sed 's/job_id=//g')"
+DETAILS=""
+for JID in $FAILED_IDS; do
+  STEPS="$(tr -d '\r' < "$JOBS_JSON" | awk -v id="$JID" '
+    $0 ~ ("\"id\":" id) , $0 ~ /"steps":\[/ { in=1 }
+    in==1 && /"name":"/ { match($0, /"name":"([^"]*)"/, n); step=n[1] }
+    in==1 && /"conclusion":"/ { match($0, /"conclusion":"([^"]*)"/, c); printf("{\"name\":\"%s\",\"conclusion\":\"%s\"},", step, c[1]); }
+  ' | sed 's/,$//')"
+  DETAILS="${DETAILS}{\"job_id\":$JID,\"steps\":[${STEPS}]},"
+done
+DETAILS="$(printf "%s" "$DETAILS" | sed 's/,$//')"
+
+# 5) Сводка и артефакты
+RUN_URL="https://github.com/$SLUG/actions/runs/$RUN_ID"
+printf '{ "slug":"%s", "workflow":"%s", "branch":"%s", "run_id":%s, "jobs_text":"%s", "failed_details":[%s], "jobs_http":"%s", "run_url":"%s" }\n' \
+  "$SLUG" "$WF" "$BR" "$RUN_ID" "$(printf "%s" "$JOB_LINES" | sed 's/"/\\"/g')" "$DETAILS" "$HTTPJ" "$RUN_URL" > "$OUT_JSON"
+
+{
+  echo "### CI Jobs (toolchain-check@main)"
+  echo "- repo: $SLUG"
+  echo "- run_id: $RUN_ID"
+  echo "- jobs_http: $HTTPJ"
+  echo "- run_url: $RUN_URL"
+  echo
+  echo "#### Jobs:"
+  printf "%s\n" "$JOB_LINES"
+  if [ -n "$FAILED_IDS" ]; then
+    echo
+    echo "#### Failed job steps:"
+    for JID in $FAILED_IDS; do
+      echo "- job_id=$JID"
+      tr -d '\r' < "$JOBS_JSON" | awk -v id="$JID" '
+        $0 ~ ("\"id\":" id) , $0 ~ /"steps":\[/ { in=1 }
+        in==1 && /"name":"/ { match($0, /"name":"([^"]*)"/, n); step=n[1] }
+        in==1 && /"conclusion":"/ { match($0, /"conclusion":"([^"]*)"/, c); printf("  · %s → %s\n", step, c[1]); }
+      '
+    done
+  fi
+} > "$OUT_MD"
+
+echo "$OUT_MD"

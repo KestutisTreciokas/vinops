@@ -17,6 +17,11 @@
 - MS:  [`docs/templates/MS.md`](./templates/MS.md)
 - QA:  [`docs/templates/QA.md`](./templates/QA.md)
 
+## ADR
+- Каталог ADR: [`docs/adr/`](./adr/)
+- Принятый пример: [`ADR-20250930-origin-hsts-and-locale-redirect.md`](./adr/ADR-20250930-origin-hsts-and-locale-redirect.md)
+
+
 ## Сводки по мерджам
 - PR-84: [`docs/merges/PR-84/`](./merges/PR-84/) (SMOKE_REPORT, OPENAPI diffs, HTML/HEAD срезы)
 

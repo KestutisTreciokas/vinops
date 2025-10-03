@@ -1,0 +1,68 @@
+#!/usr/bin/env bash
+set +e +u
+APP_ROOT="/root/work/vinops.restore"
+BASE="$APP_ROOT/docs/releases/S1V-baseline.md"
+EVD="$APP_ROOT/evidence/S1V/MS-01"
+mkdir -p "$(dirname "$BASE")" "$EVD" || true
+
+# ci-status уже есть в проекте; используем его JSON
+JSON="$EVD/ci-status.json"
+[ -f "$JSON" ] || JSON="$(/root/work/vinops.restore/infra/server/bin/ci-status | xargs -r echo)"
+
+# repo/meta
+SHA="$(git -C "$APP_ROOT" rev-parse origin/main 2>/dev/null || echo UNKNOWN)"
+META="$(git -C "$APP_ROOT" log -1 --format='author:%an  date:%ci  subject:%s' origin/main 2>/dev/null || echo UNKNOWN)"
+MANAGER="npm"
+LOCKPATH="frontend/package-lock.json"
+ENG_NODE="$(node -e "try{console.log(require('$APP_ROOT/frontend/package.json').engines.node||'')}catch(e){console.log('')}" 2>/dev/null)"
+ENG_NPM="$(node -e "try{console.log(require('$APP_ROOT/frontend/package.json').engines.npm||'')}catch(e){console.log('')}" 2>/dev/null)"
+SCRIPTS="$(node -e "try{const p=require('$APP_ROOT/frontend/package.json');console.log(Object.keys(p.scripts||{}).join(', '))}catch(e){console.log('')}" 2>/dev/null)"
+
+# ENV map (ensure exists)
+MAP="$EVD/env-map.md"; [ -f "$MAP" ] || MAP="$(/root/work/vinops.restore/infra/server/bin/env-map)"
+
+# extract CI fields
+get(){ node -e "try{const j=require('$JSON');console.log(j['$1']||'UNKNOWN')}catch(e){console.log('UNKNOWN')}" ; }
+SRC=$(get source); WF=$(get workflow); BR=$(get branch); RID=$(get run_id)
+ST=$(get status); CONC=$(get conclusion); HREF=$(get html_url); SHA_CI=$(get head_sha); CT=$(get created_at)
+
+TS="$(TZ=Europe/Warsaw date +'%F %H:%M')"
+
+{
+  echo "# S1.V — Baseline (MS-S1V-01)"
+  echo "**Timestamp (Europe/Warsaw):** $TS"
+  echo
+  echo "## Repository"
+  echo "- Default branch: **main**"
+  echo "- origin/main: \`$SHA\`  ($META)"
+  echo
+  echo "## Manager & Lockfile"
+  echo "- Manager: **$MANAGER**"
+  echo "- Lockfile: \`$LOCKPATH\` (единственный)"
+  echo
+  echo "## Node / Next / TypeScript / Engines"
+  echo "- \`.nvmrc\`: **$( [ -f "$APP_ROOT/frontend/.nvmrc" ] && cat "$APP_ROOT/frontend/.nvmrc" || echo MISSING )**"
+  echo "- \`engines.node\`: **$ENG_NODE**"
+  echo "- \`engines.npm\`: **$ENG_NPM**"
+  echo
+  echo "## CI — последняя сборка"
+  echo "- repo: **$(git -C "$APP_ROOT" remote get-url origin 2>/dev/null | sed -E 's#^.*github\.com[:/]+([^/]+/[^/.]+).*#\\1#')**"
+  echo "- workflow: **$WF**"
+  echo "- branch: **$BR**"
+  echo "- source: **$SRC**"
+  echo "- run_id: **$RID**"
+  echo "- status/conclusion: **$ST / $CONC**"
+  echo "- head_sha: **$SHA_CI**"
+  echo "- created_at: **$CT**"
+  echo "- url: **${HREF:-UNKNOWN}**"
+  echo
+  echo "## Scripts (frontend/package.json)"
+  echo "\`\`\`"
+  echo "$SCRIPTS"
+  echo "\`\`\`"
+  echo
+  echo "## ENV keys (.env.example) ↔ GitHub Environments"
+  cat "$MAP"
+} > "$BASE"
+
+echo "$BASE"

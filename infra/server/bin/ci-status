@@ -1,0 +1,113 @@
+#!/usr/bin/env bash
+set +e +u
+export TZ="Europe/Warsaw"
+
+APP_ROOT="/root/work/vinops.restore"
+OUT_JSON="$APP_ROOT/evidence/S1V/MS-01/ci-status.json"
+OUT_MD="$APP_ROOT/evidence/S1V/MS-01/ci-status.md"
+mkdir -p "$(dirname "$OUT_JSON")" || true
+
+# slug
+REMOTE="$(git -C "$APP_ROOT" remote get-url origin 2>/dev/null)"
+SLUG_ENV="${GH_REPO_SLUG:-}"
+SLUG_GIT="$(printf "%s" "$REMOTE" | sed -E 's#^.*github\.com[:/]+([^/]+)/([^/.]+)(\.git)?$#\1/\2#')"
+SLUG="${SLUG_ENV:-$SLUG_GIT}"
+
+UA="vinops-ci-status/15.0"
+AUTH=""
+[ -n "${GH_TOKEN:-}" ] && AUTH="Authorization: Bearer ${GH_TOKEN}"
+
+SRC="UNKNOWN"; WF="toolchain-check"; BR="main"; HTTP="UNKNOWN"
+RID="UNKNOWN"; ST="UNKNOWN"; CONC="UNKNOWN"; SHA="UNKNOWN"; CT="UNKNOWN"; URL="UNKNOWN"; HBR="UNKNOWN"
+
+probe () {
+  wf="$1"; br="$2"
+  url="https://api.github.com/repos/$SLUG/actions/workflows/$wf/runs?per_page=1"
+  [ -n "$br" ] && url="${url}&branch=${br}"
+
+  TMP="$(mktemp)"
+  RC="$(curl -sS -w "%{http_code}" -H "Accept: application/vnd.github+json" -H "User-Agent: $UA" ${AUTH:+-H "$AUTH"} -o "$TMP" "$url")"
+  HTTP="$RC"
+
+  # parse via Node (robust)
+  FIELDS="$(node -e '
+    const fs=require("fs");
+    const p=process.argv[1];
+    try{
+      const j=JSON.parse(fs.readFileSync(p,"utf8"));
+      const r = j && j.workflow_runs && j.workflow_runs[0];
+      if(!r){ process.exit(2); }
+      const out = [
+        r.id || "",
+        r.status || "",
+        (r.conclusion==null?"":r.conclusion),
+        r.head_sha || "",
+        r.created_at || "",
+        r.html_url || "",
+        r.head_branch || ""
+      ].join("\t");
+      console.log(out);
+    }catch(e){ process.exit(3); }
+  ' "$TMP")"
+
+  if [ "$RC" = "200" ] && [ -n "$FIELDS" ]; then
+    RID="$(printf "%s" "$FIELDS" | cut -f1)"
+    ST="$(printf  "%s" "$FIELDS" | cut -f2)"
+    CONC="$(printf "%s" "$FIELDS" | cut -f3)"
+    SHA="$(printf  "%s" "$FIELDS | cut -f4")"
+    SHA="$(printf  "%s" "$FIELDS" | cut -f4)"
+    CT="$(printf   "%s" "$FIELDS" | cut -f5)"
+    URL="$(printf  "%s" "$FIELDS" | cut -f6)"
+    HBR="$(printf  "%s" "$FIELDS" | cut -f7)"
+    [ -n "$RID" ] && {
+      SRC="[api]"; WF="${wf%.yml}"; BR="${br:-$HBR}"
+      return 0
+    }
+  fi
+  SRC="api-empty"
+  return 1
+}
+
+# порядок попыток: toolchain-check@main → build@main → toolchain-check(any)
+probe "toolchain-check.yml" "main" || probe "build.yml" "main" || probe "toolchain-check.yml" ""
+
+# badge fallback (только conclusion, если не получили CONC)
+if [ -z "$CONC" ] || [ "$CONC" = "UNKNOWN" ] || [ "$CONC" = "null" ]; then
+  BADGE_URL="https://github.com/$SLUG/actions/workflows/${WF}.yml/badge.svg?branch=${BR}"
+  TMPB="$(mktemp)"
+  curl -sSL -w "%{http_code}" -H "User-Agent: $UA" -o "$TMPB" "$BADGE_URL" >/dev/null 2>&1
+  HB="$(tr -d '\r' < "$TMPB" | grep -Eoi '(passing|failing|unknown)' | head -n1)"
+  if [ -n "$HB" ]; then
+    ST="badge"
+    CONC="$HB"
+    [ "$SRC" = "UNKNOWN" ] && SRC="badge"
+  fi
+fi
+
+# нормализуем URL, если он пуст но есть RID
+if [ -z "$URL" ] || [ "$URL" = "UNKNOWN" ]; then
+  [ -n "$RID" ] && URL="https://github.com/$SLUG/actions/runs/$RID"
+fi
+
+# JSON
+printf '{"repo":"%s","source":"%s","workflow":"%s","branch":"%s","http_code_runs":"%s","run_id":"%s","status":"%s","conclusion":"%s","head_sha":"%s","created_at":"%s","html_url":"%s","head_branch":"%s"}\n' \
+  "$SLUG" "$SRC" "$WF" "$BR" "$HTTP" "$RID" "$ST" "$CONC" "$SHA" "$CT" "$URL" "$HBR" > "$OUT_JSON"
+
+# MD
+{
+  echo "### CI Status"
+  echo "- repo: $SLUG"
+  echo "- source: $SRC"
+  echo "- workflow: $WF"
+  echo "- branch: $BR"
+  echo "- http_code(runs): $HTTP"
+  echo "- run_id: $RID"
+  echo "- status: $ST"
+  echo "- conclusion: $CONC"
+  echo "- head_sha: $SHA"
+  echo "- created_at: $CT"
+  echo "- url: $URL"
+} > "$OUT_MD"
+
+# echo путь JSON
+echo "$OUT_JSON"

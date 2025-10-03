@@ -1,0 +1,142 @@
+#!/usr/bin/env bash
+set +e +u
+export TZ="Europe/Warsaw"
+
+APP_ROOT="/root/work/vinops.restore"
+OUT_JSON="$APP_ROOT/evidence/S1V/MS-01/ci-status.json"
+OUT_MD="$APP_ROOT/evidence/S1V/MS-01/ci-status.md"
+mkdir -p "$(dirname "$OUT_JSON")" || true
+
+# 0) Подтягиваем токен/slug из /srv/vinops/.env (если есть)
+ENV_FILE="/srv/vinops/.env"
+[ -f "$ENV_FILE" ] && . "$ENV_FILE"
+
+# 1) Определяем SLUG из git remote, иначе из GH_REPO_SLUG
+cd "$APP_ROOT" 2>/dev/null || true
+REMOTE="$(git remote get-url origin 2>/dev/null)"
+SLUG="$(printf "%s" "$REMOTE" | sed -E 's#^.*github\.com[:/]+([^/]+)/([^/.]+)(\.git)?$#\1/\2#')"
+[ -n "$SLUG" ] || SLUG="${GH_REPO_SLUG:-}"
+
+UA="-H User-Agent: vinops-ci-status/4.0"
+AC="-H Accept: application/vnd.github+json"
+VER="-H X-GitHub-Api-Version: 2022-11-28"
+AUTH=""
+[ -n "${GH_TOKEN:-}" ] && AUTH="-H Authorization: Bearer ${GH_TOKEN}"
+
+fetch_api () {
+  url="$1"
+  curl -sS $UA $AC $VER $AUTH -w '\nHTTP_CODE:%{http_code}\n' "$url" 2>/dev/null
+}
+
+# Возвращает: <http_code>\n<json>
+code_and_json () {
+  body="$(fetch_api "$1")"
+  code="$(printf "%s" "$body" | awk -F: '/^HTTP_CODE:/{print $2}' | tr -d '\r\n ')"
+  json="$(printf "%s" "$body" | sed -n '1,/^HTTP_CODE:/p' | sed '$d')"
+  echo "$code"
+  echo "$json"
+}
+
+pick_from_runs_json () {
+  j="$1"
+  if command -v jq >/dev/null 2>&1; then
+    jq -r 'if (.workflow_runs|length)>0 then
+              [.workflow_runs[0].id,
+               .workflow_runs[0].html_url,
+               .workflow_runs[0].name,
+               .workflow_runs[0].status,
+               .workflow_runs[0].conclusion,
+               .workflow_runs[0].head_sha,
+               .workflow_runs[0].created_at] | @tsv
+           else "" end' <<<"$j"
+  else
+    id="$(printf "%s" "$j" | grep -o '"id":[0-9]\+' | head -n1 | cut -d: -f2)"
+    url="$(printf "%s" "$j" | grep -o '"html_url":"[^"]\+"' | head -n1 | cut -d\" -f4)"
+    name="$(printf "%s" "$j" | grep -o '"name":"[^"]\+"' | head -n1 | cut -d\" -f4)"
+    status="$(printf "%s" "$j" | grep -o '"status":"[^"]\+"' | head -n1 | cut -d\" -f4)"
+    conc="$(printf "%s" "$j" | grep -o '"conclusion":"[^"]\+"' | head -n1 | cut -d\" -f4)"
+    sha="$(printf "%s" "$j" | grep -o '"head_sha":"[0-9a-f]\{7,40\}"' | head -n1 | cut -d\" -f4)"
+    time="$(printf "%s" "$j" | grep -o '"created_at":"[^"]\+"' | head -n1 | cut -d\" -f4)"
+    printf "%s\t%s\t%s\t%s\t%s\t%s\t%s\n" "$id" "$url" "$name" "$status" "$conc" "$sha" "$time"
+  fi
+}
+
+# 2) Пытаемся найти workflow с path/name =~ build
+WC="NONE"; RC="NONE"; SRC="UNKNOWN"
+WF_ID=""
+
+read -r WC < <(code_and_json "https://api.github.com/repos/$SLUG/actions/workflows?per_page=100")
+JSONW="$(code_and_json "https://api.github.com/repos/$SLUG/actions/workflows?per_page=100" | tail -n +2)"
+if [ "$WC" = "200" ]; then
+  if command -v jq >/dev/null 2>&1; then
+    WF_ID="$(jq -r '.workflows[] | select((.path|test("build\\.yml$";"i")) or (.name|test("build";"i"))) | .id' <<<"$JSONW" | head -n1)"
+  else
+    WF_ID="$(printf "%s" "$JSONW" | grep -iE '"(path|name)":"[^"]*build[^"]*"' -B3 | grep -o '"id":[0-9]\+' | head -n1 | cut -d: -f2)"
+  fi
+fi
+
+ID=""; URL=""; NAME=""; STATUS=""; CONC=""; SHA=""; TIME=""
+if [ -n "$WF_ID" ]; then
+  read -r RC < <(code_and_json "https://api.github.com/repos/$SLUG/actions/workflows/$WF_ID/runs?branch=main&per_page=1")
+  JSON2="$(code_and_json "https://api.github.com/repos/$SLUG/actions/workflows/$WF_ID/runs?branch=main&per_page=1" | tail -n +2)"
+  if [ "$RC" = "200" ]; then
+    TSV="$(pick_from_runs_json "$JSON2")"
+    if [ -n "$TSV" ]; then
+      IFS=$'\t' read -r ID URL NAME STATUS CONC SHA TIME <<<"$TSV"
+      SRC="workflow(id=$WF_ID)"
+    fi
+  fi
+fi
+
+# 3) Фоллбек: общий список runs (если WF_ID не помог)
+if [ -z "$ID" ]; then
+  read -r RC < <(code_and_json "https://api.github.com/repos/$SLUG/actions/runs?branch=main&per_page=1")
+  JSON3="$(code_and_json "https://api.github.com/repos/$SLUG/actions/runs?branch=main&per_page=1" | tail -n +2)"
+  if [ "$RC" = "200" ]; then
+    TSV="$(pick_from_runs_json "$JSON3")"
+    if [ -n "$TSV" ]; then
+      IFS=$'\t' read -r ID URL NAME STATUS CONC SHA TIME <<<"$TSV"
+      SRC="actions/runs"
+    fi
+  fi
+fi
+
+# 4) Badge fallback
+BADGE_STATUS=""
+BADGE_URL="https://github.com/$SLUG/actions/workflows/build.yml/badge.svg?branch=main"
+BADGE_SVG="$(curl -sS -H "User-Agent: vinops-ci-status/4.0" "$BADGE_URL" 2>/dev/null)"
+if printf "%s" "$BADGE_SVG" | grep -qi 'passing'; then BADGE_STATUS="passing";
+elif printf "%s" "$BADGE_SVG" | grep -qi 'failing'; then BADGE_STATUS="failing";
+elif printf "%s" "$BADGE_SVG" | grep -qi 'unknown'; then BADGE_STATUS="unknown";
+fi
+
+# 5) Нормализация и заполнение пропусков
+[ -z "$NAME" ] && NAME="build.yml (badge)"
+[ -z "$URL" ] && URL="https://github.com/$SLUG/actions/workflows/build.yml"
+[ -z "$STATUS" ] && STATUS="$([ -n "$BADGE_STATUS" ] && echo "badge" || echo "UNKNOWN")"
+[ -z "$CONC" ] && [ -n "$BADGE_STATUS" ] && CONC="$BADGE_STATUS"
+[ -z "$ID" ] && ID="UNKNOWN"
+[ -z "$SHA" ] && SHA="UNKNOWN"
+[ -z "$TIME" ] && TIME="UNKNOWN"
+[ -z "$SRC" ] && SRC="UNKNOWN"
+
+printf '{ "repo":"%s", "source":"%s", "http_code_workflow":"%s", "http_code_runs":"%s", "badge_conclusion":"%s", "run_id":"%s", "name":"%s", "status":"%s", "conclusion":"%s", "head_sha":"%s", "created_at":"%s", "html_url":"%s" }\n' \
+  "$SLUG" "$SRC" "${WC:-NONE}" "${RC:-NONE}" "${BADGE_STATUS:-}" "$ID" "$NAME" "$STATUS" "$CONC" "$SHA" "$TIME" "$URL" > "$OUT_JSON"
+
+{
+  echo "### CI Status (main)"
+  echo "- repo: $SLUG"
+  echo "- source: $SRC"
+  echo "- http_code(workflow): ${WC:-NONE}"
+  echo "- http_code(runs): ${RC:-NONE}"
+  [ -n "$BADGE_STATUS" ] && echo "- badge: $BADGE_STATUS"
+  echo "- run_id: $ID"
+  echo "- workflow: $NAME"
+  echo "- status: $STATUS"
+  echo "- conclusion: $CONC"
+  echo "- head_sha: $SHA"
+  echo "- created_at: $TIME"
+  echo "- url: $URL"
+} > "$OUT_MD"
+
+echo "$OUT_JSON"

@@ -1,0 +1,84 @@
+#!/usr/bin/env bash
+set +e +u
+export TZ="Europe/Warsaw"
+
+APP_ROOT="/root/work/vinops.restore"
+OUT_JSON="$APP_ROOT/evidence/S1V/MS-01/ci-status.json"
+OUT_MD="$APP_ROOT/evidence/S1V/MS-01/ci-status.md"
+mkdir -p "$(dirname "$OUT_JSON")" || true
+
+cd "$APP_ROOT" 2>/dev/null || true
+REMOTE="$(git remote get-url origin 2>/dev/null)"
+SLUG_ENV="${GH_REPO_SLUG:-}"
+SLUG_GIT="$(printf "%s" "$REMOTE" | sed -E 's#^.*github\.com[:/]+([^/]+)/([^/.]+)(\.git)?$#\1/\2#')"
+SLUG="${SLUG_ENV:-$SLUG_GIT}"
+
+UA="vinops-ci-status/5.0"
+AUTH=""
+[ -n "${GH_TOKEN:-}" ] && AUTH="-H Authorization: Bearer ${GH_TOKEN}"
+
+WF_URL="https://api.github.com/repos/$SLUG/actions/workflows/build.yml"
+RUNS_URL="$WF_URL/runs?branch=main&per_page=1"
+RUNS_JSON="$(mktemp)"
+BADGE_SVG="$(mktemp)"
+
+http_wf="NONE"
+http_runs="NONE"
+SRC="UNKNOWN"
+NAME="build.yml"
+ID="UNKNOWN"
+STATUS="UNKNOWN"
+CONC=""
+SHA="UNKNOWN"
+TIME="UNKNOWN"
+URL="https://github.com/$SLUG/actions/workflows/build.yml"
+BADGE_CONC=""
+
+# --- 1) Попытка через GitHub API (если есть токен, но и без него для публичного репо тоже попробуем) ---
+HTTP=$(curl -sS -w "%{http_code}" -H "Accept: application/vnd.github+json" -H "User-Agent: $UA" $AUTH "$RUNS_URL" -o "$RUNS_JSON")
+http_runs="$HTTP"
+
+if [ "$HTTP" = "200" ] && grep -q '"workflow_runs"' "$RUNS_JSON"; then
+  ID="$(sed -n 's/.*"workflow_runs":\[\{"id":\([0-9]\+\).*/\1/p' "$RUNS_JSON" | head -n1)"
+  [ -z "$ID" ] && ID="$(sed -n 's/.*"id":\([0-9]\+\).*/\1/p' "$RUNS_JSON" | head -n1)"
+  STATUS="$(sed -n 's/.*"status":"\([^"]*\)".*/\1/p' "$RUNS_JSON" | head -n1)"
+  CONC="$(sed -n 's/.*"conclusion":"\([^"]*\)".*/\1/p' "$RUNS_JSON" | head -n1)"
+  SHA="$(sed -n 's/.*"head_sha":"\([^"]*\)".*/\1/p' "$RUNS_JSON" | head -n1)"
+  TIME="$(sed -n 's/.*"created_at":"\([^"]*\)".*/\1/p' "$RUNS_JSON" | head -n1)"
+  URL="$(sed -n 's/.*"html_url":"\([^"]*\)".*/\1/p' "$RUNS_JSON" | head -n1)"
+  [ -n "$ID" ] && SRC="api"
+fi
+
+# --- 2) Фоллбек: badge.svg (без API прав) ---
+if [ "$SRC" = "UNKNOWN" ] || [ -z "$CONC" ]; then
+  BADGE_URL="https://github.com/$SLUG/actions/workflows/build.yml/badge.svg?branch=main"
+  HTTPB=$(curl -sSL -w "%{http_code}" -H "User-Agent: $UA" "$BADGE_URL" -o "$BADGE_SVG")
+  # В SVG обычно есть текст 'passing' / 'failing' / 'unknown'
+  BADGE_CONC="$(tr -d '\r' < "$BADGE_SVG" | grep -Eoi '(passing|failing|unknown)' | head -n1)"
+  if [ -n "$BADGE_CONC" ]; then
+    STATUS="badge"
+    CONC="$BADGE_CONC"
+    SRC="badge"
+  fi
+fi
+
+# --- Запись артефактов ---
+printf '{ "repo":"%s", "source":"%s", "http_code_runs":"%s", "badge_conclusion":"%s", "run_id":"%s", "name":"%s", "status":"%s", "conclusion":"%s", "head_sha":"%s", "created_at":"%s", "html_url":"%s" }\n' \
+  "$SLUG" "$SRC" "$http_runs" "$BADGE_CONC" "$ID" "$NAME" "$STATUS" "$CONC" "$SHA" "$TIME" "$URL" > "$OUT_JSON"
+
+{
+  echo '### CI Status (main)'
+  echo "- repo: $SLUG"
+  echo "- source: $SRC"
+  echo "- http_code(runs): $http_runs"
+  echo "- run_id: $ID"
+  echo "- workflow: $NAME"
+  echo "- status: $STATUS"
+  echo "- conclusion: $CONC"
+  echo "- head_sha: $SHA"
+  echo "- created_at: $TIME"
+  echo "- url: $URL"
+} > "$OUT_MD"
+
+# Вывод для pipe в валидацию
+echo "$OUT_JSON"
