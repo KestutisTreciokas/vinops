@@ -1,0 +1,96 @@
+#!/usr/bin/env bash
+set +e +u
+export TZ="Europe/Warsaw"
+
+APP_ROOT="/root/work/vinops.restore"
+OUT_JSON="$APP_ROOT/evidence/S1V/MS-01/ci-status.json"
+OUT_MD="$APP_ROOT/evidence/S1V/MS-01/ci-status.md"
+mkdir -p "$(dirname "$OUT_JSON")" || true
+
+cd "$APP_ROOT" 2>/dev/null || true
+REMOTE="$(git remote get-url origin 2>/dev/null)"
+SLUG_ENV="${GH_REPO_SLUG:-}"
+SLUG_GIT="$(printf "%s" "$REMOTE" | sed -E 's#^.*github\.com[:/]+([^/]+)/([^/.]+)(\.git)?$#\1/\2#')"
+SLUG="${SLUG_ENV:-$SLUG_GIT}"
+
+UA="vinops-ci-status/11.0"
+AUTH_HEADER=""
+[ -n "${GH_TOKEN:-}" ] && AUTH_HEADER="Authorization: Bearer ${GH_TOKEN}"
+
+# probe toolchain-check@main first; fallback to build.yml@main then any build
+HTTP="NONE"; SRC="UNKNOWN"; WF="toolchain-check"; BR="main"
+ID="UNKNOWN"; ST="UNKNOWN"; CONC=""; SHA="UNKNOWN"; CT="UNKNOWN"; URL="https://github.com/$SLUG/actions"; HB=""
+
+probe_runs () {
+  local wf="$1" branch_q="$2"
+  local url="https://api.github.com/repos/$SLUG/actions/workflows/${wf}/runs?${branch_q}&per_page=1"
+  local tmp="$(mktemp)"
+  local rc
+  rc="$(curl -sS -w "%{http_code}" -H "Accept: application/vnd.github+json" -H "User-Agent: $UA" ${AUTH_HEADER:+-H "$AUTH_HEADER"} -o "$tmp" "$url")"
+  if [ "$rc" = "200" ] && grep -q '"workflow_runs"' "$tmp"; then
+    if grep -q '"workflow_runs":\[\]' "$tmp"; then
+      echo "EMPTY"
+    else
+      echo "$tmp"
+    fi
+  else
+    echo "ERR:$rc"
+  fi
+}
+
+res="$(probe_runs "toolchain-check.yml" "branch=main")"
+if [ "$res" = "EMPTY" ]; then
+  SRC="api-empty"; WF="toolchain-check"; BR="main"
+elif expr "$res" : 'ERR:.*' >/dev/null 2>&1; then
+  HTTP="${res#ERR:}"
+else
+  HTTP="200"; SRC="api/main"; WF="toolchain-check"; BR="main"
+  ID="$(sed -n 's/.*"workflow_runs":\[\{"id":\([0-9]\+\).*/\1/p' "$res" | head -n1)"
+  ST="$(sed -n 's/.*"status":"\([^"]*\)".*/\1/p' "$res" | head -n1)"
+  CONC="$(sed -n 's/.*"conclusion":"\([^"]*\)".*/\1/p' "$res" | head -n1)"
+  SHA="$(sed -n 's/.*"head_sha":"\([^"]*\)".*/\1/p' "$res" | head -n1)"
+  CT="$(sed -n 's/.*"created_at":"\([^"]*\)".*/\1/p' "$res" | head -n1)"
+  URL="$(sed -n 's/.*"html_url":"\([^"]*\)".*/\1/p' "$res" | head -n1)"
+fi
+
+if [ "$SRC" = "api-empty" ] || [ "$SRC" = "UNKNOWN" ]; then
+  res2="$(probe_runs "build.yml" "branch=main")"
+  if [ "$res2" != "EMPTY" ] && ! expr "$res2" : 'ERR:.*' >/dev/null 2>&1; then
+    HTTP="200"; SRC="api/main"; WF="build"; BR="main"
+    ID="$(sed -n 's/.*"workflow_runs":\[\{"id":\([0-9]\+\).*/\1/p' "$res2" | head -n1)"
+    ST="$(sed -n 's/.*"status":"\([^"]*\)".*/\1/p' "$res2" | head -n1)"
+    CONC="$(sed -n 's/.*"conclusion":"\([^"]*\)".*/\1/p' "$res2" | head -n1)"
+    SHA="$(sed -n 's/.*"head_sha":"\([^"]*\)".*/\1/p' "$res2" | head -n1)"
+    CT="$(sed -n 's/.*"created_at":"\([^"]*\)".*/\1/p' "$res2" | head -n1)"
+    URL="$(sed -n 's/.*"html_url":"\([^"]*\)".*/\1/p' "$res2" | head -n1)"
+  fi
+fi
+
+# badge fallback (only to get conclusion when API empty)
+if [ -z "$CONC" ]; then
+  BADGE_URL="https://github.com/$SLUG/actions/workflows/${WF}.yml/badge.svg?branch=${BR}"
+  TMPB="$(mktemp)"
+  HTTPB="$(curl -sSL -w "%{http_code}" -H "User-Agent: $UA" -o "$TMPB" "$BADGE_URL")"
+  HB="$(tr -d '\r' < "$TMPB" | grep -Eoi '(passing|failing|unknown)' | head -n1)"
+  [ -n "$HB" ] && { ST="badge"; CONC="$HB"; SRC="badge"; }
+fi
+
+printf '{"source":"%s","workflow":"%s","branch":"%s","http_code_runs":"%s","run_id":"%s","status":"%s","conclusion":"%s","head_sha":"%s","created_at":"%s","html_url":"%s"}\n' \
+  "$SRC" "$WF" "$BR" "${HTTP:-UNKNOWN}" "${ID:-UNKNOWN}" "${ST:-UNKNOWN}" "${CONC:-UNKNOWN}" "${SHA:-UNKNOWN}" "${CT:-UNKNOWN}" "${URL:-UNKNOWN}" > "$OUT_JSON"
+
+{
+  echo "### CI Status"
+  echo "- repo: $SLUG"
+  echo "- source: $SRC"
+  echo "- workflow: $WF"
+  echo "- branch: $BR"
+  echo "- http_code(runs): ${HTTP:-UNKNOWN}"
+  echo "- run_id: ${ID:-UNKNOWN}"
+  echo "- status: ${ST:-UNKNOWN}"
+  echo "- conclusion: ${CONC:-UNKNOWN}"
+  echo "- head_sha: ${SHA:-UNKNOWN}"
+  echo "- created_at: ${CT:-UNKNOWN}"
+  echo "- url: ${URL:-UNKNOWN}"
+} > "$OUT_MD"
+
+echo "$OUT_JSON"

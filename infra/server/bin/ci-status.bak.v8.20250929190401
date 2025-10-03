@@ -1,0 +1,102 @@
+#!/usr/bin/env bash
+set +e +u
+export TZ="Europe/Warsaw"
+
+APP_ROOT="/root/work/vinops.restore"
+OUT_JSON="$APP_ROOT/evidence/S1V/MS-01/ci-status.json"
+OUT_MD="$APP_ROOT/evidence/S1V/MS-01/ci-status.md"
+mkdir -p "$(dirname "$OUT_JSON")" || true
+
+cd "$APP_ROOT" 2>/dev/null || true
+REMOTE="$(git remote get-url origin 2>/dev/null)"
+SLUG_ENV="${GH_REPO_SLUG:-}"
+SLUG_GIT="$(printf "%s" "$REMOTE" | sed -E 's#^.*github\.com[:/]+([^/]+)/([^/.]+)(\.git)?$#\1/\2#')"
+SLUG="${SLUG_ENV:-$SLUG_GIT}"
+
+UA="vinops-ci-status/8.0"
+AUTH_HEADER=""
+[ -n "${GH_TOKEN:-}" ] && AUTH_HEADER="Authorization: Bearer ${GH_TOKEN}"
+
+# Кандидаты (по приоритету)
+CANDS=( "build.yml|build" "toolchain-check.yml|toolchain-check" "build-push.yml|build-push" "api-smoke.yml|api-smoke" )
+
+query_runs() { # $1=workflow.yml  $2=branch ('' для any)
+  local wf="$1" br="$2" url code body
+  url="https://api.github.com/repos/$SLUG/actions/workflows/$wf/runs?per_page=1"
+  [ -n "$br" ] && url="${url}&branch=${br}"
+  body="$(mktemp)"; code="$(curl -sS -w "%{http_code}" -H "Accept: application/vnd.github+json" -H "User-Agent: $UA" ${AUTH_HEADER:+-H "$AUTH_HEADER"} -o "$body" "$url")"
+  printf '%s\n' "$code"; cat "$body"; rm -f "$body"
+}
+
+pick_best() { # echo JSON {source,workflow,branch,run_id,status,conclusion,head_sha,created_at,html_url}
+  local code body wf name br
+
+  # 1) main
+  for cand in "${CANDS[@]}"; do
+    IFS='|' read -r wf name <<<"$cand"
+    code="$(query_runs "$wf" "main" | head -n1)"
+    body="$(query_runs "$wf" "main" | tail -n +2)"
+    if [ "$code" = "200" ] && command -v jq >/dev/null 2>&1; then
+      if [ "$(printf '%s' "$body" | jq '.workflow_runs | length')" -gt 0 ]; then
+        printf '{"source":"api/main","workflow":"%s","branch":"main","http_code_runs":"%s","run_id":"%s","status":"%s","conclusion":"%s","head_sha":"%s","created_at":"%s","html_url":"%s"}\n' \
+        "$name" "$code" \
+        "$(printf '%s' "$body" | jq -r '.workflow_runs[0].id')" \
+        "$(printf '%s' "$body" | jq -r '.workflow_runs[0].status')" \
+        "$(printf '%s' "$body" | jq -r '.workflow_runs[0].conclusion')" \
+        "$(printf '%s' "$body" | jq -r '.workflow_runs[0].head_sha')" \
+        "$(printf '%s' "$body" | jq -r '.workflow_runs[0].created_at')" \
+        "$(printf '%s' "$body" | jq -r '.workflow_runs[0].html_url')" \
+        ; return 0
+      fi
+    fi
+  done
+
+  # 2) any branch
+  for cand in "${CANDS[@]}"; do
+    IFS='|' read -r wf name <<<"$cand"
+    code="$(query_runs "$wf" "" | head -n1)"
+    body="$(query_runs "$wf" "" | tail -n +2)"
+    if [ "$code" = "200" ] && command -v jq >/dev/null 2>&1; then
+      if [ "$(printf '%s' "$body" | jq '.workflow_runs | length')" -gt 0 ]; then
+        br="$(printf '%s' "$body" | jq -r '.workflow_runs[0].head_branch')"
+        printf '{"source":"api/any","workflow":"%s","branch":"%s","http_code_runs":"%s","run_id":"%s","status":"%s","conclusion":"%s","head_sha":"%s","created_at":"%s","html_url":"%s"}\n' \
+        "$name" "$br" "$code" \
+        "$(printf '%s' "$body" | jq -r '.workflow_runs[0].id')" \
+        "$(printf '%s' "$body" | jq -r '.workflow_runs[0].status')" \
+        "$(printf '%s' "$body" | jq -r '.workflow_runs[0].conclusion')" \
+        "$(printf '%s' "$body" | jq -r '.workflow_runs[0].head_sha')" \
+        "$(printf '%s' "$body" | jq -r '.workflow_runs[0].created_at')" \
+        "$(printf '%s' "$body" | jq -r '.workflow_runs[0].html_url')" \
+        ; return 0
+      fi
+    fi
+  done
+
+  # 3) badge fallback (build.yml@main)
+  BADGE_URL="https://github.com/$SLUG/actions/workflows/build.yml/badge.svg?branch=main"
+  BADGE_SVG="$(mktemp)"
+  HTTPB=$(curl -sSL -w "%{http_code}" -H "User-Agent: $UA" -o "$BADGE_SVG" "$BADGE_URL")
+  BADGE_CONC="$(tr -d '\r' < "$BADGE_SVG" | grep -Eoi '(passing|failing|unknown|no status)' | head -n1)"
+  printf '{"source":"badge","workflow":"build","branch":"main","http_code_runs":"%s","run_id":"", "status":"badge", "conclusion":"%s","head_sha":"","created_at":"","html_url":"https://github.com/%s/actions/workflows/build.yml"}\n' "$HTTPB" "$BADGE_CONC" "$SLUG"
+}
+
+BEST="$(pick_best)"
+# Запись артефактов
+printf '%s\n' "$BEST" > "$OUT_JSON"
+{
+  echo '### CI Status'
+  echo "- repo: $SLUG"
+  echo "- source: $(jq -r .source "$OUT_JSON" 2>/dev/null || echo UNKNOWN)"
+  echo "- workflow: $(jq -r .workflow "$OUT_JSON" 2>/dev/null || echo UNKNOWN)"
+  echo "- branch: $(jq -r .branch "$OUT_JSON" 2>/dev/null || echo UNKNOWN)"
+  echo "- http_code(runs): $(jq -r .http_code_runs "$OUT_JSON" 2>/dev/null || echo UNKNOWN)"
+  echo "- run_id: $(jq -r .run_id "$OUT_JSON" 2>/dev/null || echo UNKNOWN)"
+  echo "- status: $(jq -r .status "$OUT_JSON" 2>/dev/null || echo UNKNOWN)"
+  echo "- conclusion: $(jq -r .conclusion "$OUT_JSON" 2>/dev/null || echo UNKNOWN)"
+  echo "- head_sha: $(jq -r .head_sha "$OUT_JSON" 2>/dev/null || echo UNKNOWN)"
+  echo "- created_at: $(jq -r .created_at "$OUT_JSON" 2>/dev/null || echo UNKNOWN)"
+  echo "- url: $(jq -r .html_url "$OUT_JSON" 2>/dev/null || echo UNKNOWN)"
+} > "$OUT_MD"
+
+# Вывод пути для пайплайнов
+echo "$OUT_JSON"

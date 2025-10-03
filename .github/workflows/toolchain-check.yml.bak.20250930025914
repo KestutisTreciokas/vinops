@@ -1,0 +1,36 @@
+name: Toolchain & Lint/Types
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node (20.14.x)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.14.x'
+          cache: 'npm'
+
+      - name: Print versions
+        run: |
+          node -v
+          npm -v
+          if [ -f frontend/package-lock.json ]; then
+            npm --prefix frontend ci
+          else
+            npm --prefix frontend install --no-audit --no-fund
+          fi
+          npm --prefix frontend run ci:versions
+
+      - name: Lint
+        run: npm --prefix frontend run lint
+
+      - name: Typecheck
+        run: npm --prefix frontend run typecheck

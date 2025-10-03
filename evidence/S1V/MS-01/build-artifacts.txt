@@ -1,0 +1,103 @@
+-- Versions --
+v20.19.5
+10.8.2
+[1G[0K[1G[0K\[1G[0K|[1G[0K/[1G[0K-[1G[0K\[1G[0K|[1G[0K/[1G[0K-[1G[0K\[1G[0K|[1G[0K/[1G[0K-[1G[0K\[1G[0K[1mnpm[22m [33mwarn[39m [94mdeprecated[39m rimraf@3.0.2: Rimraf versions prior to v4 are no longer supported
+[1G[0K\[1G[0K|[1G[0K/[1G[0K-[1G[0K\[1G[0K|[1G[0K[1mnpm[22m [33mwarn[39m [94mdeprecated[39m inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
+[1G[0K|[1G[0K/[1G[0K-[1G[0K\[1G[0K|[1G[0K/[1G[0K-[1G[0K\[1G[0K[1mnpm[22m [33mwarn[39m [94mdeprecated[39m @humanwhocodes/object-schema@2.0.3: Use @eslint/object-schema instead
+[1G[0K\[1G[0K[1mnpm[22m [33mwarn[39m [94mdeprecated[39m @humanwhocodes/config-array@0.13.0: Use @eslint/config-array instead
+[1G[0K\[1G[0K|[1G[0K[1mnpm[22m [33mwarn[39m [94mdeprecated[39m glob@7.2.3: Glob versions prior to v9 are no longer supported
+[1G[0K|[1G[0K/[1G[0K-[1G[0K\[1G[0K|[1G[0K/[1G[0K[1mnpm[22m [33mwarn[39m [94mdeprecated[39m eslint@8.57.1: This version is no longer supported. Please see https://eslint.org/version-support for other options.
+[1G[0K/[1G[0K-[1G[0K\[1G[0K|[1G[0K/[1G[0K-[1G[0K\[1G[0K|[1G[0K/[1G[0K-[1G[0K\[1G[0K|[1G[0K/[1G[0K-[1G[0K\[1G[0K|[1G[0K/[1G[0K-[1G[0K\[1G[0K|[1G[0K/[1G[0K-[1G[0K\[1G[0K|[1G[0K/[1G[0K-[1G[0K\[1G[0K|[1G[0K/[1G[0K-[1G[0K\[1G[0K|[1G[0K/[1G[0K-[1G[0K\[1G[0K
+added 414 packages in 9s
+[1G[0K\[1G[0K[1mnpm[22m [96mnotice[39m
+[1mnpm[22m [96mnotice[39m New [31mmajor[39m version of npm available! [31m10.8.2[39m -> [34m11.6.1[39m
+[1mnpm[22m [96mnotice[39m Changelog: [34mhttps://github.com/npm/cli/releases/tag/v11.6.1[39m
+[1mnpm[22m [96mnotice[39m To update run: [4mnpm install -g npm@11.6.1[24m
+[1mnpm[22m [96mnotice[39m
+[1G[0K\[1G[0K-- Build --
+  [1m[38;2;173;127;168m▲ Next.js 14.2.5[39m[22m
+  - Experiments (use with caution):
+    · typedRoutes
+
+ [37m[1m [22m[39m Creating an optimized production build ...
+ [32m[1m✓[22m[39m Compiled successfully
+[?25l [37m[1m [22m[39m Linting and checking validity of types  [36m.[39m[2K[1G [37m[1m [22m[39m Linting and checking validity of types  [36m..[39m[2K[1G [37m[1m [22m[39m Linting and checking validity of types  [36m...[39m[2K[1G [37m[1m [22m[39m Linting and checking validity of types  [36m.[39m[2K[1G [37m[1m [22m[39m Linting and checking validity of types  [36m..[39m[2K[1G [37m[1m [22m[39m Linting and checking validity of types  [36m...[39m[2K[1G [37m[1m [22m[39m Linting and checking validity of types  [36m.[39m[2K[1G[?25h
+[36m./src/app/[lang]/cars/PageClient.tsx[39m
+[33m55[39m:[33m5[39m  [33m[1mWarning[22m[39m: React Hook useEffect has a missing dependency: 'model'. Either include it or remove the dependency array.  [90m[1mreact-hooks/exhaustive-deps[22m[39m
+
+[36m./src/app/[lang]/cars/_SeoTitle.tsx[39m
+[33m7[39m:[33m7[39m  [33m[1mWarning[22m[39m: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  [90m[1m@next/next/no-img-element[22m[39m
+
+[36m./src/app/[lang]/layout.tsx[39m
+[33m31[39m:[33m3[39m  [33m[1mWarning[22m[39m: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  [90m[1m@next/next/no-img-element[22m[39m
+[33m32[39m:[33m3[39m  [33m[1mWarning[22m[39m: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  [90m[1m@next/next/no-img-element[22m[39m
+
+[36m./src/app/[lang]/vin/[vin]/_SeoBlock.tsx[39m
+[33m7[39m:[33m7[39m  [33m[1mWarning[22m[39m: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  [90m[1m@next/next/no-img-element[22m[39m
+
+[36m./src/app/[lang]/vin/[vin]/seo.ts[39m
+[33m26[39m:[33m1[39m  [33m[1mWarning[22m[39m: Assign object to a variable before exporting as module default  [90m[1mimport/no-anonymous-default-export[22m[39m
+
+[36m./src/components/CatalogCard.tsx[39m
+[33m24[39m:[33m23[39m  [33m[1mWarning[22m[39m: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  [90m[1m@next/next/no-img-element[22m[39m
+
+[36m./src/components/vin2/Gallery.tsx[39m
+[33m33[39m:[33m9[39m  [33m[1mWarning[22m[39m: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  [90m[1m@next/next/no-img-element[22m[39m
+[33m51[39m:[33m13[39m  [33m[1mWarning[22m[39m: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  [90m[1m@next/next/no-img-element[22m[39m
+
+[36m./src/components/vin2/Lightbox.tsx[39m
+[33m37[39m:[33m9[39m  [33m[1mWarning[22m[39m: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  [90m[1m@next/next/no-img-element[22m[39m
+
+[36minfo[39m  - Need to disable some ESLint rules? Learn more here: https://nextjs.org/docs/basic-features/eslint#disabling-rules
+[?25l [37m[1m [22m[39m Linting and checking validity of types  [36m.[39m[2K[1G [37m[1m [22m[39m Linting and checking validity of types  [36m..[39m[2K[1G [37m[1m [22m[39m Linting and checking validity of types  [36m...[39m[2K[1G [37m[1m [22m[39m Linting and checking validity of types  [36m.[39m[2K[1G [37m[1m [22m[39m Linting and checking validity of types  [36m..[39m[2K[1G [37m[1m [22m[39m Linting and checking validity of types  [36m...[39m[2K[1G [37m[1m [22m[39m Linting and checking validity of types  [36m.[39m[2K[1G [37m[1m [22m[39m Linting and checking validity of types  [36m..[39m[2K[1G [37m[1m [22m[39m Linting and checking validity of types  [36m...[39m[2K[1G [37m[1m [22m[39m Linting and checking validity of types  [36m.[39m[2K[1G [37m[1m [22m[39m Linting and checking validity of types  [36m..[39m[2K[1G[?25h [37m[1m [22m[39m Linting and checking validity of types     [32m[1m✓[22m[39m Linting and checking validity of types 
+[?25l [37m[1m [22m[39m Collecting page data  [36m.[39m[2K[1G [37m[1m [22m[39m Collecting page data  [36m..[39m[2K[1G[?25h [37m[1m [22m[39m Collecting page data     [32m[1m✓[22m[39m Collecting page data 
+[?25l [37m[1m [22m[39m Generating static pages (0/24)  [36m[    ][39m[2K[1G [37m[1m [22m[39m Generating static pages (7/24)  [36m[=   ][39m[2K[1G [37m[1m [22m[39m Generating static pages (19/24)  [36m[==  ][39m[2K[1G[?25h [32m[1m✓[22m[39m Generating static pages (24/24)
+[?25l [37m[1m [22m[39m Finalizing page optimization  [36m.[39m[?25l [37m[1m [22m[39m Collecting build traces  [36m.[39m[2K[1G [37m[1m [22m[39m Finalizing page optimization  [36m..[39m[2K[1G [37m[1m [22m[39m Collecting build traces  [36m..[39m[2K[1G [37m[1m [22m[39m Finalizing page optimization  [36m...[39m[2K[1G [37m[1m [22m[39m Collecting build traces  [36m...[39m[2K[1G [37m[1m [22m[39m Finalizing page optimization  [36m.[39m[2K[1G [37m[1m [22m[39m Collecting build traces  [36m.[39m[2K[1G [37m[1m [22m[39m Finalizing page optimization  [36m..[39m[2K[1G [37m[1m [22m[39m Collecting build traces  [36m..[39m[2K[1G [37m[1m [22m[39m Finalizing page optimization  [36m...[39m[2K[1G [37m[1m [22m[39m Collecting build traces  [36m...[39m[2K[1G [37m[1m [22m[39m Finalizing page optimization  [36m.[39m[2K[1G [37m[1m [22m[39m Collecting build traces  [36m.[39m[2K[1G [37m[1m [22m[39m Finalizing page optimization  [36m..[39m[2K[1G [37m[1m [22m[39m Collecting build traces  [36m..[39m[2K[1G [37m[1m [22m[39m Finalizing page optimization  [36m...[39m[2K[1G [37m[1m [22m[39m Collecting build traces  [36m...[39m[2K[1G [37m[1m [22m[39m Finalizing page optimization  [36m.[39m[2K[1G [37m[1m [22m[39m Collecting build traces  [36m.[39m[2K[1G [37m[1m [22m[39m Finalizing page optimization  [36m..[39m[2K[1G [37m[1m [22m[39m Collecting build traces  [36m..[39m[2K[1G [37m[1m [22m[39m Finalizing page optimization  [36m...[39m[2K[1G [37m[1m [22m[39m Collecting build traces  [36m...[39m[2K[1G [37m[1m [22m[39m Finalizing page optimization  [36m.[39m[2K[1G [37m[1m [22m[39m Collecting build traces  [36m.[39m[2K[1G [37m[1m [22m[39m Finalizing page optimization  [36m..[39m[2K[1G [37m[1m [22m[39m Collecting build traces  [36m..[39m[2K[1G [37m[1m [22m[39m Finalizing page optimization  [36m...[39m[2K[1G [37m[1m [22m[39m Collecting build traces  [36m...[39m[2K[1G[?25h [37m[1m [22m[39m Collecting build traces     [32m[1m✓[22m[39m Collecting build traces 
+[2K[1G[?25h [37m[1m [22m[39m Finalizing page optimization     [32m[1m✓[22m[39m Finalizing page optimization 
+
+[4mRoute (app)[24m                              [4mSize[24m     [4mFirst Load JS[24m
+┌ ○ /_not-found                          871 B          [37m[1m87.9 kB[22m[39m
+├ ● /[lang]                              2.43 kB          [37m[1m92 kB[22m[39m
+├   ├ /en
+├   └ /ru
+├ ● /[lang]/cars                         2.67 kB        [37m[1m89.7 kB[22m[39m
+├   ├ /en/cars
+├   └ /ru/cars
+├ ● /[lang]/contacts                     153 B          [37m[1m87.2 kB[22m[39m
+├   ├ /en/contacts
+├   └ /ru/contacts
+├ ● /[lang]/demo                         153 B          [37m[1m87.2 kB[22m[39m
+├   ├ /en/demo
+├   └ /ru/demo
+├ ○ /[lang]/health                       0 B                [37m[1m0 B[22m[39m
+├ ○ /[lang]/healthz                      0 B                [37m[1m0 B[22m[39m
+├ ● /[lang]/terms                        153 B          [37m[1m87.2 kB[22m[39m
+├   ├ /en/terms
+├   └ /ru/terms
+├ ƒ /[lang]/vin/[vin]                    618 B          [37m[1m87.7 kB[22m[39m
+├ ƒ /[lang]/vin/[vin]/details            618 B          [37m[1m87.7 kB[22m[39m
+├ ƒ /api/v1/vehicles/[vin]               0 B                [37m[1m0 B[22m[39m
+├ ○ /demo                                153 B          [37m[1m87.2 kB[22m[39m
+├ ○ /health                              0 B                [37m[1m0 B[22m[39m
+├ ○ /healthz                             0 B                [37m[1m0 B[22m[39m
+├ ○ /icon.svg                            0 B                [37m[1m0 B[22m[39m
+├ ○ /robots.txt                          0 B                [37m[1m0 B[22m[39m
+├ ○ /sitemap.xml                         0 B                [37m[1m0 B[22m[39m
+├ ○ /sitemap.xml.disabled.ms0203         0 B                [37m[1m0 B[22m[39m
+├ ○ /sitemaps/static.xml                 0 B                [37m[1m0 B[22m[39m
+├ ○ /sitemaps/vin.xml                    0 B                [37m[1m0 B[22m[39m
+├ ○ /sitemaps/vin/en-0.xml               0 B                [37m[1m0 B[22m[39m
+└ ○ /sitemaps/vin/ru-0.xml               0 B                [37m[1m0 B[22m[39m
++ First Load JS shared by all            [37m[1m87.1 kB[22m[39m
+  ├ chunks/23-e4b4a13bfefcd1ba.js        31.5 kB
+  ├ chunks/fd9d1056-b6e16a5f15b47ad4.js  53.6 kB
+  └ other shared chunks (total)          1.9 kB
+
+
+ƒ Middleware                             [37m[1m27.6 kB[22m[39m
+
+○  (Static)   prerendered as static content
+●  (SSG)      prerendered as static HTML (uses [36mgetStaticProps[39m)
+ƒ  (Dynamic)  server-rendered on demand
+
+[?25h

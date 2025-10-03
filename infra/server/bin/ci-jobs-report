@@ -1,0 +1,81 @@
+#!/usr/bin/env bash
+set +e +u
+export TZ="Europe/Warsaw"
+
+APP_ROOT="/root/work/vinops.restore"
+STATUS_JSON="$APP_ROOT/evidence/S1V/MS-01/ci-status.json"
+OUT_JSON="$APP_ROOT/evidence/S1V/MS-01/ci-jobs.json"
+OUT_MD="$APP_ROOT/evidence/S1V/MS-01/ci-jobs.md"
+mkdir -p "$(dirname "$OUT_JSON")" || true
+
+# SLUG
+REMOTE="$(git -C "$APP_ROOT" remote get-url origin 2>/dev/null)"
+SLUG_ENV="${GH_REPO_SLUG:-}"
+SLUG_GIT="$(printf "%s" "$REMOTE" | sed -E 's#^.*github\.com[:/]+([^/]+)/([^/.]+)(\.git)?$#\1/\2#')"
+SLUG="${SLUG_ENV:-$SLUG_GIT}"
+
+UA="vinops-ci-jobs/5.0"
+AUTH=""
+[ -n "${GH_TOKEN:-}" ] && AUTH="Authorization: Bearer ${GH_TOKEN}"
+
+# run_id из статуса, либо свежий toolchain-check@main
+RID=""
+[ -f "$STATUS_JSON" ] && RID="$(node -e 'try{console.log(JSON.parse(require("fs").readFileSync(process.argv[1],"utf8")).run_id||"")}catch(e){ }' "$STATUS_JSON")"
+
+if [ -z "$RID" ] || [ "$RID" = "UNKNOWN" ]; then
+  URL_RUNS="https://api.github.com/repos/$SLUG/actions/workflows/toolchain-check.yml/runs?branch=main&per_page=1"
+  TMP="$(mktemp)"
+  curl -sS -H "Accept: application/vnd.github+json" -H "User-Agent: $UA" ${AUTH:+-H "$AUTH"} -o "$TMP" "$URL_RUNS" >/dev/null 2>&1
+  RID="$(node -e 'try{const j=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8"));const r=(j.workflow_runs||[])[0];console.log(r?r.id:"")}catch(e){ }' "$TMP")"
+fi
+
+[ -z "$RID" ] && { echo "[ERR] run_id not found"; exit 0; }
+
+JOBS_URL="https://api.github.com/repos/$SLUG/actions/runs/$RID/jobs?per_page=100"
+JTMP="$(mktemp)"
+HTTPJ="$(curl -sS -w "%{http_code}" -H "Accept: application/vnd.github+json" -H "User-Agent: $UA" ${AUTH:+-H "$AUTH"} -o "$JTMP" "$JOBS_URL")"
+
+# Нормализуем JSON jobs (id, name, status, conclusion, steps)
+node -e '
+  const fs=require("fs");
+  const p=process.argv[1];
+  try{
+    const j=JSON.parse(fs.readFileSync(p,"utf8"));
+    const jobs=(j.jobs||[]).map(job=>({
+      id: job.id, name: job.name, status: job.status, conclusion: job.conclusion,
+      started_at: job.started_at, completed_at: job.completed_at,
+      steps: (job.steps||[]).map((s,i)=>({number: s.number||i+1, name: s.name, status: s.status, conclusion: s.conclusion}))
+    }));
+    const out={ total_count: j.total_count||jobs.length, jobs };
+    fs.writeFileSync(process.argv[2], JSON.stringify(out));
+  }catch(e){ fs.writeFileSync(process.argv[2], JSON.stringify({total_count:0,jobs:[]})); }
+' "$JTMP" "$OUT_JSON"
+
+# Markdown summary
+{
+  echo "### CI Jobs (run_id: $RID)"
+  echo "- repo: $SLUG"
+  echo "- http: $HTTPJ"
+  echo
+  echo "#### Jobs"
+  node -e '
+    const fs=require("fs");
+    const j=JSON.parse(fs.readFileSync(process.argv[1],"utf8"));
+    for(const job of (j.jobs||[])){
+      console.log(`* ${job.name} — status:${job.status} / conclusion:${job.conclusion} (id:${job.id}) steps:${(job.steps||[]).length}`);
+    }
+  ' "$OUT_JSON"
+  echo
+  echo "#### Failed steps (if any)"
+  node -e '
+    const fs=require("fs");
+    const j=JSON.parse(fs.readFileSync(process.argv[1],"utf8"));
+    for(const job of (j.jobs||[])){
+      for(const s of (job.steps||[])){
+        if(s.conclusion==="failure"){ console.log(`* job:${job.name} — step #${s.number}: ${s.name}`); }
+      }
+    }
+  ' "$OUT_JSON"
+} > "$OUT_MD"
+
+echo "$OUT_MD"

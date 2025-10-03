@@ -1,0 +1,122 @@
+#!/usr/bin/env bash
+set +e +u
+export TZ="Europe/Warsaw"
+
+APP_ROOT="/root/work/vinops.restore"
+OUT_JSON="$APP_ROOT/evidence/S1V/MS-01/ci-status.json"
+OUT_MD="$APP_ROOT/evidence/S1V/MS-01/ci-status.md"
+mkdir -p "$(dirname "$OUT_JSON")" || true
+
+cd "$APP_ROOT" 2>/dev/null || true
+REMOTE="$(git remote get-url origin 2>/dev/null)"
+SLUG_ENV="${GH_REPO_SLUG:-}"
+SLUG_GIT="$(printf "%s" "$REMOTE" | sed -E 's#^.*github\.com[:/]+([^/]+)/([^/.]+)(\.git)?$#\1/\2#')"
+SLUG="${SLUG_ENV:-$SLUG_GIT}"
+
+UA="vinops-ci-status/7.0"
+AUTH_HEADER=""
+[ -n "${GH_TOKEN:-}" ] && AUTH_HEADER="Authorization: Bearer ${GH_TOKEN}"
+
+# Candidates in priority
+CANDS_MAIN=(
+  ".github/workflows/build.yml|build"
+  ".github/workflows/toolchain-check.yml|toolchain-check"
+  ".github/workflows/build-push.yml|build-push"
+  ".github/workflows/api-smoke.yml|api-smoke"
+)
+CANDS_ANY=("${CANDS_MAIN[@]}")
+
+pick_from_api() {
+  local path="$1" name="$2" branch="$3"
+  local url="https://api.github.com/repos/$SLUG/actions/workflows/$(basename "$path")/runs?per_page=1"
+  [ -n "$branch" ] && url="${url}&branch=${branch}"
+  local tmp="$(mktemp)"
+  local code ; code="$(curl -sS -w "%{http_code}" -H "Accept: application/vnd.github+json" -H "User-Agent: $UA" ${AUTH_HEADER:+-H "$AUTH_HEADER"} -o "$tmp" "$url")"
+  printf '%s\n' "$code" > "${tmp}.code"
+  printf '%s\n' "$url"  > "${tmp}.url"
+  # Parse minimal fields
+  local id status conc sha time html head_branch
+  id="$(sed -n 's/.*"workflow_runs":\[\{"id":\([0-9]\+\).*/\1/p' "$tmp" | head -n1)"
+  [ -z "$id" ] && id="$(sed -n 's/.*"id":\([0-9]\+\).*/\1/p' "$tmp" | head -n1)"
+  status="$(sed -n 's/.*"status":"\([^"]*\)".*/\1/p' "$tmp" | head -n1)"
+  conc="$(sed -n 's/.*"conclusion":"\([^"]*\)".*/\1/p' "$tmp" | head -n1)"
+  sha="$(sed -n 's/.*"head_sha":"\([^"]*\)".*/\1/p' "$tmp" | head -n1)"
+  time="$(sed -n 's/.*"created_at":"\([^"]*\)".*/\1/p' "$tmp" | head -n1)"
+  html="$(sed -n 's/.*"html_url":"\([^"]*\)".*/\1/p' "$tmp" | head -n1)"
+  head_branch="$(sed -n 's/.*"head_branch":"\([^"]*\)".*/\1/p' "$tmp" | head -n1)"
+  printf '%s|%s|%s|%s|%s|%s|%s|%s|%s\n' "$code" "$url" "$name" "$path" "$branch" "$id" "$status" "$conc" "${head_branch:-$branch}|$sha|$time|$html"
+}
+
+best=""
+http_runs="NONE"
+
+# 1) main branch
+for cand in "${CANDS_MAIN[@]}"; do
+  IFS='|' read -r path name <<<"$cand"
+  res="$(pick_from_api "$path" "$name" "main")"
+  code="$(printf '%s' "$res" | cut -d'|' -f1)"
+  http_runs="$code"
+  id="$(printf '%s' "$res" | cut -d'|' -f6)"
+  if [ "$code" = "200" ] && [ -n "$id" ]; then best="$res"; break; fi
+done
+
+SRC="api/main"
+if [ -z "$best" ]; then
+  # 2) any branch
+  for cand in "${CANDS_ANY[@]}"; do
+    IFS='|' read -r path name <<<"$cand"
+    res="$(pick_from_api "$path" "$name" "")"
+    code="$(printf '%s' "$res" | cut -d'|' -f1)"
+    http_runs="$code"
+    id="$(printf '%s' "$res" | cut -d'|' -f6)"
+    if [ "$code" = "200" ] && [ -n "$id" ]; then best="$res"; SRC="api/any"; break; fi
+  done
+fi
+
+NAME=""; WF_PATH=""; BRANCH=""; ID=""; STATUS="UNKNOWN"; CONC=""; SHA="UNKNOWN"; TIME="UNKNOWN"; URL="https://github.com/$SLUG/actions"; BADGE_CONC=""
+if [ -n "$best" ]; then
+  NAME="$(printf '%s' "$best" | cut -d'|' -f3)"
+  WF_PATH="$(printf '%s' "$best" | cut -d'|' -f4)"
+  BRANCH="$(printf '%s' "$best" | cut -d'|' -f5)"
+  ID="$(printf '%s' "$best" | cut -d'|' -f6)"
+  STATUS="$(printf '%s' "$best" | cut -d'|' -f7)"
+  CONC="$(printf '%s' "$best" | cut -d'|' -f8)"
+  # the rest are grouped in field9: branch|sha|time|html
+  tail9="$(printf '%s' "$best" | cut -d'|' -f9-)"
+  SHA="$(printf '%s' "$tail9" | cut -d'|' -f2)"
+  TIME="$(printf '%s' "$tail9" | cut -d'|' -f3)"
+  URL="$(printf '%s' "$tail9" | cut -d'|' -f4)"
+else
+  # 3) badge fallback for build.yml@main
+  BADGE_URL="https://github.com/$SLUG/actions/workflows/build.yml/badge.svg?branch=main"
+  BADGE_SVG="$(mktemp)"
+  HTTPB=$(curl -sSL -w "%{http_code}" -H "User-Agent: $UA" -o "$BADGE_SVG" "$BADGE_URL")
+  BADGE_CONC="$(tr -d '\r' < "$BADGE_SVG" | grep -Eoi '(passing|failing|unknown|no status)' | head -n1)"
+  SRC="badge"
+  NAME="build.yml"
+  BRANCH="main"
+  STATUS="badge"
+  CONC="$BADGE_CONC"
+  URL="https://github.com/$SLUG/actions/workflows/build.yml"
+fi
+
+printf '{ "repo":"%s", "source":"%s", "workflow":"%s", "branch":"%s", "http_code_runs":"%s", "run_id":"%s", "status":"%s", "conclusion":"%s", "head_sha":"%s", "created_at":"%s", "html_url":"%s" }\n' \
+  "$SLUG" "$SRC" "$NAME" "$BRANCH" "$http_runs" "$ID" "$STATUS" "$CONC" "$SHA" "$TIME" "$URL" > "$OUT_JSON"
+
+{
+  echo '### CI Status'
+  echo "- repo: $SLUG"
+  echo "- source: $SRC"
+  echo "- workflow: $NAME"
+  echo "- branch: $BRANCH"
+  echo "- http_code(runs): $http_runs"
+  echo "- run_id: $ID"
+  echo "- status: $STATUS"
+  echo "- conclusion: $CONC"
+  echo "- head_sha: $SHA"
+  echo "- created_at: $TIME"
+  echo "- url: $URL"
+} > "$OUT_MD"
+
+# Emit path for callers
+echo "$OUT_JSON"

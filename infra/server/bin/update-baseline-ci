@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+set +e +u
+export TZ="Europe/Warsaw"
+
+APP_ROOT="/root/work/vinops.restore"
+BASE="$APP_ROOT/docs/releases/S1V-baseline.md"
+JSON_PATH="$(/root/work/vinops.restore/infra/server/bin/ci-status | xargs -r echo)"
+JSON="$(cat "$JSON_PATH" 2>/dev/null || echo '{}')"
+
+jget_any(){ key="$1"; echo "$JSON" | sed -n 's/.*"'"$key"'":\("\([^"]*\)"\|[0-9]\+\).*/\1/p' | sed 's/^"\(.*\)"$/\1/'; }
+
+REPO="$(git -C "$APP_ROOT" remote get-url origin 2>/dev/null | sed -E 's#^.*github\.com[:/]+([^/]+)/([^/.]+)(\.git)?$#\1/\2#')"
+SRC="$(jget_any source)"
+WF="$(jget_any workflow)"
+BR="$(jget_any branch)"
+RC="$(jget_any http_code_runs)"
+RID="$(jget_any run_id)"
+ST="$(jget_any status)"
+CONC="$(jget_any conclusion)"
+SHA="$(jget_any head_sha)"
+CT="$(jget_any created_at)"
+RUN_URL="https://github.com/$REPO/actions/runs/$RID"
+
+NEW_BLOCK="$(cat <<BLK
+## CI — последняя сборка
+- repo: **$REPO**
+- workflow: **$WF**
+- branch: **$BR**
+- source: **$SRC (http_code=$RC)**
+- run_id: **$RID**
+- status/conclusion: **$ST / $CONC**
+- head_sha: **$SHA**
+- created_at: **$CT**
+- url: **$RUN_URL**
+BLK
+)"
+
+TMP="$(mktemp)"
+awk -v blk="$NEW_BLOCK" '
+  BEGIN{printed=0; skip=0}
+  /^## CI —/ { if(!printed){ print blk; printed=1; } skip=1; next }
+  /^## / { if(skip){ skip=0 } }
+  { if(!skip) print }
+  END{ if(!printed){ print blk } }
+' "$BASE" > "$TMP" && mv "$TMP" "$BASE"
+
+echo "[OK] Baseline CI block refreshed"

@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+set +e +u
+APP_ROOT="/root/work/vinops.restore"
+OUT="$APP_ROOT/evidence/S1V/MS-01/env-map.md"
+ENV_EX="$APP_ROOT/frontend/.env.example"
+
+SLUG="${GH_REPO_SLUG:-$(git -C "$APP_ROOT" remote get-url origin 2>/dev/null | sed -E 's#^.*github\.com[:/]+([^/]+)/([^/.]+)(\.git)?$#\1/\2#')}"
+UA="vinops-env-map/1.0"
+AUTH=""; [ -n "${GH_TOKEN:-}" ] && AUTH="Authorization: Bearer ${GH_TOKEN}"
+
+list_env_secrets () { # $1=environment
+  curl -sS -H "Accept: application/vnd.github+json" -H "User-Agent: $UA" ${AUTH:+-H "$AUTH"} \
+    "https://api.github.com/repos/${SLUG}/environments/$1/secrets?per_page=100" \
+    | grep -Eo '"name":"[^"]+"' | sed 's/"name":"//;s/"$//' | sort -u
+}
+
+# 1) keys из .env.example
+EX_KEYS="$(grep -E '^[A-Z0-9_ ]*=' "$ENV_EX" 2>/dev/null | cut -d= -f1 | sort -u)"
+# 2) secrets имен в environments
+DEV="$(list_env_secrets development)"
+PROD="$(list_env_secrets production)"
+
+{
+  echo "### ENV mapping (.env.example ↔ GitHub Environments)"
+  echo
+  printf "| KEY | in .env.example | in DEV env | in PROD env |\n|-----|------------------|------------|-------------|\n"
+  # объединяем множества
+  printf "%s\n%s\n%s\n" "$EX_KEYS" "$DEV" "$PROD" | sort -u | while read -r k; do
+    [ -z "$k" ] && continue
+    IN_EX=$(printf "%s\n" "$EX_KEYS" | grep -qx "$k" && echo yes || echo no)
+    IN_DEV=$(printf "%s\n" "$DEV"     | grep -qx "$k" && echo yes || echo no)
+    IN_PRO=$(printf "%s\n" "$PROD"    | grep -qx "$k" && echo yes || echo no)
+    printf "| %s | %s | %s | %s |\n" "$k" "$IN_EX" "$IN_DEV" "$IN_PRO"
+  done
+} > "$OUT"
+
+echo "$OUT"

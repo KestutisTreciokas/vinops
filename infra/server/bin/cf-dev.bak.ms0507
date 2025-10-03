@@ -1,0 +1,97 @@
+#!/usr/bin/env bash
+set +e +u
+export TZ="Europe/Warsaw"
+
+log()  { echo "[$(date +'%F %H:%M %Z')] $*"; }
+fail(){ log "FAIL: $*"; return 1; }
+
+# --- env ---
+ENV_FILE="/srv/vinops/.env"
+[ -f "$ENV_FILE" ] || { echo "[FAIL] .env not found: $ENV_FILE"; exit 1; }
+. "$ENV_FILE"
+
+CF_API="${CF_API:-https://api.cloudflare.com/client/v4}"
+ZID="${CF_ZONE_ID_DEV:-${CF_ZONE_ID_PROD:-}}"
+HOST_DEV="dev.vinops.online"
+TARGET="${DEV_DNS_TARGET:-vinops.online}"   # можно переопределить в .env
+[ -n "${CF_API_TOKEN:-}" ] || { echo "[FAIL] CF_API_TOKEN missing"; exit 1; }
+[ -n "${ZID:-}" ] || { echo "[FAIL] CF_ZONE_ID_DEV/PROD missing"; exit 1; }
+
+authH=( -H "Authorization: Bearer ${CF_API_TOKEN}" -H "Content-Type: application/json" )
+
+ensure_dns() {
+  log "DNS ensure for $HOST_DEV (target=$TARGET)"
+  q="$(curl -sS "${authH[@]}" "$CF_API/zones/$ZID/dns_records?name=$HOST_DEV")"
+  rid="$(printf "%s" "$q" | sed -n 's/.*"id":"\([a-f0-9]\{32\}\)".*/\1/p' | head -n1)"
+  cur_type="$(printf "%s" "$q" | sed -n 's/.*"type":"\([A-Z]*\)".*/\1/p' | head -n1)"
+  cur_cont="$(printf "%s" "$q" | sed -n 's/.*"content":"\([^"]*\)".*/\1/p' | head -n1)"
+  cur_proxy="$(printf "%s" "$q" | sed -n 's/.*"proxied":\([^,}]*\).*/\1/p' | head -n1)"
+
+  if echo "$TARGET" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$'; then
+    need_type="A"
+  else
+    need_type="CNAME"
+  fi
+  body="$(printf '{"type":"%s","name":"%s","content":"%s","ttl":1,"proxied":true}' "$need_type" "$HOST_DEV" "$TARGET")"
+
+  if [ -z "$rid" ]; then
+    log "DNS create ($need_type $HOST_DEV → $TARGET, proxied=true)"
+    out="$(curl -sS -X POST "${authH[@]}" "$CF_API/zones/$ZID/dns_records" --data "$body")"
+    printf "%s\n" "$out" | grep -Eq '"success":[[:space:]]*true' || { echo "$out"; fail "DNS create failed"; return 1; }
+    log "DNS created: success"
+  else
+    if [ "$cur_type" != "$need_type" ] || [ "$cur_cont" != "$TARGET" ] || ! printf "%s" "$cur_proxy" | grep -qi true; then
+      log "DNS update ($rid → $need_type/$TARGET proxied=true)"
+      out="$(curl -sS -X PUT "${authH[@]}" "$CF_API/zones/$ZID/dns_records/$rid" --data "$body")"
+      printf "%s\n" "$out" | grep -Eq '"success":[[:space:]]*true' || { echo "$out"; fail "DNS update failed"; return 1; }
+      log "DNS updated: success"
+    else
+      log "DNS already desired: type=$cur_type content=$cur_cont proxied=$cur_proxy"
+    fi
+  fi
+}
+
+enable_always_https() {
+  log "Enable Always HTTPS"
+  out="$(curl -sS -X PATCH "${authH[@]}" "$CF_API/zones/$ZID/settings/always_use_https" --data '{"value":"on"}')"
+  printf "%s\n" "$out" | grep -Eq '"success":[[:space:]]*true' || { echo "$out"; fail "Always HTTPS failed"; return 1; }
+  log "Always HTTPS: on"
+}
+
+purge_and_warmup() {
+  # точечный purge dev-URL'ов
+  urls=(
+    "https://dev.vinops.online/en"
+    "https://dev.vinops.online/robots.txt"
+    "https://dev.vinops.online/sitemap.xml"
+    "https://dev.vinops.online/sitemaps/static.xml"
+    "https://dev.vinops.online/sitemaps/vin.xml"
+  )
+  json_files="$(printf '"%s",' "${urls[@]}" | sed 's/,$//')"
+  log "CF purge_urls: [${urls[*]}]"
+  out="$(curl -sS -X POST "${authH[@]}" "$CF_API/zones/$ZID/purge_cache" --data "{\"files\":[${json_files}]}")"
+  printf "%s\n" "$out" | grep -Eq '"success":[[:space:]]*true' || { echo "$out"; fail "purge by URLs failed"; return 1; }
+  log "CF purge_urls: success:true"
+
+  # warm-up
+  for p in / /en /health /robots.txt /sitemap.xml; do
+    code="$(curl -sk -o /dev/null -w '%{http_code}' "https://dev.vinops.online$p")"
+    loc="$(curl -skI "https://dev.vinops.online$p" | awk -F': ' 'tolower($1)=="location"{print $2}' | tr -d "\r")"
+    if [ "$p" = "/" ]; then
+      [ "$code" = "308" ] || { log "warm-up $p -> $code (want 308)"; return 1; }
+      log "warm-up $p -> $code${loc:+ (Location: $loc)} [OK]"
+    else
+      [ "$code" = "200" ] || { log "warm-up $p -> $code (want 200)"; return 1; }
+      log "warm-up $p -> $code  [OK]"
+    fi
+  done
+}
+
+main() {
+  log "cf-dev start: zone=$ZID host=$HOST_DEV target=$TARGET"
+  ensure_dns       || exit 1
+  enable_always_https || exit 1
+  purge_and_warmup || exit 1
+  log "cf-dev: DONE"
+}
+main
