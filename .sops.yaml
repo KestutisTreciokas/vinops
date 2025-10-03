@@ -1,0 +1,17 @@
+# SOPS policy — vinops-tg-bot (S0)
+# Scope S0: encrypt only *.sops.yaml under infra/secrets/**
+# Reserved for future: services/tg-bot/**/secrets/**
+creation_rules:
+  - path_regex: ^infra/secrets/.*\.sops\.ya?ml$
+    key_groups:
+      - age:
+          - age14gzudn5k6vfsgqr70z30ky6q2k8597a00e52ulxs2qs2jm0dhprqpeypza
+    encrypted_regex: '^(.*)$'
+    shamir_threshold: 1
+
+  - path_regex: ^services/tg-bot/.*/secrets/.*\.sops\.ya?ml$
+    key_groups:
+      - age:
+          - age14gzudn5k6vfsgqr70z30ky6q2k8597a00e52ulxs2qs2jm0dhprqpeypza
+    encrypted_regex: '^(.*)$'
+    shamir_threshold: 1
