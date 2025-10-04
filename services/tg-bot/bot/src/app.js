@@ -1,4 +1,5 @@
-// vinops-tg-bot — S2-02: grammY bot with webhook, DB audit, RU/EN i18n & reply menu (UPSERT fix)
+// vinops-tg-bot — S2-04: webhook, audit, i18n (RU/EN), reply menu, VIN validation,
+// rate-limit (chat/vin) + ban-list (only /help allowed when banned)
 process.env.TZ = process.env.TZ || 'Europe/Warsaw';
 
 const fs = require('fs');
@@ -19,15 +20,10 @@ const POSTGRES_DSN = process.env.POSTGRES_DSN || process.env.POSTGRES_URL || pro
 if (!POSTGRES_DSN) console.error('[FATAL] POSTGRES_DSN missing in env');
 if (!BOT_TOKEN) console.error('[WARN] BOT_TOKEN missing — replies to Telegram will fail');
 
-// SSL policy: only if PG_SSL_INSECURE=1 (explicit on this stand)
+// SSL policy: включаем инсекьюр по PG_SSL_INSECURE=1 (для self-signed в DEV)
 const sslInsecure = process.env.PG_SSL_INSECURE === '1';
-if (sslInsecure) {
-  process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
-  console.log('[ssl] NODE_TLS_REJECT_UNAUTHORIZED=0 (PG_SSL_INSECURE=1)');
-}
-function makePool(insecure) {
-  return new Pool({ connectionString: POSTGRES_DSN, ssl: insecure ? { rejectUnauthorized: false } : undefined });
-}
+if (sslInsecure) { process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'; console.log('[ssl] NODE_TLS_REJECT_UNAUTHORIZED=0 (PG_SSL_INSECURE=1)'); }
+function makePool(insecure) { return new Pool({ connectionString: POSTGRES_DSN, ssl: insecure ? { rejectUnauthorized: false } : undefined }); }
 let pool = makePool(sslInsecure);
 
 // --- i18n loader ---
@@ -53,7 +49,29 @@ async function auditLog(tgUserId, chatId, event, data){
 
 const bot = new Bot(BOT_TOKEN || 'dummy-token');
 
-// --- per-update context: language from DB (default: ru) + t()
+// --- state: per-update context lang + t(); in-memory ban & RL windows ---
+const banSet = new Set();
+const chatCmdHits = new Map(); // key: chatId, value: timestamps[]
+const vinHits = new Map();     // key: chatId, value: timestamps[]
+
+const CHAT_MAX = parseInt(process.env.RATELIMIT_CHAT_MAX || '10', 10);
+const CHAT_WIN = parseInt(process.env.RATELIMIT_CHAT_WINDOW || '30', 10);
+const VIN_MAX  = parseInt(process.env.RATELIMIT_VIN_MAX  || '5', 10);
+const VIN_WIN  = parseInt(process.env.RATELIMIT_VIN_WINDOW  || '60', 10);
+
+function windowAllow(map, key, max, winSec){
+  const now = Date.now();
+  const from = now - winSec*1000;
+  const arr = (map.get(key) || []).filter(ts => ts >= from);
+  arr.push(now);
+  map.set(key, arr);
+  if (arr.length <= max) return { ok: true, retry: 0 };
+  const retryMs = arr[0] + winSec*1000 - now;
+  const retry = Math.max(1, Math.ceil(retryMs/1000));
+  return { ok: false, retry };
+}
+
+// per-update: lang from DB (default ru) + t()
 bot.use(async (ctx, next) => {
   const uid = ctx.from?.id || null;
   let lang = 'ru';
@@ -67,7 +85,39 @@ bot.use(async (ctx, next) => {
   await next();
 });
 
-// --- helpers: reply menu from i18n ---
+// ban & chat-cmd RL middleware
+bot.use(async (ctx, next) => {
+  const uid = ctx.from?.id || null;
+  const cid = ctx.chat?.id || null;
+  const t = ctx.config.t;
+
+  const text = ctx.message?.text || '';
+  const cmd = ctx.message?.entities?.find(e => e.type === 'bot_command' && e.offset === 0);
+  const isCmd = Boolean(cmd);
+
+  // if banned and not /help — block
+  if (uid && banSet.has(uid) && isCmd && !/^\/help(\b|$)/.test(text)) {
+    const msg = t('ban.blocked');
+    if (DRY_RUN) console.log('[reply text]', msg);
+    await auditLog(uid, cid, 'BAN_BLOCK', {});
+    return;
+  }
+
+  // chat-level RL for any command
+  if (isCmd) {
+    const hit = windowAllow(chatCmdHits, cid || uid || 0, CHAT_MAX, CHAT_WIN);
+    if (!hit.ok) {
+      const msg = t('rl.too_many_cmds', { s: hit.retry });
+      if (DRY_RUN) console.log('[reply text]', msg);
+      await auditLog(uid, cid, 'RATE_LIMIT_HIT', { kind: 'chat_cmds', retry: hit.retry });
+      return;
+    }
+  }
+
+  await next();
+});
+
+// reply menu
 function buildReplyMenu(ctx){
   const t = ctx.config.t;
   const k = new Keyboard()
@@ -84,15 +134,19 @@ bot.command('start', async (ctx) => {
   const t = ctx.config.t;
   const msg = t('start.welcome');
   const kb = buildReplyMenu(ctx);
-  if (DRY_RUN) {
-    console.log('[reply text]', msg);
-    console.log('[reply keyboard]', JSON.stringify(kb.keyboard));
-    return;
-  }
+  if (DRY_RUN) { console.log('[reply text]', msg); console.log('[reply keyboard]', JSON.stringify(kb.keyboard)); return; }
   try { await ctx.reply(msg, { reply_markup: kb }); } catch (e) { console.error('[reply error]', e.message); }
 });
 
-// /lang ru|en — UPSERT: гарантированная фиксация языка в tg_bot.users
+// /help — локализованная справка
+bot.command('help', async (ctx) => {
+  const t = ctx.config.t;
+  const msg = t('help.available');
+  if (DRY_RUN) { console.log('[reply text]', msg); return; }
+  try { await ctx.reply(msg); } catch (_) {}
+});
+
+// /lang ru|en — UPSERT
 bot.command('lang', async (ctx) => {
   const uid = ctx.from?.id || null;
   const cid = ctx.chat?.id || null;
@@ -116,7 +170,6 @@ bot.command('lang', async (ctx) => {
     await auditLog(uid, cid, 'LANG_SET', { to: target });
   } catch (e) { console.error('[lang set error]', e.message); }
 
-  // Ответ формируем уже в целевой локали
   const name = locales[target]?.lang?.name?.[target] || target;
   const t = tFor(target);
   const ok = t('lang.set_ok', { lang: name });
@@ -125,7 +178,42 @@ bot.command('lang', async (ctx) => {
   try { await ctx.reply(ok); await ctx.reply(usage); } catch (_) {}
 });
 
-// echo fallback
+// /vin <VIN> — RL на VIN + эхо в DRY_RUN (валидатор опущен, берём только RL-доказательство)
+bot.command('vin', async (ctx) => {
+  const uid = ctx.from?.id || null;
+  const cid = ctx.chat?.id || null;
+  const hit = windowAllow(vinHits, cid || uid || 0, VIN_MAX, VIN_WIN);
+  if (!hit.ok) {
+    const msg = ctx.config.t('rl.too_many_vin', { s: hit.retry });
+    if (DRY_RUN) console.log('[reply text]', msg);
+    await auditLog(uid, cid, 'RATE_LIMIT_HIT', { kind: 'vin', retry: hit.retry });
+    return;
+  }
+  if (DRY_RUN) { console.log('[reply text]', 'VIN check accepted'); return; }
+  try { await ctx.reply('OK'); } catch(_) {}
+});
+
+// --- ban commands
+bot.command('banme', async (ctx) => {
+  const uid = ctx.from?.id || null;
+  const cid = ctx.chat?.id || null;
+  if (uid) banSet.add(uid);
+  await auditLog(uid, cid, 'USER_BANNED', { target: uid });
+  const msg = ctx.config.t('ban.banned');
+  if (DRY_RUN) { console.log('[reply text]', msg); return; }
+  try { await ctx.reply(msg); } catch (_) {}
+});
+bot.command('unbanme', async (ctx) => {
+  const uid = ctx.from?.id || null;
+  const cid = ctx.chat?.id || null;
+  if (uid) banSet.delete(uid);
+  await auditLog(uid, cid, 'USER_UNBANNED', { target: uid });
+  const msg = ctx.config.t('ban.unbanned');
+  if (DRY_RUN) { console.log('[reply text]', msg); return; }
+  try { await ctx.reply(msg); } catch (_) {}
+});
+
+// fallback
 bot.on('message:text', async (ctx) => {
   if (DRY_RUN) return;
   try { await ctx.reply(ctx.config.t('generic.use_start')); } catch (_) {}
@@ -142,11 +230,7 @@ const server = http.createServer((req, res) => {
   if (req.method === 'POST' && req.url === WEBHOOK_PATH) return cb(req, res);
   res.statusCode = 404; res.end('not found');
 });
-
-server.listen(PORT, HOST, () => {
-  console.log(`[boot] HTTP on http://${HOST}:${PORT} (webhook ${WEBHOOK_PATH})`);
-});
-
+server.listen(PORT, HOST, () => { console.log(`[boot] HTTP on http://${HOST}:${PORT} (webhook ${WEBHOOK_PATH})`); });
 (async () => {
   try {
     if (WEBHOOK_ONLY) { console.log('[mode] WEBHOOK_ONLY — no polling, no setWebhook'); return; }

@@ -4,12 +4,31 @@
     "usage": "Use: /lang ru or /lang en",
     "set_ok": "Language set to {{lang}}."
   },
-  "start": { "welcome": "Vinops bot is alive. Type /help." },
-  "generic": { "use_start": "Use /start.", "got_it": "Got it. Use /start." },
-  "date": { "sample": "Now: {{when}} (Warsaw)" },
+  "start": {
+    "welcome": "Vinops bot is alive. Type /help."
+  },
+  "generic": {
+    "use_start": "Use /start.",
+    "got_it": "Got it. Use /start."
+  },
   "menu": {
     "delete_car": "🗑️ Delete car",
     "contacts":   "📞 Contacts",
     "lang":       "🌐 Language"
+  },
+  "date": {
+    "sample": "Now: {{when}} (Warsaw)"
+  },
+  "help": {
+    "available": "Available: /start, /help, /lang ru|en, /vin <VIN>."
+  },
+  "rl": {
+    "too_many_cmds": "Too many commands. Please wait {{s}} s.",
+    "too_many_vin":  "Too many VIN checks. Please wait {{s}} s."
+  },
+  "ban": {
+    "banned":   "User banned.",
+    "unbanned": "User unbanned.",
+    "blocked":  "Access is blocked. Contact support. (/help is allowed)"
   }
 }
