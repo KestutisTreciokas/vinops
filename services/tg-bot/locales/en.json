@@ -1,0 +1,15 @@
+{
+  "lang": {
+    "name": { "ru": "Russian", "en": "English" },
+    "usage": "Use: /lang ru or /lang en",
+    "set_ok": "Language set to {{lang}}."
+  },
+  "start": { "welcome": "Vinops bot is alive. Type /help." },
+  "generic": { "use_start": "Use /start.", "got_it": "Got it. Use /start." },
+  "date": { "sample": "Now: {{when}} (Warsaw)" },
+  "menu": {
+    "delete_car": "🗑️ Delete car",
+    "contacts":   "📞 Contacts",
+    "lang":       "🌐 Language"
+  }
+}
