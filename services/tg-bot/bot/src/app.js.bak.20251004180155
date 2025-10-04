@@ -236,39 +236,3 @@ process.on('SIGINT', () => { server.close(()=>process.exit(0)); });
 process.on('SIGTERM', () => { server.close(()=>process.exit(0)); });
 
 
-
-// --- S2-06 block: miniapp invoice (mock) ---
-(() => {
-  try {
-    const baseEnv = process.env.WEBAPP_BASE_URL || process.env.MINIAPP_INVOICE_URL || 'https://miniapp.vinops.online';
-    function baseUrl() { return String(baseEnv).replace(/\/+$/,''); }
-    function ctxLang(ctx){ return (ctx?.config?.lang || 'en').toLowerCase(); }
-    function buildUrl(ctx){
-      const chat = ctx?.chat?.id || ctx?.from?.id || 0;
-      const lang = ctxLang(ctx);
-      return `${baseUrl()}/invoice?chat=${encodeURIComponent(chat)}&lang=${encodeURIComponent(lang)}`;
-    }
-
-    // /invoice — показать кнопку Mini App и записать аудит (mock)
-    bot.command('invoice', async (ctx) => {
-      const t = ctx?.config?.t ?? ((k)=>k);
-      const title = (t('invoice.title') && t('invoice.title') !== 'invoice.title') ? t('invoice.title') : 'Invoice';
-      const label = (t('invoice.open_btn') && t('invoice.open_btn') !== 'invoice.open_btn') ? t('invoice.open_btn') : 'Open invoice (Mini App)';
-      const url = buildUrl(ctx);
-      const kb = new InlineKeyboard().add({ text: label, web_app: { url } });
-
-      if (process.env.DRY_RUN == '1') {
-        console.log('[reply text]', title);
-        console.log('[reply inline_keyboard]', JSON.stringify(kb.inline_keyboard));
-        console.log('[miniapp url]', url);
-      } else {
-        try { await ctx.reply(title, { reply_markup: kb }); } catch (_) {}
-      }
-
-      const uid = ctx.from?.id || null;
-      const cid = ctx.chat?.id || null;
-      try { await auditLog(uid, cid, 'INVOICE_OPENED', { url, via: 'command' }); } catch(e) {}
-    });
-  } catch(e) { console.error('[S2-06 init error]', e?.message || e); }
-})();
-// --- /S2-06 block ---

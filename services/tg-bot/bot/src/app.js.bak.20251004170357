@@ -5,7 +5,7 @@ process.env.TZ = process.env.TZ || 'Europe/Warsaw';
 const fs = require('fs');
 const path = require('path');
 const http = require('http');
-const { Bot, webhookCallback, Keyboard, InlineKeyboard } = require('grammy');
+const { Bot, webhookCallback, Keyboard } = require('grammy');
 const { Pool } = require('pg');
 
 const PORT = parseInt(process.env.PORT || '8091', 10);
@@ -213,6 +213,12 @@ bot.command('unbanme', async (ctx) => {
   try { await ctx.reply(msg); } catch (_) {}
 });
 
+// fallback
+bot.on('message:text:S205disabled'), async (ctx) => {
+  if (DRY_RUN) return;
+  try { await ctx.reply(ctx.config.t('generic.use_start')); } catch (_) {}
+});
+
 // --- HTTP server & webhook
 const cb = webhookCallback(bot, 'http');
 const server = http.createServer((req, res) => {
@@ -235,40 +241,59 @@ server.listen(PORT, HOST, () => { console.log(`[boot] HTTP on http://${HOST}:${P
 process.on('SIGINT', () => { server.close(()=>process.exit(0)); });
 process.on('SIGTERM', () => { server.close(()=>process.exit(0)); });
 
+// --- S2-05 block: contacts & invoice ---
+try {
+  // /contacts
+  bot.command('contacts', async (ctx) => {
+    const t = ctx.config?.t ?? ((k) => k);
+    const msg = t('contacts.text');
+    if (process.env.DRY_RUN == '1') {
+      console.log('[reply text]', msg);
+    } else {
+      try { await ctx.reply(msg); } catch (_) {}
+    }
+  });
 
+  // /invoice
+  bot.command('invoice', async (ctx) => {
+    const t = ctx.config?.t ?? ((k) => k);
+    const label = t('invoice.open_btn');
+    const url = process.env.MINIAPP_INVOICE_URL || 'https://example.org/miniapp/invoice';
+    const kb = { inline_keyboard: [[ { text: label, web_app: { url } } ]] };
+    const msg = t('invoice.prompt');
+    if (process.env.DRY_RUN == '1') {
+      console.log('[reply text]', msg);
+      console.log('[reply inline_keyboard]', JSON.stringify(kb.inline_keyboard));
+    } else {
+      try { await ctx.reply(msg, { reply_markup: kb }); } catch (_) {}
+    }
+  });
 
-// --- S2-06 block: miniapp invoice (mock) ---
-(() => {
-  try {
-    const baseEnv = process.env.WEBAPP_BASE_URL || process.env.MINIAPP_INVOICE_URL || 'https://miniapp.vinops.online';
-    function baseUrl() { return String(baseEnv).replace(/\/+$/,''); }
-    function ctxLang(ctx){ return (ctx?.config?.lang || 'en').toLowerCase(); }
-    function buildUrl(ctx){
-      const chat = ctx?.chat?.id || ctx?.from?.id || 0;
-      const lang = ctxLang(ctx);
-      return `${baseUrl()}/invoice?chat=${encodeURIComponent(chat)}&lang=${encodeURIComponent(lang)}`;
+  // Fallback router for menu buttons (localized labels)
+  bot.on('message:text', async (ctx) => {
+    const t   = ctx.config?.t ?? ((k) => k);
+    const txt = (ctx.message && ctx.message.text) || '';
+
+    if (txt === t('menu.contacts')) {
+      const msg = t('contacts.text');
+      if (process.env.DRY_RUN == '1') console.log('[reply text]', msg);
+      else { try { await ctx.reply(msg); } catch (_) {} }
+      return;
     }
 
-    // /invoice — показать кнопку Mini App и записать аудит (mock)
-    bot.command('invoice', async (ctx) => {
-      const t = ctx?.config?.t ?? ((k)=>k);
-      const title = (t('invoice.title') && t('invoice.title') !== 'invoice.title') ? t('invoice.title') : 'Invoice';
-      const label = (t('invoice.open_btn') && t('invoice.open_btn') !== 'invoice.open_btn') ? t('invoice.open_btn') : 'Open invoice (Mini App)';
-      const url = buildUrl(ctx);
-      const kb = new InlineKeyboard().add({ text: label, web_app: { url } });
+    if (txt === t('menu.lang')) {
+      const msg = t('lang.usage');
+      if (process.env.DRY_RUN == '1') console.log('[reply text]', msg);
+      else { try { await ctx.reply(msg); } catch (_) {} }
+      return;
+    }
 
-      if (process.env.DRY_RUN == '1') {
-        console.log('[reply text]', title);
-        console.log('[reply inline_keyboard]', JSON.stringify(kb.inline_keyboard));
-        console.log('[miniapp url]', url);
-      } else {
-        try { await ctx.reply(title, { reply_markup: kb }); } catch (_) {}
-      }
+    // default
+    if (process.env.DRY_RUN == '1') return;
+    try { await ctx.reply(t('generic.use_start')); } catch (_) {}
+  });
 
-      const uid = ctx.from?.id || null;
-      const cid = ctx.chat?.id || null;
-      try { await auditLog(uid, cid, 'INVOICE_OPENED', { url, via: 'command' }); } catch(e) {}
-    });
-  } catch(e) { console.error('[S2-06 init error]', e?.message || e); }
-})();
-// --- /S2-06 block ---
+} catch (e) {
+  console.error('[S2-05] inject failed:', e?.message || e);
+}
+// --- /S2-05 block ---
