@@ -213,6 +213,12 @@ bot.command('unbanme', async (ctx) => {
   try { await ctx.reply(msg); } catch (_) {}
 });
 
+// fallback
+bot.on('message:text:S205disabled',  async (ctx) => {
+  if (DRY_RUN) return;
+  try { await ctx.reply(ctx.config.t('generic.use_start')); } catch (_) {}
+});
+
 // --- HTTP server & webhook
 const cb = webhookCallback(bot, 'http');
 const server = http.createServer((req, res) => {

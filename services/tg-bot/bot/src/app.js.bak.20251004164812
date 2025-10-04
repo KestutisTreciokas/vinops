@@ -5,7 +5,7 @@ process.env.TZ = process.env.TZ || 'Europe/Warsaw';
 const fs = require('fs');
 const path = require('path');
 const http = require('http');
-const { Bot, webhookCallback, Keyboard, InlineKeyboard } = require('grammy');
+const { Bot, webhookCallback, Keyboard } = require('grammy');
 const { Pool } = require('pg');
 
 const PORT = parseInt(process.env.PORT || '8091', 10);
@@ -213,6 +213,12 @@ bot.command('unbanme', async (ctx) => {
   try { await ctx.reply(msg); } catch (_) {}
 });
 
+// fallback
+bot.on('message:text', async (ctx) => {
+  if (DRY_RUN) return;
+  try { await ctx.reply(ctx.config.t('generic.use_start')); } catch (_) {}
+});
+
 // --- HTTP server & webhook
 const cb = webhookCallback(bot, 'http');
 const server = http.createServer((req, res) => {
@@ -234,49 +240,3 @@ server.listen(PORT, HOST, () => { console.log(`[boot] HTTP on http://${HOST}:${P
 })();
 process.on('SIGINT', () => { server.close(()=>process.exit(0)); });
 process.on('SIGTERM', () => { server.close(()=>process.exit(0)); });
-
-// --- S2-05 block: contacts & invoice ---
-(() => {
-  try {
-    // /contacts — локализованный ответ
-    bot.command('contacts', async (ctx) => {
-      const t = ctx.config?.t ?? ((k) => k);
-      const msg = t('contacts.text');
-      if (DRY_RUN) { console.log('[reply text]', msg); return; }
-      try { await ctx.reply(msg); } catch (_) {}
-    });
-
-    // Обработка нажатия кнопки ReplyKeyboard "�� Contacts/Контакты"
-    bot.on('message:text', async (ctx, next) => {
-      const t = ctx.config?.t ?? ((k) => k);
-      const txt = ctx.message?.text || '';
-      if (txt === t('menu.contacts')) {
-        const msg = t('contacts.text');
-        if (DRY_RUN) { console.log('[reply text]', msg); return; }
-        try { await ctx.reply(msg); } catch (_) {}
-        return;
-      }
-      if (next) return next();
-    });
-
-    // /invoice — показать кнопку Mini App (мок)
-    bot.command('invoice', async (ctx) => {
-      const t = ctx.config?.t ?? ((k) => k);
-      const rawLabel = t('invoice.open_btn');
-      const label = rawLabel && rawLabel !== 'invoice.open_btn' ? rawLabel : 'Open invoice';
-      const rawTitle = t('invoice.title');
-      const title = rawTitle && rawTitle !== 'invoice.title' ? rawTitle : 'Invoice';
-      const url = process.env.MINIAPP_INVOICE_URL || 'https://example.org/miniapp/invoice';
-      const kb = new InlineKeyboard().add({ text: label, web_app: { url } });
-      if (DRY_RUN) {
-        console.log('[reply text]', title);
-        console.log('[reply inline_keyboard]', JSON.stringify(kb.inline_keyboard));
-        return;
-      }
-      try { await ctx.reply(title, { reply_markup: kb }); } catch (_) {}
-    });
-  } catch (e) {
-    console.error('[S2-05 init error]', e?.message || e);
-  }
-})();
-// --- /S2-05 block ---

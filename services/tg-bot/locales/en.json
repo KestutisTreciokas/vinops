@@ -8,19 +8,15 @@
     "welcome": "Vinops bot is alive. Type /help."
   },
   "generic": {
-    "use_start": "Use /start.",
-    "got_it": "Got it. Use /start."
+    "use_start": "Use /start."
+  },
+  "help": {
+    "available": "Available: /start, /help, /lang ru|en, /vin <VIN>, /contacts, /invoice."
   },
   "menu": {
     "delete_car": "🗑️ Delete car",
     "contacts":   "📞 Contacts",
     "lang":       "🌐 Language"
-  },
-  "date": {
-    "sample": "Now: {{when}} (Warsaw)"
-  },
-  "help": {
-    "available": "Available: /start, /help, /lang ru|en, /vin <VIN>."
   },
   "rl": {
     "too_many_cmds": "Too many commands. Please wait {{s}} s.",
@@ -30,5 +26,13 @@
     "banned":   "User banned.",
     "unbanned": "User unbanned.",
     "blocked":  "Access is blocked. Contact support. (/help is allowed)"
+  },
+  "contacts": {
+    "title": "Contacts",
+    "text":  "Support: @vinops_support\nEmail: support@vinops.local\nHours: 09:00–18:00 CET (Mon–Fri)"
+  },
+  "invoice": {
+    "prompt":   "Open the Mini App to create an invoice.",
+    "open_btn": "Open invoice (Mini App)"
   }
 }
