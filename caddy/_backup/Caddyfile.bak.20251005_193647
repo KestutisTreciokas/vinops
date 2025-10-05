@@ -8,7 +8,7 @@ vinops.online, www.vinops.online {
   }
   encode zstd gzip
 
-  # Security headers
+  # Security headers (оставляем как было)
   header {
         X-Release-Sha 085e4b00fd0c
     defer
@@ -20,7 +20,7 @@ vinops.online, www.vinops.online {
     Content-Security-Policy-Report-Only "default-src 'self'; img-src 'self' https: data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; connect-src 'self' https:; font-src 'self' data:; frame-ancestors 'self'"
   }
 
-  # Исключения — не редиректим
+  # Исключения статических/служебных путей — не редиректим
   @static path /favicon.ico /icon.svg /robots.txt /sitemap.xml /sitemap* /jsonld* /_next/* /assets/* /svg/* /api/* /cdn-cgi/*
 
   # Корень → /en (строгий 308)
@@ -34,11 +34,11 @@ vinops.online, www.vinops.online {
   }
   redir @noLocale /en{uri} 308
 
-  # Статика и остальное → Next
+  # Статику и остальное проксируем в Next
   handle @static {
-    reverse_proxy web:3000 {
-      header_down X-Release-Sha 085e4b00fd0c
-    }
+  reverse_proxy web:3000 {
+    header_down X-Release-Sha 085e4b00fd0c
+  }
   }
   reverse_proxy web:3000 {
     header_down X-Release-Sha 085e4b00fd0c
@@ -68,24 +68,14 @@ tg.vinops.online {
   tls internal
   encode zstd gzip
 
-  # Базовый путь вебхука
-  @tg path /tg-webhook*
-
-  # Комбинированный мэчер: путь И секрет
-  @good {
-    path /tg-webhook*
-    header X-Telegram-Bot-Api-Secret-Token *
+  @webhook path /tg-webhook*
+  handle @webhook {
+    @noSecret { not header X-Telegram-Bot-Api-Secret-Token * }
+    respond @noSecret 401
+    reverse_proxy host.docker.internal:8091
   }
 
-  # Чёткий приоритет обработчиков:
-  # 1) good → proxy, 2) tg без секрета → 401, 3) всё остальное → 404
-  route {
-    handle @good {
-      reverse_proxy 127.0.0.1:8091
-    }
-    handle @tg {
-      respond 401
-    }
+  handle {
     respond 404
   }
 }
