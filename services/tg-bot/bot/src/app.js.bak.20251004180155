@@ -1,4 +1,3 @@
-require('./env');
 // vinops-tg-bot — S2-04: webhook, audit, i18n (RU/EN), reply menu, VIN validation,
 // rate-limit (chat/vin) + ban-list (only /help allowed when banned)
 process.env.TZ = process.env.TZ || 'Europe/Warsaw';
@@ -12,18 +11,9 @@ const { Pool } = require('pg');
 const PORT = parseInt(process.env.PORT || '8091', 10);
 const HOST = '127.0.0.1';
 const WEBHOOK_PATH = '/tg-webhook';
-const REPLY_MODE_RAW = process.env.REPLY_MODE || (process.env.DRY_RUN === '1' ? 'log' : 'telegram');
-const NODE_ENV = process.env.NODE_ENV || 'development';
-const REPLY_MODE = (NODE_ENV === 'production') ? 'telegram' : REPLY_MODE_RAW;
-const DRY_RUN = REPLY_MODE !== 'telegram';
-
-const BOT_MODE = process.env.BOT_MODE || (process.env.WEBHOOK_ONLY === '1' ? 'webhook' : 'polling');
-const WEBHOOK_PUBLIC_URL = process.env.WEBHOOK_PUBLIC_URL || '';
-const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET || '';
-
-// Совместимость со старым кодом:
-const WEBHOOK_ONLY = (BOT_MODE === 'webhook');
-const PUBLIC = WEBHOOK_PUBLIC_URL;
+const DRY_RUN = process.env.DRY_RUN === '1';
+const WEBHOOK_ONLY = process.env.WEBHOOK_ONLY === '1';
+const PUBLIC = process.env.WEBHOOK_PUBLIC_URL || '';
 
 const BOT_TOKEN = process.env.BOT_TOKEN;
 const POSTGRES_DSN = process.env.POSTGRES_DSN || process.env.POSTGRES_URL || process.env.DATABASE_URL;
@@ -224,59 +214,21 @@ bot.command('unbanme', async (ctx) => {
 });
 
 // --- HTTP server & webhook
-// --- HTTP server & webhook (canonical) ---
-// --- HTTP server & webhook (canonical) ---
-const cb = BOT_MODE === 'webhook' ? webhookCallback(bot, 'http') : null;
+const cb = webhookCallback(bot, 'http');
 const server = http.createServer((req, res) => {
   if (req.method === 'GET' && req.url === '/health') {
     res.writeHead(200, { 'content-type': 'application/json' });
     res.end(JSON.stringify({ ok: true, ts: new Date().toISOString() }));
     return;
   }
-  if (req.method === 'POST' && req.url === WEBHOOK_PATH) {
-    if (!cb) { res.statusCode = 503; res.end('webhook disabled'); return; }
-
-    const expected = (WEBHOOK_SECRET || '').trim();
-    const raw = req.headers['x-telegram-bot-api-secret-token'];
-    const got = Array.isArray(raw) ? String(raw[0] || '').trim() : String(raw || '').trim();
-
-    if (NODE_ENV !== 'production' || DRY_RUN) {
-      try {
-        console.log('[webhook] hdr', JSON.stringify({
-          expected_len: expected.length,
-          got_len: got.length,
-          header_keys: Object.keys(req.headers).sort()
-        }));
-      } catch(_) {}
-    }
-
-    if (expected) {
-      if (got !== expected) {
-        if (NODE_ENV !== 'production' || DRY_RUN) console.error('[webhook] secret mismatch');
-        res.statusCode = 401; res.end('invalid secret'); return;
-      } else {
-        if (NODE_ENV !== 'production' || DRY_RUN) console.log('[webhook] secret ok');
-      }
-    }
-    return cb(req, res);
-  }
+  if (req.method === 'POST' && req.url === WEBHOOK_PATH) return cb(req, res);
   res.statusCode = 404; res.end('not found');
 });
-server.listen(PORT, HOST, () => {
-  console.log(`[boot] HTTP on http://${HOST}:${PORT} (webhook ${WEBHOOK_PATH})`);
-});
+server.listen(PORT, HOST, () => { console.log(`[boot] HTTP on http://${HOST}:${PORT} (webhook ${WEBHOOK_PATH})`); });
 (async () => {
-try {
-    if (NODE_ENV === 'production') {
-      const missing = [];
-      if (BOT_MODE !== 'webhook') missing.push('BOT_MODE=webhook');
-      if (!WEBHOOK_PUBLIC_URL) missing.push('WEBHOOK_PUBLIC_URL');
-      if (!WEBHOOK_SECRET) missing.push('WEBHOOK_SECRET');
-      if (missing.length) { console.error('[FATAL] Production requires: ' + missing.join(', ')); process.exit(1); }
-    }
-    console.log('[boot] modes:', 'bot=' + BOT_MODE, 'reply=' + REPLY_MODE);
-if (WEBHOOK_ONLY) { console.log('[mode] WEBHOOK_ONLY — no polling, no setWebhook'); return; }
-    if (PUBLIC) { const url = PUBLIC.replace(/\/+$/,'') + WEBHOOK_PATH; await bot.api.setWebhook(url, { secret_token: WEBHOOK_SECRET, allowed_updates: ['message','callback_query'] }); console.log('[mode] WEBHOOK via', url); return; }
+  try {
+    if (WEBHOOK_ONLY) { console.log('[mode] WEBHOOK_ONLY — no polling, no setWebhook'); return; }
+    if (PUBLIC) { const url = PUBLIC.replace(/\/+$/,'') + WEBHOOK_PATH; await bot.api.setWebhook(url); console.log('[mode] WEBHOOK via', url); return; }
     console.log('[mode] POLLING'); await bot.start({ allowed_updates: ['message'] });
   } catch (e) { console.error('[startup error]', e.message); }
 })();
@@ -284,39 +236,3 @@ process.on('SIGINT', () => { server.close(()=>process.exit(0)); });
 process.on('SIGTERM', () => { server.close(()=>process.exit(0)); });
 
 
-
-// --- S2-06 block: miniapp invoice (mock) ---
-(() => {
-  try {
-    const baseEnv = process.env.WEBAPP_BASE_URL || process.env.MINIAPP_INVOICE_URL || 'https://miniapp.vinops.online';
-    function baseUrl() { return String(baseEnv).replace(/\/+$/,''); }
-    function ctxLang(ctx){ return (ctx?.config?.lang || 'en').toLowerCase(); }
-    function buildUrl(ctx){
-      const chat = ctx?.chat?.id || ctx?.from?.id || 0;
-      const lang = ctxLang(ctx);
-      return `${baseUrl()}/invoice?chat=${encodeURIComponent(chat)}&lang=${encodeURIComponent(lang)}`;
-    }
-
-    // /invoice — показать кнопку Mini App и записать аудит (mock)
-    bot.command('invoice', async (ctx) => {
-      const t = ctx?.config?.t ?? ((k)=>k);
-      const title = (t('invoice.title') && t('invoice.title') !== 'invoice.title') ? t('invoice.title') : 'Invoice';
-      const label = (t('invoice.open_btn') && t('invoice.open_btn') !== 'invoice.open_btn') ? t('invoice.open_btn') : 'Open invoice (Mini App)';
-      const url = buildUrl(ctx);
-      const kb = new InlineKeyboard().add({ text: label, web_app: { url } });
-
-      if (process.env.DRY_RUN == '1') {
-        console.log('[reply text]', title);
-        console.log('[reply inline_keyboard]', JSON.stringify(kb.inline_keyboard));
-        console.log('[miniapp url]', url);
-      } else {
-        try { await ctx.reply(title, { reply_markup: kb }); } catch (_) {}
-      }
-
-      const uid = ctx.from?.id || null;
-      const cid = ctx.chat?.id || null;
-      try { await auditLog(uid, cid, 'INVOICE_OPENED', { url, via: 'command' }); } catch(e) {}
-    });
-  } catch(e) { console.error('[S2-06 init error]', e?.message || e); }
-})();
-// --- /S2-06 block ---
