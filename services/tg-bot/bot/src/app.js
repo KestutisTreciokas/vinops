@@ -1,3 +1,4 @@
+require('./env');
 // vinops-tg-bot — S2-04: webhook, audit, i18n (RU/EN), reply menu, VIN validation,
 // rate-limit (chat/vin) + ban-list (only /help allowed when banned)
 process.env.TZ = process.env.TZ || 'Europe/Warsaw';
@@ -11,9 +12,18 @@ const { Pool } = require('pg');
 const PORT = parseInt(process.env.PORT || '8091', 10);
 const HOST = '127.0.0.1';
 const WEBHOOK_PATH = '/tg-webhook';
-const DRY_RUN = process.env.DRY_RUN === '1';
-const WEBHOOK_ONLY = process.env.WEBHOOK_ONLY === '1';
-const PUBLIC = process.env.WEBHOOK_PUBLIC_URL || '';
+const REPLY_MODE_RAW = process.env.REPLY_MODE || (process.env.DRY_RUN === '1' ? 'log' : 'telegram');
+const NODE_ENV = process.env.NODE_ENV || 'development';
+const REPLY_MODE = (NODE_ENV === 'production') ? 'telegram' : REPLY_MODE_RAW;
+const DRY_RUN = REPLY_MODE !== 'telegram';
+
+const BOT_MODE = process.env.BOT_MODE || (process.env.WEBHOOK_ONLY === '1' ? 'webhook' : 'polling');
+const WEBHOOK_PUBLIC_URL = process.env.WEBHOOK_PUBLIC_URL || '';
+const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET || '';
+
+// Совместимость со старым кодом:
+const WEBHOOK_ONLY = (BOT_MODE === 'webhook');
+const PUBLIC = WEBHOOK_PUBLIC_URL;
 
 const BOT_TOKEN = process.env.BOT_TOKEN;
 const POSTGRES_DSN = process.env.POSTGRES_DSN || process.env.POSTGRES_URL || process.env.DATABASE_URL;
@@ -214,21 +224,59 @@ bot.command('unbanme', async (ctx) => {
 });
 
 // --- HTTP server & webhook
-const cb = webhookCallback(bot, 'http');
+// --- HTTP server & webhook (canonical) ---
+// --- HTTP server & webhook (canonical) ---
+const cb = BOT_MODE === 'webhook' ? webhookCallback(bot, 'http') : null;
 const server = http.createServer((req, res) => {
   if (req.method === 'GET' && req.url === '/health') {
     res.writeHead(200, { 'content-type': 'application/json' });
     res.end(JSON.stringify({ ok: true, ts: new Date().toISOString() }));
     return;
   }
-  if (req.method === 'POST' && req.url === WEBHOOK_PATH) return cb(req, res);
+  if (req.method === 'POST' && req.url === WEBHOOK_PATH) {
+    if (!cb) { res.statusCode = 503; res.end('webhook disabled'); return; }
+
+    const expected = (WEBHOOK_SECRET || '').trim();
+    const raw = req.headers['x-telegram-bot-api-secret-token'];
+    const got = Array.isArray(raw) ? String(raw[0] || '').trim() : String(raw || '').trim();
+
+    if (NODE_ENV !== 'production' || DRY_RUN) {
+      try {
+        console.log('[webhook] hdr', JSON.stringify({
+          expected_len: expected.length,
+          got_len: got.length,
+          header_keys: Object.keys(req.headers).sort()
+        }));
+      } catch(_) {}
+    }
+
+    if (expected) {
+      if (got !== expected) {
+        if (NODE_ENV !== 'production' || DRY_RUN) console.error('[webhook] secret mismatch');
+        res.statusCode = 401; res.end('invalid secret'); return;
+      } else {
+        if (NODE_ENV !== 'production' || DRY_RUN) console.log('[webhook] secret ok');
+      }
+    }
+    return cb(req, res);
+  }
   res.statusCode = 404; res.end('not found');
 });
-server.listen(PORT, HOST, () => { console.log(`[boot] HTTP on http://${HOST}:${PORT} (webhook ${WEBHOOK_PATH})`); });
+server.listen(PORT, HOST, () => {
+  console.log(`[boot] HTTP on http://${HOST}:${PORT} (webhook ${WEBHOOK_PATH})`);
+});
 (async () => {
-  try {
-    if (WEBHOOK_ONLY) { console.log('[mode] WEBHOOK_ONLY — no polling, no setWebhook'); return; }
-    if (PUBLIC) { const url = PUBLIC.replace(/\/+$/,'') + WEBHOOK_PATH; await bot.api.setWebhook(url); console.log('[mode] WEBHOOK via', url); return; }
+try {
+    if (NODE_ENV === 'production') {
+      const missing = [];
+      if (BOT_MODE !== 'webhook') missing.push('BOT_MODE=webhook');
+      if (!WEBHOOK_PUBLIC_URL) missing.push('WEBHOOK_PUBLIC_URL');
+      if (!WEBHOOK_SECRET) missing.push('WEBHOOK_SECRET');
+      if (missing.length) { console.error('[FATAL] Production requires: ' + missing.join(', ')); process.exit(1); }
+    }
+    console.log('[boot] modes:', 'bot=' + BOT_MODE, 'reply=' + REPLY_MODE);
+if (WEBHOOK_ONLY) { console.log('[mode] WEBHOOK_ONLY — no polling, no setWebhook'); return; }
+    if (PUBLIC) { const url = PUBLIC.replace(/\/+$/,'') + WEBHOOK_PATH; await bot.api.setWebhook(url, { secret_token: WEBHOOK_SECRET, allowed_updates: ['message','callback_query'] }); console.log('[mode] WEBHOOK via', url); return; }
     console.log('[mode] POLLING'); await bot.start({ allowed_updates: ['message'] });
   } catch (e) { console.error('[startup error]', e.message); }
 })();
