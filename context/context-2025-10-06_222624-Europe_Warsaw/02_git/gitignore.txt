@@ -1,0 +1,22 @@
+# deps
+node_modules/
+*.log
+
+# env
+.env
+.env.*
+
+# builds
+.next/
+dist/
+build/
+
+# misc
+.DS_Store
+coverage/
+context/context-*.txt
+
+# S0: forbid committing any plaintext secrets (safety)
+infra/secrets/*.plain
+infra/secrets/*.decrypted
+infra/secrets/*.yaml.plain

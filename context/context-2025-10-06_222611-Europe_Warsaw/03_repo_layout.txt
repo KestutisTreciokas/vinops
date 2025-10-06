@@ -1,0 +1,19 @@
+# layout (participates=yes|no)
+frontend: yes (Dockerfile
+Dockerfile.bak.ms0203.1758679574
+Dockerfile.bak.ms0203.1758685976
+next.config.js
+next.config.mjs
+next.config.mjs.bak.1758335978
+next.config.ts
+package.json
+package.json.bak)
+backend: yes (Dockerfile)
+app: no
+public: no
+docker: no
+infra: no
+db: no
+collector: no
+scripts: no
+contracts: no

@@ -1,0 +1,30 @@
+b8d4a66 2025-10-06 18:30:35 +0300 ops  (HEAD -> work/ib-baseline, origin/work/ib-baseline) infra(tg-webhook): fix Caddy upstream to 172.19.0.1:8091, add diagnostics & QA proofs [MS-S2.5-04]
+02298c7 2025-10-05 23:31:03 +0200 ops  feat(caddy): tg.vinops.online webhook routing + matchers; strict order 401/proxy/404 [MS-S2.5-02]
+ff97cce 2025-10-05 17:19:31 +0200 ops  feat(bot/env): enforce prod ENV gates + docs (env-prod.md); hook app.js to env.js [MS-S2.5-01]
+cb49f9b 2025-10-04 20:41:23 +0200 ops  feat(tg-bot): Mini App handshake mock + INVOICE_OPENED audit [MS-S2-06]
+8dc299d 2025-10-04 20:39:43 +0300 ops  feat(tg-bot): S2-05 menu/contacts + invoice Mini App mock, RU/EN i18n, reply keyboard; keep S2-01..04 green [MS-S2-05]
+a9e4f62 2025-10-04 19:37:20 +0300 ops  feat(bot): rate limit & ban (i18n replies + audit proofs) [MS-S2-04]
+4759f3f 2025-10-04 15:28:56 +0200 ops  feat(bot): I18N RU/EN (/lang, ReplyKeyboard from locales, Warsaw dates) [MS-S2-02]
+b73d41b 2025-10-04 05:09:59 +0200 ops  feat(bot): grammY webhook skeleton, DB audit BOT_START, webhook docs [MS-S2-01]
+098c527 2025-10-04 01:18:31 +0200 ops  docs(db): close MS-S1-04 — эксплуатационные регламенты (docs + evidence) [MS-S1-04] @ 2025-10-04 01:18 Europe/Warsaw
+ae69ef8 2025-10-04 00:56:34 +0200 ops  docs(db): close MS-S1-03 — roles & privileges evidence and registry update [MS-S1-03]
+58aa6ee 2025-10-04 01:33:30 +0300 ops  feat(db/audit): add audit_log API, enforce read-only on audit, add audit events dictionary and evidence [MS-S1-02]
+4fe3aff 2025-10-03 22:30:14 +0200 ops  feat(db): init schema & migrations; evidence added [MS-S1-01]
+693ff71 2025-10-03 20:33:51 +0200 ops  ci(tg-bot): enable GHCR CI, publish & evidence with run link + digest [MS-S0-04]
+e64759e 2025-10-03 20:20:22 +0200 ops  ci(tg-bot): trigger CI & GHCR publish (S0) [MS-S0-04]
+cfe70dd 2025-10-03 19:53:57 +0200 ops  docs(env): define ENV contract, matrix and runtime checks [MS-S0-03]
+f77cbef 2025-10-03 19:33:09 +0200 ops  chore(secrets): enable sops/age policy, add guard & evidence [MS-S0-02]
+8cd0861 2025-10-03 18:23:08 +0200 ops  chore(repo): add S0 skeleton and sprint registry entry [MS-S0-01]
+42e2d16 2025-09-30 23:10:16 +0300 ops  docs(decisions): add alias DECISIONS.md, first ADR (origin+HSTS+308), README ADR section [MS-IB-01-02]
+a9d8bf9 2025-09-30 22:27:21 +0300 ops  (origin/rebase/pr-84-consolidated, rebase/pr-84-consolidated) docs: add /docs index and root links [MS-IB-01-01]
+cc106e3 2025-09-28 23:26:58 +0200 ops  ci(cd): MS-0.5-06 — release artifacts automation; registry updated [MS-0.5-06]
+3012a5e 2025-09-28 23:02:52 +0200 ops  ops(ci): MS-0.5-05 closed — dev CF purge-by-URLs + warm-up (rc=0); prod auto-rollback on smoke fail; deploy/smoke/rollback scripts & docs updated [MS-0.5-05]
+3a93b99 2025-09-28 21:05:26 +0300 ops  fix(db): typed Promise<void> in reduce; sequential SET w/ ignore errors [MS-0.5-04]
+9e3fc7e 2025-09-28 19:50:45 +0200 ops  (tag: MS-0.5-04_PREMERGE) fix(build): align VIN page exports & resolve local change for merge simulation [MS-0.5-04]
+0ef70e4 2025-09-28 19:07:44 +0200 ops  ci(cd): Sprint 0.5 — MS-0.5-01..03 closed; registry updated [MS-0.5-01][MS-0.5-02][MS-0.5-03]
+4ca2c8e 2025-09-28 00:45:45 +0300 KestutisTreciokas  (refs/tmp/main) Merge pull request #88 from KestutisTreciokas/docs/ms-s0-03-postmerge
+069756c 2025-09-27 23:27:31 +0200 ops  (tag: ms-s0-03-merge-pr84, origin/docs/ms-s0-03-postmerge, main, docs/ms-s0-03-postmerge) docs(decision): DL-INFRA-POSTMERGE-PR87 — инфра правки вне MS-S0-03 (после мержа PR #87)
+96d4766 2025-09-27 23:26:58 +0200 ops  docs(merge): restore MERGE_REPORT & CANONICAL_PROOF; registry row — post-merge fix [MS-S0-03]
+d892cd4 2025-09-28 00:16:08 +0300 KestutisTreciokas  (docs/postmerge-ms-s0-03) Merge pull request #87 from KestutisTreciokas/rebase/pr-84-consolidated
+2e8eb6f 2025-09-28 00:10:40 +0300 ops  fix(fonts): stub all next/font/local exports for dev smoke [MS-S0-03]
+9253290 2025-09-27 23:54:04 +0300 ops  chore(ms-s0-03): save WIP before rebase

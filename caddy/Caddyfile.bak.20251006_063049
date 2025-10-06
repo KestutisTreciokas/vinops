@@ -75,7 +75,8 @@ tg.vinops.online {
   }
   @tg path /tg-webhook*
 
-  # Приоритет: 1) good → proxy, 2) tg без секрета → 401, 3) остальное → 404
+  # Приоритет обработчиков:
+  # 1) good → proxy, 2) tg без секрета → 401, 3) всё остальное → 404
   route {
     handle @good {
       reverse_proxy 172.19.0.1:8091 {
