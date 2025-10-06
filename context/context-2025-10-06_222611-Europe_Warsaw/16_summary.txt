@@ -1,0 +1,7 @@
+# UNKNOWN (если присутствуют)
+Next.js build artifacts: UNKNOWN. Как проверить: выполнить сборку и убедиться в наличии .next/
+DB snapshot: UNKNOWN. Как проверить: экспортировать PGHOST/PGUSER/PGDATABASE и повторить.
+HTTP HEADs: UNKNOWN (host not provided). Как проверить: запустить с --host https://example.org
+
+# Риски/наблюдения (эвристика)
+- Нет каталога public/ — часть SEO/статик может отсутствовать.

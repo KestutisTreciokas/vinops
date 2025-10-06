@@ -1,0 +1,7 @@
+v20.17.0
+10.8.2
+pnpm: UNKNOWN
+yarn: UNKNOWN
+10.8.2
+tsc: UNKNOWN
+next: UNKNOWN

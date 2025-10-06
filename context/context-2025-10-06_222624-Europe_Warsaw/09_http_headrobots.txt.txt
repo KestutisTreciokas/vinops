@@ -1,0 +1,7 @@
+HTTP/2 502 
+content-type: text/plain; charset=UTF-8
+strict-transport-security: max-age=7776000
+x-content-type-options: nosniff
+x-frame-options: SAMEORIGIN
+referrer-policy: same-origin
+cache-control: private, max-age=0, no-store, no-cache, must-revalidate, post-check=0, pre-check=0

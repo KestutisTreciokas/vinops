@@ -1,0 +1,23 @@
+0 2 * * * cd /root/work/vinops && ./bin/backup-db.sh >> context/backup.log 2>&1 && find backups -type f -name "*.dump" -mtime +7 -delete
+*/5 * * * * /root/work/vinops.restore/ops/smoke.sh >> /var/log/vinops-smoke.log 2>&1
+---- systemd services (filtered) ----
+  cron.service                         loaded active running Regular background program processing daemon
+  docker.service                       loaded active running Docker Application Container Engine
+  kmod-static-nodes.service            loaded active exited  Create List of Static Device Nodes
+  vinops.service                       loaded active exited  Vinops prod stack (docker compose)
+---- systemd timers ----
+Tue 2025-10-07 00:00:00 MSK 33min left    Mon 2025-10-06 00:00:25 MSK 23h ago       dpkg-db-backup.timer           dpkg-db-backup.service
+Tue 2025-10-07 00:00:00 MSK 33min left    Mon 2025-10-06 00:00:25 MSK 23h ago       logrotate.timer                logrotate.service
+Tue 2025-10-07 00:01:25 MSK 35min left    Mon 2025-10-06 00:01:25 MSK 23h ago       update-notifier-download.timer update-notifier-download.service
+Tue 2025-10-07 00:11:10 MSK 44min left    Mon 2025-10-06 00:11:10 MSK 23h ago       systemd-tmpfiles-clean.timer   systemd-tmpfiles-clean.service
+Tue 2025-10-07 01:21:57 MSK 1h 55min left Mon 2025-10-06 12:21:15 MSK 11h ago       motd-news.timer                motd-news.service
+Tue 2025-10-07 03:36:27 MSK 4h 10min left Mon 2025-10-06 14:54:04 MSK 8h ago        fwupd-refresh.timer            fwupd-refresh.service
+Tue 2025-10-07 06:03:43 MSK 6h left       Mon 2025-10-06 06:40:45 MSK 16h ago       apt-daily-upgrade.timer        apt-daily-upgrade.service
+Tue 2025-10-07 08:54:48 MSK 9h left       Mon 2025-10-06 22:18:25 MSK 1h 7min ago   certbot.timer                  certbot.service
+Tue 2025-10-07 10:51:52 MSK 11h left      Mon 2025-10-06 02:04:39 MSK 21h ago       man-db.timer                   man-db.service
+Tue 2025-10-07 14:19:02 MSK 14h left      Mon 2025-10-06 20:16:45 MSK 3h 9min ago   apt-daily.timer                apt-daily.service
+Sun 2025-10-12 03:10:55 MSK 5 days left   Sun 2025-10-05 03:11:25 MSK 1 day 20h ago e2scrub_all.timer              e2scrub_all.service
+Mon 2025-10-13 01:08:39 MSK 6 days left   Mon 2025-10-06 01:24:25 MSK 22h ago       fstrim.timer                   fstrim.service
+Mon 2025-10-13 18:11:16 MSK 6 days left   Mon 2025-10-06 02:04:38 MSK 21h ago       update-notifier-motd.timer     update-notifier-motd.service
+13 timers listed.
+Pass --all to see loaded but inactive timers, too.

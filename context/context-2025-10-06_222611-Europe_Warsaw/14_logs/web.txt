@@ -1,0 +1,102 @@
+time="2025-10-06T23:26:12+03:00" level=warning msg="The \"GHCR_IMAGE_WEB\" variable is not set. Defaulting to a blank string."
+time="2025-10-06T23:26:12+03:00" level=warning msg="The \"WEB_IMAGE_TAG\" variable is not set. Defaulting to a blank string."
+time="2025-10-06T23:26:12+03:00" level=warning msg="The \"SENTRY_DSN\" variable is not set. Defaulting to a blank string."
+time="2025-10-06T23:26:12+03:00" level=warning msg="The \"DB_PORT\" variable is not set. Defaulting to a blank string."
+time="2025-10-06T23:26:12+03:00" level=warning msg="The \"DB_PASSWORD\" variable is not set. Defaulting to a blank string."
+time="2025-10-06T23:26:12+03:00" level=warning msg="The \"NEXT_PUBLIC_SENTRY_DSN\" variable is not set. Defaulting to a blank string."
+time="2025-10-06T23:26:12+03:00" level=warning msg="The \"DOMAIN_OR_IP\" variable is not set. Defaulting to a blank string."
+time="2025-10-06T23:26:12+03:00" level=warning msg="The \"PORT_API_HOST\" variable is not set. Defaulting to a blank string."
+time="2025-10-06T23:26:12+03:00" level=warning msg="The \"DB_NAME\" variable is not set. Defaulting to a blank string."
+time="2025-10-06T23:26:12+03:00" level=warning msg="The \"DB_USER\" variable is not set. Defaulting to a blank string."
+time="2025-10-06T23:26:12+03:00" level=warning msg="The \"DB_USER\" variable is not set. Defaulting to a blank string."
+time="2025-10-06T23:26:12+03:00" level=warning msg="The \"DB_NAME\" variable is not set. Defaulting to a blank string."
+time="2025-10-06T23:26:12+03:00" level=warning msg="The \"DB_USER\" variable is not set. Defaulting to a blank string."
+time="2025-10-06T23:26:12+03:00" level=warning msg="The \"DB_PASSWORD\" variable is not set. Defaulting to a blank string."
+time="2025-10-06T23:26:12+03:00" level=warning msg="The \"DB_NAME\" variable is not set. Defaulting to a blank string."
+time="2025-10-06T23:26:12+03:00" level=warning msg="The \"GHCR_IMAGE_API\" variable is not set. Defaulting to a blank string."
+time="2025-10-06T23:26:12+03:00" level=warning msg="The \"API_IMAGE_TAG\" variable is not set. Defaulting to a blank string."
+time="2025-10-06T23:26:12+03:00" level=warning msg="The \"DATABASE_URL\" variable is not set. Defaulting to a blank string."
+time="2025-10-06T23:26:12+03:00" level=warning msg="The \"DB_NAME\" variable is not set. Defaulting to a blank string."
+time="2025-10-06T23:26:12+03:00" level=warning msg="The \"DB_PASSWORD\" variable is not set. Defaulting to a blank string."
+time="2025-10-06T23:26:12+03:00" level=warning msg="The \"SENTRY_DSN\" variable is not set. Defaulting to a blank string."
+time="2025-10-06T23:26:12+03:00" level=warning msg="The \"DB_PORT\" variable is not set. Defaulting to a blank string."
+time="2025-10-06T23:26:12+03:00" level=warning msg="The \"DB_USER\" variable is not set. Defaulting to a blank string."
+time="2025-10-06T23:26:12+03:00" level=warning msg="The \"NEXT_PUBLIC_SENTRY_DSN\" variable is not set. Defaulting to a blank string."
+web-1  |   ▲ Next.js 14.2.5
+web-1  |   - Local:        http://localhost:3000
+web-1  |   - Network:      http://0.0.0.0:3000
+web-1  | 
+web-1  |  ✓ Starting...
+web-1  |  ✓ Ready in 532ms
+web-1  | Failed to update prerender cache for 08aa89877f29e07e421621df5967405bfc6007a979719b950c59c6af4d426f23 Error: EACCES: permission denied, mkdir '/app/.next/cache/fetch-cache'
+web-1  |     at async Object.mkdir (node:internal/fs/promises:858:10)
+web-1  |     at async FileSystemCache.set (/app/node_modules/next/dist/server/lib/incremental-cache/file-system-cache.js:276:13)
+web-1  |     at async IncrementalCache.set (/app/node_modules/next/dist/server/lib/incremental-cache/index.js:411:13)
+web-1  |     at async /app/.next/server/chunks/948.js:2:7061
+web-1  |     at async l (/app/.next/server/app/[lang]/cars/page.js:1:5086)
+web-1  |     at async o (/app/.next/server/app/[lang]/cars/page.js:1:5597) {
+web-1  |   errno: -13,
+web-1  |   code: 'EACCES',
+web-1  |   syscall: 'mkdir',
+web-1  |   path: '/app/.next/cache/fetch-cache'
+web-1  | }
+web-1  | Failed to update prerender cache for a4bb338092593bd6c469ce8b8c0be308ebbeb08d47d4d101ef89833a3236476a Error: EACCES: permission denied, mkdir '/app/.next/cache/fetch-cache'
+web-1  |     at async Object.mkdir (node:internal/fs/promises:858:10)
+web-1  |     at async FileSystemCache.set (/app/node_modules/next/dist/server/lib/incremental-cache/file-system-cache.js:276:13)
+web-1  |     at async IncrementalCache.set (/app/node_modules/next/dist/server/lib/incremental-cache/index.js:411:13)
+web-1  |     at async /app/.next/server/chunks/948.js:2:7061
+web-1  |     at async l (/app/.next/server/app/[lang]/cars/page.js:1:5086)
+web-1  |     at async o (/app/.next/server/app/[lang]/cars/page.js:1:5597) {
+web-1  |   errno: -13,
+web-1  |   code: 'EACCES',
+web-1  |   syscall: 'mkdir',
+web-1  |   path: '/app/.next/cache/fetch-cache'
+web-1  | }
+web-1  | Failed to update prerender cache for 08aa89877f29e07e421621df5967405bfc6007a979719b950c59c6af4d426f23 Error: EACCES: permission denied, mkdir '/app/.next/cache/fetch-cache'
+web-1  |     at async Object.mkdir (node:internal/fs/promises:858:10)
+web-1  |     at async FileSystemCache.set (/app/node_modules/next/dist/server/lib/incremental-cache/file-system-cache.js:276:13)
+web-1  |     at async IncrementalCache.set (/app/node_modules/next/dist/server/lib/incremental-cache/index.js:411:13)
+web-1  |     at async /app/.next/server/chunks/948.js:2:7061
+web-1  |     at async Promise.all (index 0)
+web-1  |     at async Object.close (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:214462) {
+web-1  |   errno: -13,
+web-1  |   code: 'EACCES',
+web-1  |   syscall: 'mkdir',
+web-1  |   path: '/app/.next/cache/fetch-cache'
+web-1  | }
+web-1  | Failed to update prerender cache for a4bb338092593bd6c469ce8b8c0be308ebbeb08d47d4d101ef89833a3236476a Error: EACCES: permission denied, mkdir '/app/.next/cache/fetch-cache'
+web-1  |     at async Object.mkdir (node:internal/fs/promises:858:10)
+web-1  |     at async FileSystemCache.set (/app/node_modules/next/dist/server/lib/incremental-cache/file-system-cache.js:276:13)
+web-1  |     at async IncrementalCache.set (/app/node_modules/next/dist/server/lib/incremental-cache/index.js:411:13)
+web-1  |     at async /app/.next/server/chunks/948.js:2:7061
+web-1  |     at async Promise.all (index 0)
+web-1  |     at async Object.close (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:214462) {
+web-1  |   errno: -13,
+web-1  |   code: 'EACCES',
+web-1  |   syscall: 'mkdir',
+web-1  |   path: '/app/.next/cache/fetch-cache'
+web-1  | }
+web-1  | Failed to update prerender cache for a4bb338092593bd6c469ce8b8c0be308ebbeb08d47d4d101ef89833a3236476a Error: EACCES: permission denied, mkdir '/app/.next/cache/fetch-cache'
+web-1  |     at async Object.mkdir (node:internal/fs/promises:858:10)
+web-1  |     at async FileSystemCache.set (/app/node_modules/next/dist/server/lib/incremental-cache/file-system-cache.js:276:13)
+web-1  |     at async IncrementalCache.set (/app/node_modules/next/dist/server/lib/incremental-cache/index.js:411:13)
+web-1  |     at async /app/.next/server/chunks/948.js:2:7061
+web-1  |     at async Promise.all (index 0)
+web-1  |     at async Object.close (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:214462) {
+web-1  |   errno: -13,
+web-1  |   code: 'EACCES',
+web-1  |   syscall: 'mkdir',
+web-1  |   path: '/app/.next/cache/fetch-cache'
+web-1  | }
+web-1  | Failed to update prerender cache for 08aa89877f29e07e421621df5967405bfc6007a979719b950c59c6af4d426f23 Error: EACCES: permission denied, mkdir '/app/.next/cache/fetch-cache'
+web-1  |     at async Object.mkdir (node:internal/fs/promises:858:10)
+web-1  |     at async FileSystemCache.set (/app/node_modules/next/dist/server/lib/incremental-cache/file-system-cache.js:276:13)
+web-1  |     at async IncrementalCache.set (/app/node_modules/next/dist/server/lib/incremental-cache/index.js:411:13)
+web-1  |     at async /app/.next/server/chunks/948.js:2:7061
+web-1  |     at async Promise.all (index 0)
+web-1  |     at async Object.close (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:214462) {
+web-1  |   errno: -13,
+web-1  |   code: 'EACCES',
+web-1  |   syscall: 'mkdir',
+web-1  |   path: '/app/.next/cache/fetch-cache'
+web-1  | }

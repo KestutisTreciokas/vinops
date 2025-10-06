@@ -1,0 +1,2 @@
+origin	git@github.com:KestutisTreciokas/vinops.git (fetch)
+origin	ssh://git@ssh.github.com:443/KestutisTreciokas/vinops.git (push)
