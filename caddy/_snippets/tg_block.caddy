@@ -1,0 +1,16 @@
+# --- tg.vinops.online webhook (S2.5-02) ---
+tg.vinops.online {
+  tls internal
+  encode zstd gzip
+
+  @tg path /tg-webhook*
+  @with header X-Telegram-Bot-Api-Secret-Token *
+
+  # Порядок важен: сначала успешный путь → proxy, затем "только путь" → 401, остальное → 404
+  route {
+    reverse_proxy @tg @with 127.0.0.1:8091
+    respond @tg 401
+    respond 404
+  }
+}
+# --- /tg.vinops.online webhook ---
