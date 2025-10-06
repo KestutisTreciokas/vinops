@@ -4,13 +4,13 @@
 
 vinops.online, www.vinops.online {
   header {
-    X-Release-Sha 085e4b00fd0c
+        X-Release-Sha 085e4b00fd0c
   }
   encode zstd gzip
 
   # Security headers
   header {
-    X-Release-Sha 085e4b00fd0c
+        X-Release-Sha 085e4b00fd0c
     defer
     -X-Powered-By
     X-Frame-Options "SAMEORIGIN"
@@ -48,7 +48,7 @@ vinops.online, www.vinops.online {
 # --- dev host block [MS-0.5-03] ---
 dev.vinops.online {
   header {
-    X-Release-Sha 085e4b00fd0c
+        X-Release-Sha 085e4b00fd0c
   }
   @root path /
   redir @root /en 308
@@ -68,24 +68,25 @@ tg.vinops.online {
   tls internal
   encode zstd gzip
 
+  # Базовый путь вебхука
+  @tg path /tg-webhook*
+
   # Комбинированный мэчер: путь И секрет
   @good {
     path /tg-webhook*
     header X-Telegram-Bot-Api-Secret-Token *
   }
-  @tg path /tg-webhook*
 
-  # Приоритет: 1) good → proxy, 2) tg без секрета → 401, 3) остальное → 404
+  # Чёткий приоритет обработчиков:
+  # 1) good → proxy, 2) tg без секрета → 401, 3) всё остальное → 404
   route {
     handle @good {
-      reverse_proxy 172.19.0.1:8091 {
-        header_down X-Debug-Upstream {upstream_hostport}
-      }
+      reverse_proxy 127.0.0.1:8091
     }
     handle @tg {
-      respond "unauthorized" 401
+      respond 401
     }
-    respond "not found" 404
+    respond 404
   }
 }
 # --- /tg.vinops.online webhook ---
