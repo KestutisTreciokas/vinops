@@ -1,38 +1,28 @@
-# Операции — vinops-tg-bot (S1)
+# Операции БД: бэкап/восстановление (TZ: Europe/Warsaw)
 
-## Целевая БД
-- Версия сервера: PostgreSQL 17.x
-- DSN хранится в `infra/secrets/.env.sops.yaml` → ключ `POSTGRES_DSN` (sops/age).
-- Схема приложения: `tg_bot` (единственная точка записи).
+## Инструменты
+- Клиент PostgreSQL 17.x (`pg_dump`, `psql`)
+- `gzip`
+- `age` (recipient: `age14gzudn5k6vfsgqr70z30ky6q2k8597a00e52ulxs2qs2jm0dhprqpeypza`), identity на хосте: `/srv/vinops/age/keys.txt`.
 
-## Стратегия бэкапа (утверждено в S1)
-**Ежедневный логический бэкап `pg_dump -Fc`** с шифрованием **age**.
-- Время: ежедневно в 02:15 (Europe/Warsaw).
-- Хранилище: `/srv/vinops/backups/postgres/vinops/%Y-%m-%d/`
-- Имена файлов: `vinops_%Y%m%d.sqlc.age` (custom-формат внутри, затем age).
-- Шифрование: получатель `age14gzudn5k6vfsgqr70z30ky6q2k8597a00e52ulxs2qs2jm0dhprqpeypza`
-- Ретеншн: 7 daily, 4 weekly, 6 monthly.
+## Бэкап схемы `tg_bot`
+Скрипт: `scripts/db/backup_tg_bot.sh` (пользователь подключения: `etl_rw`).
+Результат: `${APP_ROOT}/backup/vinops_tg_bot_<YYYY-MM-DD_HHMMSS>.sql.gz.age`.
 
-### Скрипт бэкапа (не требует простоя)
-```bash
-#!/usr/bin/env bash
-set -euo pipefail
-export SOPS_AGE_KEY_FILE="/srv/vinops/age/keys.txt"
-export APP_ROOT="/root/work/vinops.restore"
-DSN="$(SOPS_AGE_KEY_FILE="$SOPS_AGE_KEY_FILE" sops -d "$APP_ROOT/infra/secrets/.env.sops.yaml" | awk -F': ' '/^POSTGRES_DSN:/{print $2}' | tr -d '"')"
-DATE="$(date +%F)"
-DST="/srv/vinops/backups/postgres/vinops/${DATE}"
-RECIPIENT="age14gzudn5k6vfsgqr70z30ky6q2k8597a00e52ulxs2qs2jm0dhprqpeypza"
-mkdir -p "$DST"
-pg_dump -Fc "$DSN" -f "${DST}/vinops_$(date +%Y%m%d).sqlc"
-age -r "$RECIPIENT" -o "${DST}/vinops_$(date +%Y%m%d).sqlc.age" "${DST}/vinops_$(date +%Y%m%d).sqlc"
-shred -u "${DST}/vinops_$(date +%Y%m%d).sqlc"
-# daily retention cleanup (7 days for example)
-find /srv/vinops/backups/postgres/vinops -mindepth 1 -maxdepth 1 -type d -mtime +7 -name '20*' -exec rm -rf {} +
-```
+## Восстановление (smoke) в temp-БД
+Скрипт: `scripts/db/restore_tg_bot_to_tempdb.sh /path/to/backup.sql.gz.age`
 
-**Планировщик: cron (пример)**  
-Добавьте в crontab (root):
-```
-15 2 * * * /usr/local/bin/backup_vinops.sh
-```
+1. Создаётся temp-БД `vinops_restore_tg_bot_<YYYYMMDD_HHMMSS>` под `db_admin` (owner — `db_admin`).
+2. Выдаётся `GRANT CONNECT, CREATE, TEMP` для `gen_user`.
+3. Расшифровка `age -d` и распаковка `gzip -d`.
+4. Импорт под `gen_user` (`ON_ERROR_STOP=1`).
+5. Смоки:
+   - `select count(*) from tg_bot.audit;`
+   - последние 5 записей из `tg_bot.audit`;
+   - наличие схемы `tg_bot` и последовательности `tg_bot.audit_id_seq`.
+
+Смоки выполняются пользователем `gen_user` (тот же DSN, что у сервиса). См. чек-лист в `docs/db/signature.md`.
+
+## Ретеншн
+- Ежедневные бэкапы, хранение: 14 дней.
+- Формат: `.sql.gz.age`.

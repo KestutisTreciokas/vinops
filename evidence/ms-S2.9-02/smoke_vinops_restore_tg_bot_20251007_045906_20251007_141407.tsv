@@ -1,0 +1,11 @@
+check\tvalue
+psql: error: connection to server at "192.168.0.5", port 5432 failed: FATAL:  permission denied for database "vinops_restore_tg_bot_20251007_045906"
+DETAIL:  User does not have CONNECT privilege.
+-- last 5 events
+psql: error: connection to server at "192.168.0.5", port 5432 failed: FATAL:  permission denied for database "vinops_restore_tg_bot_20251007_045906"
+DETAIL:  User does not have CONNECT privilege.
+-- objects existence
+psql: error: connection to server at "192.168.0.5", port 5432 failed: FATAL:  permission denied for database "vinops_restore_tg_bot_20251007_045906"
+DETAIL:  User does not have CONNECT privilege.
+psql: error: connection to server at "192.168.0.5", port 5432 failed: FATAL:  permission denied for database "vinops_restore_tg_bot_20251007_045906"
+DETAIL:  User does not have CONNECT privilege.

@@ -1,0 +1,11 @@
+check	value
+
+-- last 5 events
+
+-- objects existence
+?column?	exists
+schema_tg_bot	t
+(1 row)
+?column?	exists
+seq_audit_id	t
+(1 row)

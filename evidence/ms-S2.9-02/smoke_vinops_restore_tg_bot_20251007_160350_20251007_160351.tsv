@@ -1,0 +1,19 @@
+check	value
+audit_rows	231
+
+-- last 5 events
+id	chat_id	event	at
+231	9101	INVOICE_OPENED	2025-10-06 23:54:12.819124+03
+230	9101	RATE_LIMIT_HIT	2025-10-06 23:54:12.80622+03
+229	9101	BOT_START	2025-10-06 23:54:12.742589+03
+228	9101	LANG_SET	2025-10-06 23:54:12.729372+03
+227	7545856874	VIN_ENTERED	2025-10-06 22:16:16.224342+03
+(5 rows)
+
+-- objects existence
+?column?	exists
+schema_tg_bot	t
+(1 row)
+?column?	exists
+seq_audit_id	t
+(1 row)
