@@ -12,3 +12,4 @@
 | MS-S0-03 | Консолидация PR #84 (rebase/pr-84-consolidated) | Closed | 2025-09-27 22:54 | MERGE_REPORT+CANONICAL_PROOF+NOOP-PG(dev) |
 >>>>>>> origin/main
 | MS-0.5-06 | Артефакты релиза | Closed | 2025-09-28 23:26 | current.json + release-*.json автогенерация |
+| MS-AB-01 | Роли и знания агентов | Closed | 2025-10-08 22:00 | См. docs/AGENTS/* |
