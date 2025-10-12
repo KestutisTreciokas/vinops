@@ -1,0 +1,4 @@
+{
+  "query": "query($zone:String!,$host:String!,$since:Time!,$r1:String,$r2:String){ viewer { zones(filter:{zoneTag:$zone}) { byHost: firewallEventsAdaptive(filter:{clientRequestHTTPHost:$host, action:\"block\", datetime_geq:$since}, limit:50, orderBy:[datetime_DESC]) { datetime action source ruleId rayName clientRequestMethod clientRequestPath edgeResponseStatus } r1: firewallEventsAdaptive(filter:{rayName:$r1}, limit:5, orderBy:[datetime_DESC]) { datetime action source ruleId rayName clientRequestMethod clientRequestPath edgeResponseStatus } r2: firewallEventsAdaptive(filter:{rayName:$r2}, limit:5, orderBy:[datetime_DESC]) { datetime action source ruleId rayName clientRequestMethod clientRequestPath edgeResponseStatus } } } }",
+  "variables": { "zone": "cada0a021d91eb29fac9b94f9e64fdf2", "host": "tg.vinops.online", "since": "2025-10-07T18:29:21Z", "r1": "98afa674ef108d9e", "r2": "98afa677798f8d50" }
+}

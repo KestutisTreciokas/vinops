@@ -1,0 +1,34 @@
+version: 1
+allowed_paths:
+  - "**/*"   # глобально разрешаем, но…
+require_gates:
+  DB_SCHEMA_CHANGE:
+    - "db/migrations/**/*.sql"
+  INFRA_CF_WAF:
+    - "infra/cloudflare/**"
+    - ".cloudflare/**"
+  SECURITY_HEADERS:
+    - "infra/proxy/**"
+    - "deploy/**"
+    - "caddy/**"
+    - "nginx/**"
+  PROD_SECRETS_ACCESS:
+    - ".github/workflows/deploy*.yml"
+    - "deploy/**"
+patch_limits:
+  soft:
+    max_changed_lines: 800
+    max_changed_files: 30
+  hard:
+    max_changed_lines: 2500
+    max_changed_files: 100
+  on_violation: "fail_with_instruction"  # агент останавливается и запрашивает Gate/разбиение
+branch_rules:
+  main:
+    merge: "required"            # в main — только через PR/merge queue/статусы
+    direct_push: false
+  staging:
+    merge: "preferred"
+    direct_push: true            # разрешаем агентам пушить в staging при зелёном CI
+  "bot/**":
+    direct_push: true            # служебные ветки для мелких авто-правок

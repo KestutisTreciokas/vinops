@@ -1,0 +1,19 @@
+HTTP/2 401 
+date: Tue, 07 Oct 2025 18:35:25 GMT
+content-type: text/plain
+server: cloudflare
+nel: {"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}
+alt-svc: h3=":443"; ma=86400
+via: 1.1 Caddy
+x-debug-upstream: 172.19.0.1:8091
+report-to: {"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=uJcXZrKN1284ZEGZOtbvSwIh5RtGBz18gcJQJvSssZdk3x%2B2T4KNTOKLi73rzdH40eiHWFS2g2KLR%2Bkkg1b9N0nAwitI0FAvleVQV6Qd"}]}
+vary: Accept-Encoding
+cf-cache-status: DYNAMIC
+strict-transport-security: max-age=7776000
+x-content-type-options: nosniff
+set-cookie: __ddg8_=hlm81uyC92bGgHQI; Path=/; Domain=vinops.online; Expires=Tue, 07 Oct 2025 18:55:25 GMT
+set-cookie: __ddg10_=1759862125; Path=/; Domain=vinops.online; Expires=Tue, 07 Oct 2025 18:55:25 GMT
+set-cookie: __ddg9_=162.158.238.190; Path=/; Domain=vinops.online; Expires=Tue, 07 Oct 2025 18:55:25 GMT
+set-cookie: __ddg1_=XmFVzxcOq1eRAPvuV30s; HttpOnly; Path=/; Domain=vinops.online; Expires=Wed, 07 Oct 2026 18:35:25 GMT
+cf-ray: 98af7f8bbfd28d5b-HEL
+

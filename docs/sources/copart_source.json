@@ -1,28 +1,25 @@
 {
   "source": "copart",
-  "channel": "UNKNOWN",
+  "channel": "HTTP",
   "http": {
-    "url": "UNKNOWN",
-    "auth": { "type": "none", "api_key": "UNKNOWN" }
+    "url": "https://www.copart.com/downloadSalesData",
+    "auth": { "type": "cookie", "cookie_env": "COPART_COOKIE" },
+    "headers": {
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36",
+      "Accept": "text/csv,*/*;q=0.9",
+      "Accept-Language": "en-US,en;q=0.9",
+      "Cache-Control": "no-cache",
+      "Pragma": "no-cache",
+      "Referer": "https://www.copart.com/"
+    }
   },
-  "s3": {
-    "endpoint": "UNKNOWN",
-    "bucket": "UNKNOWN",
-    "region": "UNKNOWN",
-    "access_key_id": "UNKNOWN",
-    "secret_access_key": "UNKNOWN"
-  },
-  "sftp": {
-    "host": "UNKNOWN",
-    "user": "UNKNOWN",
-    "key_path": "UNKNOWN",
-    "password": "UNKNOWN"
-  },
+  "s3": { "endpoint": "UNKNOWN", "bucket": "UNKNOWN", "region": "UNKNOWN", "access_key_id": "UNKNOWN", "secret_access_key": "UNKNOWN" },
+  "sftp": { "host": "UNKNOWN", "user": "UNKNOWN", "key_path": "UNKNOWN", "password": "UNKNOWN" },
   "update_window_minutes": 15,
   "schedule_cron": "*/15 * * * *",
   "timezone": "UTC",
   "headers_version": "copart_v1",
   "rate_limit": { "requests_per_minute": "UNKNOWN" },
-  "limitations": "UNKNOWN",
-  "notes": ""
+  "limitations": "Auth required; anti-bot may return 418/403; cookie via COPART_COOKIE; optional proxy via PROXY_URL",
+  "notes": "Downloader must mimic browser; use --http1.1; geo-block may apply."
 }

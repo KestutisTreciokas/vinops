@@ -1,0 +1,4 @@
+{
+  "query": "query($zone:String!,$ray1:String,$ray2:String){ viewer { zones(filter:{zoneTag:$zone}) { ray1: firewallEventsAdaptive(filter:{rayName:$ray1},limit:5,orderBy:[datetime_DESC]) { action source ruleId rayName clientRequestMethod clientRequestURI clientRequestHTTPHost edgeResponseStatus datetime } ray2: firewallEventsAdaptive(filter:{rayName:$ray2},limit:5,orderBy:[datetime_DESC]) { action source ruleId rayName clientRequestMethod clientRequestURI clientRequestHTTPHost edgeResponseStatus datetime } } } }",
+  "variables": { "zone": "cada0a021d91eb29fac9b94f9e64fdf2", "ray1": "98afa674ef108d9e", "ray2": "98afa677798f8d50" }
+}
