@@ -1,0 +1,57 @@
+version: 1
+policy: |
+  Гейты включают зоны с высоким риском, крупные диффы и использование prod-секретов.
+  Запрос/ответ оформляются YAML-блоком в комментарии к PR. Агент ждёт explicit approve.
+gates:
+  - id: HIGH_RISK_LARGE_DIFF
+    description: "Изменённых строк > 800 ИЛИ файлов > 30."
+    triggers:
+      max_changed_lines: 800
+      max_changed_files: 30
+    approvers: ["owner","architect"]
+    required: true
+
+  - id: DB_SCHEMA_CHANGE
+    description: "Затрагиваются db/migrations/**/*.sql (EMC-правила)."
+    file_globs: ["db/migrations/**/*.sql"]
+    approvers: ["owner","architect"]
+    requires_ADR: true
+    required: true
+
+  - id: PROD_SECRETS_ACCESS
+    description: "Запуск workflows с prod-секретами (deploy/prod purge/ssh)."
+    approvers: ["owner"]
+    required: true
+
+  - id: INFRA_CF_WAF
+    description: "Изменения в Cloudflare rules/WAF."
+    file_globs: ["infra/cloudflare/**",".cloudflare/**"]
+    approvers: ["owner","security"]
+    required: true
+
+  - id: SECURITY_HEADERS
+    description: "Изменения периметра заголовков (HSTS/CSP/Referrer-Policy/Frame)."
+    file_globs: ["infra/proxy/**","deploy/**","caddy/**","nginx/**"]
+    approvers: ["owner","security"]
+    required: true
+
+request_template: |
+  ```yaml
+  gate_request:
+    id: <GATE_ID>
+    pr: <PR_NUMBER>
+    risk: <LOW|MED|HIGH>
+    area: <module|infra|db|seo|...>
+    summary: "<кратко зачем>"
+    requested_by: "vinops-ai"
+    timestamp: "<UTC ISO8601>"
+
+response_template: |
+gate_response:
+  id: <GATE_ID>
+  pr: <PR_NUMBER>
+  decision: <approve|deny>
+  approved_by: "<username>"
+  expires_at: "<UTC ISO8601|optional>"
+  notes: "<условия/ограничения, если есть>"
+

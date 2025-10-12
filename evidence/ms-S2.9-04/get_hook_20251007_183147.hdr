@@ -1,0 +1,15 @@
+HTTP/2 403 
+date: Tue, 07 Oct 2025 16:31:06 GMT
+content-type: text/html; charset=UTF-8
+cache-control: private, max-age=0, no-store, no-cache, must-revalidate, post-check=0, pre-check=0
+expires: Thu, 01 Jan 1970 00:00:01 GMT
+referrer-policy: same-origin
+x-frame-options: SAMEORIGIN
+strict-transport-security: max-age=7776000
+x-content-type-options: nosniff
+report-to: {"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=mZ5lV8DG3wvYx7VJF5jVvyT91At3PpcVxjow62iDysC1LGck073pddIN4y5yJeN963UqSkcTk8PWpjqceGjO6SN5j%2FLLzdsv11gKyQMF"}]}
+nel: {"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}
+server: cloudflare
+cf-ray: 98aec9708f0e8d72-HEL
+alt-svc: h3=":443"; ma=86400
+
