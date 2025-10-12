@@ -1,0 +1,4 @@
+[TS Warsaw] 2025-10-13 00:47]
+[INFO] источник DSN: derived:/srv/vinops/tg-webhook/server.js + /srv/vinops/secure/pg_etl_rw.password + /etc/vinops/pg/ca.crt
+[INFO] DSN(libpq kv): hostaddr=192.168.0.5 host=418a052549dc7dac1163fd68.twc1.net port=5432 dbname=vinops user=*** sslmode=verify-full sslrootcert=...
+[Q1] counts by expected events (24h)
