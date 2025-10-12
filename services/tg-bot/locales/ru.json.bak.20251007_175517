@@ -11,7 +11,7 @@
     "use_start": "Используйте /start."
   },
   "help": {
-    "available": "Доступно: /start, /help, /lang ru|en, /vin &lt;VIN&gt;, /contacts, /invoice."
+    "available": "Доступно: /start, /help, /lang ru|en, /vin <VIN>, /contacts, /invoice."
   },
   "menu": {
     "delete_car": "🗑️ Удалить машину",
