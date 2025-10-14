@@ -111,9 +111,32 @@ http://miniapp.vinops.online {
   respond 404
 }
 # --- /miniapp.vinops.online ---
-
 # --- miniapp.vinops.online (HTTPS origin for CF Full/Strict) ---
-https://miniapp.vinops.online {
+miniapp.vinops.online {
+  encode zstd gzip
+
+  # Assets: immutable cache at edge
+  @assets path /webapp/assets/*
+  handle @assets {
+    header Cache-Control "public, max-age=86400, immutable"
+    reverse_proxy 172.19.0.1:8091
+  }
+
+  # HTML/API/metrics
+  @webapp path /webapp* /metrics
+  handle @webapp {
+    reverse_proxy 172.19.0.1:8091
+  }
+
+  # Остальное — 404
+  respond 404
+
+  # Локальный Origin TLS, достаточный для CF Full/Strict
+  tls internal
+}
+# --- /miniapp.vinops.online (HTTPS) ---
+# --- miniapp.vinops.online (HTTPS origin for CF) ---
+miniapp.vinops.online {
   tls internal
   encode zstd gzip
 
@@ -134,3 +157,26 @@ https://miniapp.vinops.online {
   respond 404
 }
 # --- /miniapp.vinops.online (HTTPS) ---
+# --- miniapp.vinops.online (HTTPS origin behind CF) ---
+miniapp.vinops.online {
+  tls internal
+  encode zstd gzip
+
+  # Assets: immutable cache at edge
+  @assets path /webapp/assets/*
+  handle @assets {
+    header Cache-Control "public, max-age=86400, immutable"
+    reverse_proxy 172.19.0.1:8091
+  }
+
+  # HTML/API/metrics: proxy as-is; cache controlled by backend
+  @webapp path /webapp* /metrics
+  handle @webapp {
+    reverse_proxy 172.19.0.1:8091
+  }
+
+  # Everything else — 404 (no redirects)
+  respond 404
+}
+# --- /miniapp.vinops.online (HTTPS) ---
+

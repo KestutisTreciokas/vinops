@@ -90,47 +90,24 @@ tg.vinops.online {
 }
 # --- /tg.vinops.online webhook ---
 
-# --- miniapp.vinops.online (HTTP origin behind CF) ---
+# --- miniapp.vinops.online (HTTP origin behind CF, auto_https off) ---
 http://miniapp.vinops.online {
+  auto_https off
   encode zstd gzip
 
-  # Assets: immutable cache at edge
   @assets path /webapp/assets/*
   handle @assets {
     header Cache-Control "public, max-age=86400, immutable"
     reverse_proxy 172.19.0.1:8091
   }
 
-  # HTML/API/metrics: proxy as-is; cache controlled by backend
-  @webapp path /webapp* /metrics
+  @webapp path /webapp*
   handle @webapp {
     reverse_proxy 172.19.0.1:8091
   }
 
-  # Everything else — 404 (no redirects)
-  respond 404
-}
-# --- /miniapp.vinops.online ---
-
-# --- miniapp.vinops.online (HTTPS origin for CF Full/Strict) ---
-https://miniapp.vinops.online {
-  tls internal
-  encode zstd gzip
-
-  # Assets: immutable cache at edge
-  @assets path /webapp/assets/*
-  handle @assets {
-    header Cache-Control "public, max-age=86400, immutable"
+  handle /metrics {
     reverse_proxy 172.19.0.1:8091
   }
-
-  # HTML/API/metrics: proxy as-is; cache controlled by backend
-  @webapp path /webapp* /metrics
-  handle @webapp {
-    reverse_proxy 172.19.0.1:8091
-  }
-
-  # Everything else — 404 (no redirects)
-  respond 404
 }
-# --- /miniapp.vinops.online (HTTPS) ---
+# --- /miniapp.vinops.online (HTTP) ---
