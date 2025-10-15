@@ -1,0 +1,9 @@
+HTTP/2 302 
+cache-control: no-cache, no-store
+content-type: text/html
+content-length: 122
+x-iinfo: 13-22658847-0 0NNN RT(1760507114906 471) q(0 -1 -1 -1) r(0 -1) B13(11,1721662,0) U18
+set-cookie: visid_incap_242093=m/PM6hIbQMKY9Cgcokb1Euo072gAAAAAQUIPAAAAAAAhdLh1YFs/O6QBMC6nmzUn; expires=Wed, 14 Oct 2026 06:44:29 GMT; HttpOnly; path=/
+set-cookie: incap_ses_190_242093=FJazXdAzmQx6q3QXZwSjAuo072gAAAAAnGyAPxIR3uscg0DR2nWjjw==; path=/
+location: https://www.copart.com/downloadSalesData
+
