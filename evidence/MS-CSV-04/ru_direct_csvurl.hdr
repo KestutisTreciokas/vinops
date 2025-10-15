@@ -1,0 +1,16 @@
+HTTP/1.1 200 OK
+Server: nginx
+Date: Wed, 15 Oct 2025 05:45:06 GMT
+Content-Type: application/octet-stream
+Content-Length: 95933181
+Last-Modified: Wed, 15 Oct 2025 05:45:02 GMT
+Connection: keep-alive
+ETag: "68ef34de-5b7d2fd"
+Content-Disposition: attachment; filename="salesdata.csv"
+Accept-Ranges: bytes
+Set-Cookie: visid_incap_1659755=eXrWoRDjTnuhjgjB9PhF++E072gAAAAAQUIPAAAAAADkr4ziA7qvdiVDz6aEEzJM; expires=Thu, 15 Oct 2026 00:37:36 GMT; HttpOnly; path=/
+Set-Cookie: nlbi_1659755=H8zIR3tBqlnBQLXa7aEZlQAAAAAT/OYCBg20xnwZkEVHAWCP; HttpOnly; path=/
+Set-Cookie: incap_ses_1515_1659755=lxWOC6xzEwSpo0JNz1wGFeE072gAAAAAN8TZUt3bxwGBo7yyWySiuQ==; path=/
+X-CDN: Imperva
+X-Iinfo: 4-7963913-7963915 NNNN CT(160 320 0) RT(1760507105419 103) q(0 0 5 0) r(7 7) U6
+
