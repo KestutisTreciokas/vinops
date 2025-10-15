@@ -1,0 +1,4 @@
+https://inventory.copart.io/FTPLSTDM/salesdata.cgi?authKey=YPYU91EI
+
+classification: tokenized (query-param authKey=…)
+ttl: не установлен в MS-CSV-01 (проверяется в MS-CSV-02)
