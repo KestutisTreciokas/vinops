@@ -1,0 +1,42 @@
+# --- miniapp.vinops.online (HTTP origin behind CF) ---
+http://miniapp.vinops.online {
+  encode zstd gzip
+
+  @assets path /webapp/assets/*
+  handle @assets {
+    header Cache-Control "public, max-age=86400, immutable"
+    reverse_proxy 172.19.0.1:8091
+  }
+
+  @webapp path /webapp*
+  handle @webapp {
+    reverse_proxy 172.19.0.1:8091
+  }
+
+  handle /metrics {
+    reverse_proxy 172.19.0.1:8091
+  }
+}
+# --- /miniapp.vinops.online (HTTP) ---
+
+# --- miniapp.vinops.online (HTTPS origin for CF Full/Strict) ---
+miniapp.vinops.online {
+  tls internal
+  encode zstd gzip
+
+  @assets path /webapp/assets/*
+  handle @assets {
+    header Cache-Control "public, max-age=86400, immutable"
+    reverse_proxy 172.19.0.1:8091
+  }
+
+  @webapp path /webapp*
+  handle @webapp {
+    reverse_proxy 172.19.0.1:8091
+  }
+
+  handle /metrics {
+    reverse_proxy 172.19.0.1:8091
+  }
+}
+# --- /miniapp.vinops.online (HTTPS) ---
