@@ -121,8 +121,7 @@ jobs:
             TARGET=dev
           fi
           PROJECT_DIR="${{ vars.PROJECT_DIR }}"
-          ssh -o StrictHostKeyChecking=no -i key.pem "$SSH_USER@$SSH_HOST" "export PROJECT_DIR=$PROJECT_DIR GHCR_PULL_USER=$GHCRU GHCR_PULL_TOKEN=$GHCRT; \
-            $PROJECT_DIR/bin/deploy '${{ env.SHORT_SHA }}' '$TARGET'"
+          ssh -o StrictHostKeyChecking=no -i key.pem "$SSH_USER@$SSH_HOST" "export PROJECT_DIR=$PROJECT_DIR GHCR_PULL_USER=$GHCRU GHCR_PULL_TOKEN=$GHCRT; $PROJECT_DIR/bin/deploy '${{ env.SHORT_SHA }}' '$TARGET'"
 
       - name: Pre-smoke /health
         run: |

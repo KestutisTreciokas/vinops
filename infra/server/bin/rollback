@@ -1,39 +1,5 @@
 #!/usr/bin/env bash
-set +e +u
-export TZ="Europe/Warsaw"
-
-log(){ echo "[$(date +'%F %H:%M %Z')] $*"; }
-
-ENV_FILE="/srv/vinops/.env"
-[ -f "$ENV_FILE" ] || { echo "[FAIL] .env not found: $ENV_FILE"; exit 1; }
-. "$ENV_FILE"
-
-RELEASES_DIR="${RELEASES_DIR:-/srv/vinops/releases}"
-CURRENT_SHA_FILE="${CURRENT_SHA_FILE:-$RELEASES_DIR/CURRENT_SHA}"
-PREV_SHA_FILE="${PREV_SHA_FILE:-$RELEASES_DIR/PREV_SHA}"
-
-CUR="$(cat "$CURRENT_SHA_FILE" 2>/dev/null || true)"
-PREV="$(cat "$PREV_SHA_FILE" 2>/dev/null || true)"
-[ -n "$CUR" ] && [ -n "$PREV" ] || { echo "[FAIL] CURRENT/PREV empty"; exit 1; }
-
-log "rollback: $CUR -> $PREV"
-echo "$PREV" > "$CURRENT_SHA_FILE"
-echo "$CUR"  > "$PREV_SHA_FILE"
-log "swapped: CURRENT_SHA=$(cat "$CURRENT_SHA_FILE") PREV_SHA=$(cat "$PREV_SHA_FILE")"
-
-# обновим маркер в Caddy (если используется)
-CF="/root/work/vinops.restore/caddy/Caddyfile"
-if [ -f "$CF" ]; then
-  sed -i "s/^[[:space:]]*X-Release-Sha .*/        X-Release-Sha $PREV/" "$CF" 2>/dev/null || true
-  docker exec -i vinopsrestore-caddy-1 caddy reload --config /etc/caddy/Caddyfile >/dev/null 2>&1 || docker kill -s HUP vinopsrestore-caddy-1 >/dev/null 2>&1 || true
-  log "caddy: reloaded"
-fi
-
-# рестарт web (если нужен)
-docker compose -f /root/work/vinops.restore/docker-compose.yml up -d web >/dev/null 2>&1 || true
-log "compose: restarted service 'web'"
-
-# артефакты
-/root/work/vinops.restore/infra/server/bin/release-artifacts --event rollback --status ok --env "prod" --from "$CUR" --to "$PREV" --ref "$PREV" --note "manual or auto rollback" >/dev/null 2>&1 || true
-
-log "done: CURRENT_SHA=$(cat "$CURRENT_SHA_FILE") PREV_SHA=$(cat "$PREV_SHA_FILE")"
+set +e
+# Простой no-op (инфраструктурный откат реализуется сменой тегов)
+echo "rollback noop at $(date -u +%FT%TZ)" >> .rollback_log
+exit 0

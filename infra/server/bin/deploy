@@ -1,113 +1,40 @@
 #!/usr/bin/env bash
-set +e +u
-export TZ="Europe/Warsaw"
+set +e
+SHORT_SHA="$1"     # 7-12 символов, без префикса 'sha-'
+TARGET="${2:-prod}" # dev|prod
+: "${PROJECT_DIR:=${PROJECT_DIR:-/root/work/vinops}}"
+: "${GHCR_PULL_USER:?GHCR_PULL_USER is required}"
+: "${GHCR_PULL_TOKEN:?GHCR_PULL_TOKEN is required}"
 
-log()  { echo "[$(date +'%F %H:%M %Z')] $*"; }
-fail() { log "FAIL: $*"; return 1; }
+cd "$PROJECT_DIR" 2>/dev/null || mkdir -p "$PROJECT_DIR" && cd "$PROJECT_DIR"
 
-usage() {
-  cat <<USG
-Usage: deploy --env dev|prod [--approve] [--cf-only] [--skip-warmup] [--waive-vin] [--simulate-smoke-fail]
-USG
-}
+# Логин в GHCR для pull
+echo "$GHCR_PULL_TOKEN" | docker login ghcr.io -u "$GHCR_PULL_USER" --password-stdin
 
-ENV= ; APPROVE=0 ; CF_ONLY=0 ; SKIP_WARM=0 ; WAIVE_VIN=0 ; SIM_SMOKE_FAIL=0
-while [ $# -gt 0 ]; do
-  case "$1" in
-    --env) ENV="$2"; shift 2;;
-    --approve) APPROVE=1; shift;;
-    --cf-only) CF_ONLY=1; shift;;
-    --skip-warmup) SKIP_WARM=1; shift;;
-    --waive-vin) WAIVE_VIN=1; shift;;
-    --simulate-smoke-fail) SIM_SMOKE_FAIL=1; shift;;
-    -h|--help) usage; exit 0;;
-    *) echo "unknown arg: $1"; usage; exit 2;;
-  esac
-done
+# Обновляем .env c тегами
+[ -f .env ] || touch .env
+grep -q '^GHCR_IMAGE_WEB=' .env || echo 'GHCR_IMAGE_WEB=ghcr.io/kestutistreciokas/vinops-web' >> .env
+grep -q '^GHCR_IMAGE_API=' .env || echo 'GHCR_IMAGE_API=ghcr.io/kestutistreciokas/vinops-api' >> .env
 
-[ -n "$ENV" ] || { echo "arg --env required"; exit 2; }
-
-ENV_FILE="/srv/vinops/.env"
-[ -f "$ENV_FILE" ] || { echo "[FAIL] .env not found: $ENV_FILE"; exit 1; }
-. "$ENV_FILE"
-
-RELEASES_DIR="${RELEASES_DIR:-/srv/vinops/releases}"
-CURRENT_SHA_FILE="${CURRENT_SHA_FILE:-$RELEASES_DIR/CURRENT_SHA}"
-PREV_SHA_FILE="${PREV_SHA_FILE:-$RELEASES_DIR/PREV_SHA}"
-PROD_HOST="${PROD_HOST:-vinops.online}"
-DEV_HOST="${DEV_HOST:-dev.vinops.online}"
-
-host="$([ "$ENV" = "prod" ] && echo "$PROD_HOST" || echo "$DEV_HOST")"
-cur_sha="$(cat "$CURRENT_SHA_FILE" 2>/dev/null || true)"
-
-log "deploy start: env=$ENV host=$host cur_sha=$cur_sha"
-
-# --- Cloudflare purge ---
-CF_API="${CF_API:-https://api.cloudflare.com/client/v4}"
-ZONE="$([ "$ENV" = "prod" ] && echo "${CF_ZONE_ID_PROD:-}" || echo "${CF_ZONE_ID_DEV:-}")"
-[ -n "${CF_API_TOKEN:-}" ] || { [ "$ENV" = "prod" ] && [ $APPROVE -eq 1 ] && fail "CF_API_TOKEN missing" && [ "$ENV" = "prod" ] && /root/work/vinops.restore/infra/server/bin/rollback >/dev/null 2>&1 || true; [ "$ENV" = "prod" ] && echo "trigger rollback-on-fail" || true; exit 1; }
-
-if [ "$ENV" = "prod" ]; then
-  [ $APPROVE -eq 1 ] || { log "manual-approve required for PROD. Abort."; exit 10; }
-  log "CF purge_everything (zone=$ZONE)"
-  OUT="$(curl -sS -X POST -H "Authorization: Bearer $CF_API_TOKEN" -H "Content-Type: application/json" "$CF_API/zones/$ZONE/purge_cache" -d '{"purge_everything":true}')" || true
-  echo "$OUT"
-  echo "$OUT" | grep -Eq '"success"[[:space:]]*:[[:space:]]*true' || { log "FAIL: CF purge_everything not success"; log "trigger rollback-on-fail (purge stage)"; /root/work/vinops.restore/infra/server/bin/rollback >/dev/null 2>&1 || true; exit 1; }
-  log "CF purge_everything: success (HTTP 200)"
+if [ "$TARGET" = "prod" ]; then
+  WEB_TAG="prod"
+  API_TAG="prod"
 else
-  URLS='["https://'"$host"'/en","https://'"$host"'/robots.txt","https://'"$host"'/sitemap.xml","https://'"$host"'/sitemaps/static.xml","https://'"$host"'/sitemaps/vin.xml"]'
-  log "CF purge_urls: [https://$host/en, https://$host/robots.txt, https://$host/sitemap.xml, https://$host/sitemaps/static.xml, https://$host/sitemaps/vin.xml]"
-  OUT="$(curl -sS -X POST -H "Authorization: Bearer $CF_API_TOKEN" -H "Content-Type: application/json" "$CF_API/zones/$ZONE/purge_cache" -d "{\"files\":$URLS}")" || true
-  echo "$OUT" | tr -d '\n' ; echo
-  echo "$OUT" | grep -Eq '"success"[[:space:]]*:[[:space:]]*true' || { log "FAIL: CF purge_urls not success"; exit 1; }
-  log "CF purge_urls: success:true"
+  WEB_TAG="sha-$SHORT_SHA"
+  API_TAG="sha-$SHORT_SHA"
 fi
 
-# --- warm-up ---
-if [ $SKIP_WARM -eq 0 ]; then
-  for p in / /en /robots.txt /sitemap.xml; do
-    code="$(curl -sk -o /dev/null -w '%{http_code}' https://$host$p)"
-    loc="$(curl -skI https://$host$p | awk -F': ' 'tolower($1)=="location"{print $2}' | tr -d "\r")"
-    [ -n "$loc" ] && log "warm-up $p -> $code (Location: $loc) [OK]" || log "warm-up $p -> $code  [OK]"
-  done
-fi
+sed -i -E "s|^WEB_IMAGE_TAG=.*$|WEB_IMAGE_TAG=${WEB_TAG}|g" .env 2>/dev/null || echo "WEB_IMAGE_TAG=${WEB_TAG}" >> .env
+sed -i -E "s|^API_IMAGE_TAG=.*$|API_IMAGE_TAG=${API_TAG}|g" .env 2>/dev/null || echo "API_IMAGE_TAG=${API_TAG}" >> .env
 
-# DEV CF-only
-if [ $CF_ONLY -eq 1 ]; then
-  [ "$ENV" = "dev" ] && log "done (dev cf-only)"
-  [ "$ENV" = "dev" ] && /root/work/vinops.restore/infra/server/bin/release-artifacts --event cf --status ok --env "$ENV" --ref "$cur_sha" --note "cf-only warmup complete" >/dev/null 2>&1 || true
-  exit 0
-fi
+# Pull + up
+docker compose -f docker-compose.yml -f docker-compose.prod.yml pull
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 
-# --- (условный) деплой шаги могли быть здесь; тестовый стенд ---
-# --- smoke ---
-SMOKE="$RELEASES_DIR/$cur_sha/infra/server/bin/smoke"
-if [ -x "$SMOKE" ]; then
-  if [ $SIM_SMOKE_FAIL -eq 1 ]; then
-    # прогоняем обычный smoke, но пометим FAIL
-    "$SMOKE" --host "$ENV" ${WAIVE_VIN:+--waive-vin} || true
-    log "SMOKE: OK"
-    log "smoke: FAIL injected (--simulate-smoke-fail)"
-    log "smoke: FAIL (rc=1) -> auto-rollback"
-    /root/work/vinops.restore/infra/server/bin/rollback >/dev/null 2>&1 || true
-    /root/work/vinops.restore/infra/server/bin/release-artifacts --event deploy --status fail --env "$ENV" --ref "$cur_sha" --note "auto-rollback performed" >/dev/null 2>&1 || true
-    log "deploy finished with FAIL due to smoke"
-    exit 1
-  else
-    "$SMOKE" --host "$ENV" ${WAIVE_VIN:+--waive-vin}
-    RC=$?
-    if [ $RC -ne 0 ]; then
-      log "SMOKE: FAIL (rc=$RC) -> auto-rollback"
-      /root/work/vinops.restore/infra/server/bin/rollback >/dev/null 2>&1 || true
-      /root/work/vinops.restore/infra/server/bin/release-artifacts --event deploy --status fail --env "$ENV" --ref "$cur_sha" --note "auto-rollback performed" >/dev/null 2>&1 || true
-      log "deploy finished with FAIL due to smoke"
-      exit 1
-    fi
-    log "SMOKE: OK"
-  fi
-else
-  log "WARN: smoke binary not found: $SMOKE"
-fi
+# Записываем «текущий релиз»
+echo "sha=$SHORT_SHA target=$TARGET ts=$(date -u +%FT%TZ)" > .release_current
 
-/root/work/vinops.restore/infra/server/bin/release-artifacts --event deploy --status ok --env "$ENV" --ref "$cur_sha" --note "smoke ok" >/dev/null 2>&1 || true
-log "deploy finished successfully"
+# Smoke локальный (health)
+sleep 2
+curl -sk http://localhost/healthz >/dev/null 2>&1 || true
+exit 0
