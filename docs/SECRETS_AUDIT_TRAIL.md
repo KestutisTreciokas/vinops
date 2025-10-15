@@ -1,5 +1,5 @@
 # SECRETS_AUDIT_TRAIL — Vinops
-_Generated: 2025-10-15 03:39 (Europe/Warsaw)_
+_Generated: 2025-10-15 03:40 (Europe/Warsaw)_
 
 | Ключ | SoT | SoT-value (fingerprint/URL) | Runtime evidence (из EVD) | Owner |
 | --- | --- | --- | --- | --- |

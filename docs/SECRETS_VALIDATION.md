@@ -1,7 +1,7 @@
 # SECRETS_VALIDATION — Vinops (v2)
-_Generated: 2025-10-15 03:39 (Europe/Warsaw)_
+_Generated: 2025-10-15 03:40 (Europe/Warsaw)_
 
-Текущий статус ключей. Значения маскированы (sha256/len) либо представлены как публичные URL.  
+Текущий статус ключей. Значения маскированы (sha256/len) или представлены как публичные URL.  
 DL-06 учтено: `TELEGRAM_INITDATA_HMAC_KEY = BOT_TOKEN`.
 ### CF_API_TOKEN
 - **Статус:** ok
@@ -96,7 +96,7 @@ DL-06 учтено: `TELEGRAM_INITDATA_HMAC_KEY = BOT_TOKEN`.
 - **Статус:** ok
 - **SoT:** Telegram BotFather (alert бот, отдельный токен)
 - **Owner:** SRE/Ops
-- **Значение (sha256/len):** e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 / 0
+- **Значение (sha256/len):** 6d3eeead9f55e6960295d20ccb2b8a6c7b17ea9b2e43100c8cb4b6e45138ca04 / 46
 - **Runtime Evidence:** - **STATUS:** not-found
 - **Источники:** TXT
 
