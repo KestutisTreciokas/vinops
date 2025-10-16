@@ -1,0 +1,244 @@
+name: CD: Deploy (dev/prod) with CF purge, warm-up, SEO smokes, rollback
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Target environment"
+        required: true
+        type: choice
+        options: [development, production]
+      seed_vin:
+        description: "Seed VIN to smoke (optional; overrides repo file)"
+        required: false
+        default: ""
+  push:
+    branches:
+      - rebase/pr-84-consolidated
+      - main
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      short_sha: ${{ steps.meta.outputs.short_sha }}
+      env_resolved: ${{ steps.meta.outputs.env_resolved }}
+    steps:
+      - name: Resolve env and short SHA
+        id: meta
+        run: |
+          REF="${GITHUB_REF##*/}"
+          if [ "${{ inputs.environment }}" != "" ]; then
+            ENV="${{ inputs.environment }}"
+          else
+            if [ "$REF" = "main" ]; then ENV="production"; else ENV="development"; fi
+          fi
+          echo "env_resolved=$ENV" >> "$GITHUB_OUTPUT"
+          echo "short_sha=${GITHUB_SHA::12}" >> "$GITHUB_OUTPUT"
+
+  deploy:
+    needs: prepare
+    runs-on: ubuntu-latest
+    environment: ${{ needs.prepare.outputs.env_resolved }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set variables
+        id: vars
+        run: |
+          echo "SHORT_SHA=${{ needs.prepare.outputs.short_sha }}" >> $GITHUB_ENV
+          echo "ENVIRONMENT=${{ needs.prepare.outputs.env_resolved }}" >> $GITHUB_ENV
+
+      - name: GHCR login (writer for retag on prod)
+        if: env.ENVIRONMENT == 'production'
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+
+      - name: Retag candidate->prod (web/api)  # prod only
+        if: env.ENVIRONMENT == 'production'
+        run: |
+          set -e
+          for IMG in vinops-web vinops-api; do
+            SRC="ghcr.io/kestutistreciokas/${IMG}:sha-${SHORT_SHA}"
+            DST="ghcr.io/kestutistreciokas/${IMG}:prod"
+            docker pull "$SRC"
+            docker tag "$SRC" "$DST"
+            docker push "$DST"
+          done
+
+      - name: Setup SSH key
+        run: |
+          if [ "${{ env.ENVIRONMENT }}" = "production" ]; then
+            echo "${{ secrets.PROD_SSH_KEY }}" > key.pem
+          else
+            echo "${{ secrets.DEV_SSH_KEY }}" > key.pem
+          fi
+          chmod 600 key.pem
+
+      - name: Copy server bin scripts (deploy/smoke/rollback) to ${PROJECT_DIR}/bin
+        run: |
+          if [ "${{ env.ENVIRONMENT }}" = "production" ]; then
+            SSH_HOST="${{ secrets.PROD_SSH_HOST }}"
+            SSH_USER="${{ secrets.PROD_SSH_USER }}"
+          else
+            SSH_HOST="${{ secrets.DEV_SSH_HOST }}"
+            SSH_USER="${{ secrets.DEV_SSH_USER }}"
+          fi
+          PROJECT_DIR="${{ vars.PROJECT_DIR }}"
+          ssh -o StrictHostKeyChecking=no -i key.pem "$SSH_USER@$SSH_HOST" "mkdir -p $PROJECT_DIR/bin"
+          for f in deploy smoke rollback; do
+            scp -i key.pem -o StrictHostKeyChecking=no infra/server/bin/$f "$SSH_USER@$SSH_HOST:$PROJECT_DIR/bin/$f"
+            ssh -o StrictHostKeyChecking=no -i key.pem "$SSH_USER@$SSH_HOST" "chmod +x $PROJECT_DIR/bin/$f"
+          done
+
+      - name: Ensure .env on server contains mandatory keys
+        run: |
+          if [ "${{ env.ENVIRONMENT }}" = "production" ]; then
+            SSH_HOST="${{ secrets.PROD_SSH_HOST }}"
+            SSH_USER="${{ secrets.PROD_SSH_USER }}"
+          else
+            SSH_HOST="${{ secrets.DEV_SSH_HOST }}"
+            SSH_USER="${{ secrets.DEV_SSH_USER }}"
+          fi
+          PROJECT_DIR="${{ vars.PROJECT_DIR }}"
+          ssh -o StrictHostKeyChecking=no -i key.pem "$SSH_USER@$SSH_HOST" "mkdir -p $PROJECT_DIR && touch $PROJECT_DIR/.env && \
+            grep -q '^PROJECT_DIR=' $PROJECT_DIR/.env || echo 'PROJECT_DIR='$PROJECT_DIR >> $PROJECT_DIR/.env && \
+            grep -q '^GHCR_IMAGE_WEB=' $PROJECT_DIR/.env || echo 'GHCR_IMAGE_WEB=ghcr.io/kestutistreciokas/vinops-web' >> $PROJECT_DIR/.env && \
+            grep -q '^GHCR_IMAGE_API=' $PROJECT_DIR/.env || echo 'GHCR_IMAGE_API=ghcr.io/kestutistreciokas/vinops-api' >> $PROJECT_DIR/.env"
+
+      - name: Deploy (server)
+        run: |
+          if [ "${{ env.ENVIRONMENT }}" = "production" ]; then
+            SSH_HOST="${{ secrets.PROD_SSH_HOST }}"
+            SSH_USER="${{ secrets.PROD_SSH_USER }}"
+            GHCRU="${{ secrets.GHCR_PULL_USER }}"
+            GHCRT="${{ secrets.GHCR_PULL_TOKEN }}"
+            TARGET=prod
+          else
+            SSH_HOST="${{ secrets.DEV_SSH_HOST }}"
+            SSH_USER="${{ secrets.DEV_SSH_USER }}"
+            GHCRU="${{ secrets.GHCR_PULL_USER }}"
+            GHCRT="${{ secrets.GHCR_PULL_TOKEN }}"
+            TARGET=dev
+          fi
+          PROJECT_DIR="${{ vars.PROJECT_DIR }}"
+          ssh -o StrictHostKeyChecking=no -i key.pem "$SSH_USER@$SSH_HOST" "export PROJECT_DIR=$PROJECT_DIR GHCR_PULL_USER=$GHCRU GHCR_PULL_TOKEN=$GHCRT; $PROJECT_DIR/bin/deploy '${{ env.SHORT_SHA }}' '$TARGET'"
+
+      - name: Pre-smoke /health
+        run: |
+          if [ "${{ env.ENVIRONMENT }}" = "production" ]; then
+            BASE="${{ secrets.PROD_BASE_URL }}"
+          else
+            BASE="${{ secrets.DEV_BASE_URL }}"
+          fi
+          curl -skI "$BASE/health" | tee health_headers.txt
+          test "$(curl -sk -o /dev/null -w "%{http_code}" "$BASE/health")" = "200"
+
+      - name: Purge Cloudflare cache
+        run: |
+          if [ "${{ env.ENVIRONMENT }}" = "production" ]; then
+            curl -sS -X POST "https://api.cloudflare.com/client/v4/zones/${{ secrets.CF_ZONE_ID }}/purge_cache" \
+              -H "Authorization: Bearer ${{ secrets.CF_API_TOKEN }}" -H "Content-Type: application/json" \
+              --data '{"purge_everything":true}' | tee cf_purge.json
+          else
+            files="$(cat docs/release/CF_purge_urls.json | tr -d "\n\r\t")"
+            curl -sS -X POST "https://api.cloudflare.com/client/v4/zones/${{ secrets.CF_ZONE_ID }}/purge_cache" \
+              -H "Authorization: Bearer ${{ secrets.CF_API_TOKEN }}" -H "Content-Type: application/json" \
+              --data "{\"files\": $files}" | tee cf_purge.json
+          fi
+
+      - name: Warm-up URLs
+        run: |
+          if [ "${{ env.ENVIRONMENT }}" = "production" ]; then
+            BASE="${{ secrets.PROD_BASE_URL }}"
+          else
+            BASE="${{ secrets.DEV_BASE_URL }}"
+          fi
+          for p in $(jq -r '.[]' docs/release/smoke_urls.json); do
+            curl -sk "$BASE$p" >/dev/null || true
+          done
+
+      - name: Resolve seed VIN
+        id: seed
+        run: |
+          if [ -n "${{ inputs.seed_vin }}" ]; then
+            echo "VIN=${{ inputs.seed_vin }}" >> $GITHUB_OUTPUT
+          else
+            key=$([ "${{ env.ENVIRONMENT }}" = "production" ] && echo "production" || echo "development")
+            vin="$(jq -r --arg k "$key" '.[$k][0]' docs/release/seed_vins.json)"
+            echo "VIN=$vin" >> $GITHUB_OUTPUT
+          fi
+
+      - name: SEO smokes (<head>)
+        id: seo
+        continue-on-error: true
+        run: |
+          set +e
+          if [ "${{ env.ENVIRONMENT }}" = "production" ]; then
+            BASE="${{ secrets.PROD_BASE_URL }}"
+          else
+            BASE="${{ secrets.DEV_BASE_URL }}"
+          fi
+          VIN="${{ steps.seed.outputs.VIN }}"
+          echo "Using VIN=$VIN BASE=$BASE"
+          EN_CODE="$(curl -sk -o /dev/null -w "%{http_code}" "$BASE/en")"
+          VIN_CODE="$(curl -sk -o vin.html -w "%{http_code}" "$BASE/en/vin/$VIN")"
+          CANON=$(grep -i '<link[^>]*rel="canonical"' vin.html | wc -l || true)
+          HEN=$(grep -i 'hreflang="en"' vin.html | wc -l || true)
+          HRU=$(grep -i 'hreflang="ru"' vin.html | wc -l || true)
+          HXD=$(grep -i 'hreflang="x-default"' vin.html | wc -l || true)
+          LDV=$(grep -i 'application/ld+json' vin.html | grep -i 'Vehicle' | wc -l || true)
+          LDB=$(grep -i 'application/ld+json' vin.html | grep -i 'BreadcrumbList' | wc -l || true)
+          echo "EN=$EN_CODE VIN=$VIN_CODE CANON=$CANON HEN=$HEN HRU=$HRU HXD=$HXD LDV=$LDV LDB=$LDB" | tee seo_checks.txt
+          if [ "$EN_CODE" = "200" ] && [ "$VIN_CODE" = "200" ] && [ "$CANON" -ge 1 ] && [ "$HEN" -ge 1 ] && [ "$HRU" -ge 1 ] && [ "$HXD" -ge 1 ] && [ "$LDV" -ge 1 ] && [ "$LDB" -ge 1 ]; then
+            echo "ok" > seo_status.txt
+            exit 0
+          else
+            echo "fail" > seo_status.txt
+            exit 10
+          fi
+
+      - name: Rollback on smoke failure
+        if: steps.seo.outcome != 'success'
+        run: |
+          if [ "${{ env.ENVIRONMENT }}" = "production" ]; then
+            SSH_HOST="${{ secrets.PROD_SSH_HOST }}"
+            SSH_USER="${{ secrets.PROD_SSH_USER }}"
+          else
+            SSH_HOST="${{ secrets.DEV_SSH_HOST }}"
+            SSH_USER="${{ secrets.DEV_SSH_USER }}"
+          fi
+          PROJECT_DIR="${{ vars.PROJECT_DIR }}"
+          ssh -o StrictHostKeyChecking=no -i key.pem "$SSH_USER@$SSH_HOST" "export PROJECT_DIR=$PROJECT_DIR; $PROJECT_DIR/bin/rollback" | tee rollback.json
+          exit 1  # fail job after rollback
+
+      - name: Prepare release passport (artifact)
+        if: always()
+        run: |
+          mkdir -p docs/releases
+          NOW="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+          PASSPORT="docs/releases/release-${NOW}.json"
+          STATUS="$(cat seo_status.txt 2>/dev/null || echo 'fail')"
+          cat > "$PASSPORT" <<JSON
+{
+  "sha": "${{ env.SHORT_SHA }}",
+  "env": "${{ env.ENVIRONMENT }}",
+  "status": "$STATUS",
+  "cf_purge": $(cat cf_purge.json 2>/dev/null || echo "{}"),
+  "seo_checks": $(cat seo_checks.txt 2>/dev/null | awk '{printf "{\"raw\":\"%s\"}",$0}'),
+  "created_at": "$NOW",
+  "runner": "${{ runner.name }}",
+  "actor": "${{ github.actor }}"
+}
+JSON
+          echo "$PASSPORT" > release_artifact_path.txt
+
+      - name: Upload release artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-passport-${{ env.ENVIRONMENT }}-${{ env.SHORT_SHA }}
+          path: |
+            $(cat release_artifact_path.txt)
+            cf_purge.json
+            seo_checks.txt
+            health_headers.txt

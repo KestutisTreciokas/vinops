@@ -1,0 +1,7 @@
+# WORKTREE SIZES — MS-MIG-01-01
+Timestamp: 2025-10-15T22:46:19Z
+1.1G	/root/work/vinops.restore
+93M	/root/work/vinops.restore/.git
+1.1M	/root/work/vinops.restore/design
+7.6M	/root/work/vinops.restore/context
+94M	/root/work/vinops.restore/docs

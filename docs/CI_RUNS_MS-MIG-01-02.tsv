@@ -1,0 +1,18 @@
+18546076217	build	pull_request	completed	failure	wip/backup-20250918-012854	https://github.com/KestutisTreciokas/Vinops-project/actions/runs/18546076217	2025-10-16T00:06:52Z
+18546064882	Toolchain & Lint/Types	pull_request	completed	failure	rebase/pr-84-consolidated	https://github.com/KestutisTreciokas/Vinops-project/actions/runs/18546064882	2025-10-16T00:06:11Z
+18546064878	Contract tests (OpenAPI v1)	pull_request	completed	failure	rebase/pr-84-consolidated	https://github.com/KestutisTreciokas/Vinops-project/actions/runs/18546064878	2025-10-16T00:06:11Z
+18546064876	api-smoke	pull_request	completed	failure	rebase/pr-84-consolidated	https://github.com/KestutisTreciokas/Vinops-project/actions/runs/18546064876	2025-10-16T00:06:11Z
+18546064875	build	pull_request	completed	success	rebase/pr-84-consolidated	https://github.com/KestutisTreciokas/Vinops-project/actions/runs/18546064875	2025-10-16T00:06:11Z
+18546037786	tg-bot — CI & GHCR publish (S0)	pull_request	completed	failure	work/ib-baseline	https://github.com/KestutisTreciokas/Vinops-project/actions/runs/18546037786	2025-10-16T00:04:33Z
+18546037758	api-smoke	pull_request	completed	failure	work/ib-baseline	https://github.com/KestutisTreciokas/Vinops-project/actions/runs/18546037758	2025-10-16T00:04:33Z
+18546037750	Contract tests (OpenAPI v1)	pull_request	completed	failure	work/ib-baseline	https://github.com/KestutisTreciokas/Vinops-project/actions/runs/18546037750	2025-10-16T00:04:33Z
+18546037747	Secrets Guard	pull_request	completed	failure	work/ib-baseline	https://github.com/KestutisTreciokas/Vinops-project/actions/runs/18546037747	2025-10-16T00:04:33Z
+18546037745	Toolchain & Lint/Types	pull_request	completed	failure	work/ib-baseline	https://github.com/KestutisTreciokas/Vinops-project/actions/runs/18546037745	2025-10-16T00:04:33Z
+18546037744	build	pull_request	completed	success	work/ib-baseline	https://github.com/KestutisTreciokas/Vinops-project/actions/runs/18546037744	2025-10-16T00:04:33Z
+18546026971	build	pull_request	completed	success	wip/backup-20250917-181834	https://github.com/KestutisTreciokas/Vinops-project/actions/runs/18546026971	2025-10-16T00:03:57Z
+18546023179	build	pull_request	completed	failure	wip/backup-20250918-012020	https://github.com/KestutisTreciokas/Vinops-project/actions/runs/18546023179	2025-10-16T00:03:45Z
+18545932983	Build & Push to GHCR	push	completed	failure	main	https://github.com/KestutisTreciokas/Vinops-project/actions/runs/18545932983	2025-10-15T23:57:57Z
+18545918479	build	pull_request	completed	success	rollback/root-sync-with-fe	https://github.com/KestutisTreciokas/Vinops-project/actions/runs/18545918479	2025-10-15T23:56:43Z
+18545181683	Build & Push to GHCR	push	completed	failure	main	https://github.com/KestutisTreciokas/Vinops-project/actions/runs/18545181683	2025-10-15T23:12:52Z
+18545177356	Toolchain & Lint/Types	push	completed	failure	fix/ssr-home-features-and-typedroutes	https://github.com/KestutisTreciokas/Vinops-project/actions/runs/18545177356	2025-10-15T23:12:39Z
+18545177332	api-smoke	push	completed	failure	fix/ssr-home-features-and-typedroutes	https://github.com/KestutisTreciokas/Vinops-project/actions/runs/18545177332	2025-10-15T23:12:39Z
